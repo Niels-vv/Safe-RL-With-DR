@@ -50,8 +50,7 @@ class Agent(AgentConfig):
         self.test = test
         self.max_steps = max_steps
         self.max_episodes = max_episodes
-        if test:
-            self.policy_network = MlpPolicy(action_size=self.action_size, input_size = observation_space).to(device)
+        self.policy_network = MlpPolicy(action_size=action_space, input_size = observation_space).to(device)
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)
         self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=self.k_epoch,
                                                    gamma=0.999)

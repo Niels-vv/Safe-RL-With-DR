@@ -24,13 +24,14 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AgentLoop(Agent):
     def __init__(self, env, max_steps, max_episodes, test=False):
-        observations_space = env.observations_spec() #TODO incorrect
-        action_space = env.action_spec()    #TODO incorrect
+        observations_space = 10 # iets met flatten van env.observation_spec() #TODO incorrect
+        action_space = 1 # iets met flatten van env.action_spec()    #TODO incorrect
         super(AgentLoop, self).__init__(env, observations_space, action_space, max_steps, max_episodes, test)
 
         self.reward = 0
         self.episode = 0
         self.step = 0
+        self.screen_size = env.observation_spec()[0].feature_screen[1]
         self.obs_spec = None
         self.action_spec = None
 
@@ -39,15 +40,10 @@ class AgentLoop(Agent):
         self.action_spec = action_spec
 
     def get_env_action(self, action, obs):
-        action = np.unravel_index(action, [1, self._screen_size, self._screen_size])
-        target = [action[2], action[1]]
-        command = _MOVE_SCREEN #action[0]   # removing unit selection out of the equation
-        # if command == 0:
-        #   command = _SELECT_POINT
-        # else:
-        #   command = _MOVE_SCREEN
-
-        if command in obs.observation["available_actions"]:
+        action = np.unravel_index(action, [self._screen_size, self._screen_size])
+        target = [action[1], action[0]]
+        command = _MOVE_SCREEN 
+        if command in obs.observation.available_actions:
             return actions.FunctionCall(command, [[0], target])
         else:
             return actions.FunctionCall(_NO_OP, [])
@@ -69,11 +65,8 @@ class AgentLoop(Agent):
             return self._action.argmax()
         # explore
         else:
-            # print("random choice")
-            # action = np.random.choice([0, 1])
-            action = 0
             target = np.random.randint(0, self._screen_size, size=2)
-            return action * self._screen_size*self._screen_size + target[0] * self._screen_size + target[1]
+            return target[0] + target[1]
 
     def select_friendly_action(self):
         return FUNCTIONS.select_army("select")
@@ -84,7 +77,6 @@ class AgentLoop(Agent):
         self.episode += 1
         self.env.reset()
         select_friendly = self.select_friendly_action()
-        print("Chosen friendly action")
         return self.env.step([select_friendly])
 
     def run_loop(self):
@@ -94,11 +86,13 @@ class AgentLoop(Agent):
         try:
             # A new episode
             while self.episode < self.max_episodes:
-                obs = self.reset()
+                obs = self.reset()[0]
                 episode_length = 0
-
                 # Get initial state
-                print(f'Feature screen type: {type(obs.observations.feature_screen)}')
+                state = obs.observation.feature_screen.player_relative #flatten dit
+                print(self.env.observation_spec())
+                print(self.env.observation_spec()[0].feature_screen[1])
+                raise Exception("Implemented until this")
                 state = torch.flatten(obs.observation.feature_screen)
                 print(f'State shape: {state.shape}')
                 state_mem = state
@@ -152,5 +146,7 @@ class AgentLoop(Agent):
 
         except KeyboardInterrupt:
             pass
+        except Exception as e:
+            print(e)
         finally:
             self.env.close()
