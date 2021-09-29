@@ -1,95 +1,156 @@
 import torch
-import matplotlib.pyplot as plt
-import pandas as pd
+import numpy as np
 from ppo.PPO import Agent
+from pysc2.lib import actions
+from pysc2.lib import features
+from torch.autograd import Variable
+
+# Based on: https://github.com/whathelll/DeepRLBootCampLabs, https://github.com/whathelll/DeepRLBootCampLabs/blob/master/pytorch/sc2_agents/base_rl_agent.py
+
+_PLAYER_FRIENDLY = features.PlayerRelative.SELF
+_PLAYER_NEUTRAL = features.PlayerRelative.NEUTRAL  # beacon/minerals
+_PLAYER_HOSTILE = features.PlayerRelative.ENEMY
+_NO_OP = actions.FUNCTIONS.no_op.id
+_MOVE_SCREEN = actions.FUNCTIONS.Move_screen.id
+_ATTACK_SCREEN = actions.FUNCTIONS.Attack_screen.id
+_SELECT_ARMY = actions.FUNCTIONS.select_army.id
+_NOT_QUEUED = [0]
+_SELECT_ALL = [0]
+_SELECT_POINT = actions.FUNCTIONS.select_point.id
+
+FUNCTIONS = actions.FUNCTIONS
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AgentLoop(Agent):
     def __init__(self, env, max_steps, max_episodes, test=False):
-        observations_space = env.observations_spec()
-        action_space = env.action_spec()
+        observations_space = env.observations_spec() #TODO incorrect
+        action_space = env.action_spec()    #TODO incorrect
         super(AgentLoop, self).__init__(env, observations_space, action_space, max_steps, max_episodes, test)
 
+        self.reward = 0
+        self.episode = 0
+        self.step = 0
+        self.obs_spec = None
+        self.action_spec = None
+
+    def setup(self, obs_spec, action_spec):
+        self.obs_spec = obs_spec
+        self.action_spec = action_spec
+
+    def get_env_action(self, action, obs):
+        action = np.unravel_index(action, [1, self._screen_size, self._screen_size])
+        target = [action[2], action[1]]
+        command = _MOVE_SCREEN #action[0]   # removing unit selection out of the equation
+        # if command == 0:
+        #   command = _SELECT_POINT
+        # else:
+        #   command = _MOVE_SCREEN
+
+        if command in obs.observation["available_actions"]:
+            return actions.FunctionCall(command, [[0], target])
+        else:
+            return actions.FunctionCall(_NO_OP, [])
+
+
+    '''
+        :param
+        s = obs.observation["screen"]
+        :returns
+        action = argmax action
+    '''
+    def get_action(self, s):
+        # greedy
+        if np.random.rand() > self._epsilon.value():
+            # print("greedy action")
+            s = Variable(torch.from_numpy(s).cuda())
+            s = s.unsqueeze(0).float()
+            self._action = self._Q(s).squeeze().cpu().data.numpy()
+            return self._action.argmax()
+        # explore
+        else:
+            # print("random choice")
+            # action = np.random.choice([0, 1])
+            action = 0
+            target = np.random.randint(0, self._screen_size, size=2)
+            return action * self._screen_size*self._screen_size + target[0] * self._screen_size + target[1]
+
+    def select_friendly_action(self):
+        return FUNCTIONS.select_army("select")
+    
+    def reset(self):
+        self.step = 0
+        self.reward = 0
+        self.episode += 1
+        self.env.reset()
+        select_friendly = self.select_friendly_action()
+        print("Chosen friendly action")
+        return self.env.step([select_friendly])
+
     def run_loop(self):
-        episode = 0
-        step = 0
         reward_history = []
         avg_reward = []
-        solved = False
 
-        # A new episode
-        while not solved:
-            start_step = step
-            episode += 1
-            episode_length = 0
+        try:
+            # A new episode
+            while self.episode < self.max_episodes:
+                obs = self.reset()
+                episode_length = 0
 
-            # Get initial state
-            state, reward, action, terminal = self.new_random_game()
-            state_mem = state
-            state = torch.tensor(state, dtype=torch.float, device=device)
-            total_episode_reward = 1
+                # Get initial state
+                print(f'Feature screen type: {type(obs.observations.feature_screen)}')
+                state = torch.flatten(obs.observation.feature_screen)
+                print(f'State shape: {state.shape}')
+                state_mem = state
+                state = torch.tensor(state, dtype=torch.float, device=device)
+                total_episode_reward = 1
 
-            # A step in an episode
-            while not solved:
-                step += 1
-                episode_length += 1
+                raise Exception("Implemented until this")
 
-                # Choose action
-                prob_a = self.policy_network.pi(state)
-                action = torch.distributions.Categorical(prob_a).sample().item()
+                # A step in an episode
+                while self.step < self.max_steps:
+                    self.step += 1
+                    episode_length += 1
 
-                # Act
-                new_state, reward, terminal, _ = self.env.step(action)
-                new_state_mem = new_state
-                new_state = torch.tensor(new_state, dtype=torch.float, device=device)
+                    # Choose action
+                    prob_a = self.policy_network.pi(state)
+                    action = torch.distributions.Categorical(prob_a).sample().item()
 
-                reward = -1 if terminal else reward
+                    # Act
+                    new_state, reward, terminal, _ = self.env.step(action)
+                    new_state_mem = new_state
+                    new_state = torch.tensor(new_state, dtype=torch.float, device=device)
 
-                self.add_memory(state_mem, action, reward/10.0, new_state_mem, terminal, prob_a[action].item())
+                    reward = -1 if terminal else reward
 
-                state = new_state
-                state_mem = new_state_mem
-                total_episode_reward += reward
+                    self.add_memory(state_mem, action, reward/10.0, new_state_mem, terminal, prob_a[action].item())
 
-                if terminal:
-                    episode_length = step - start_step
-                    reward_history.append(total_episode_reward)
-                    avg_reward.append(sum(reward_history[-10:])/10.0)
+                    state = new_state
+                    state_mem = new_state_mem
+                    total_episode_reward += reward
 
-                    self.finish_path(episode_length)
+                    if terminal:
+                        reward_history.append(total_episode_reward)
+                        avg_reward.append(sum(reward_history[-10:])/10.0)
 
-                    if len(reward_history) > 100 and sum(reward_history[-100:-1]) / 100 >= 195:
-                        solved = True
+                        self.finish_path(self.step)
 
-                    print('episode: %.2f, total step: %.2f, last_episode length: %.2f, last_episode_reward: %.2f, '
-                          'loss: %.4f, lr: %.4f' % (episode, step, episode_length, total_episode_reward, self.loss,
-                                                    self.scheduler.get_last_lr()[0]))
+                        print('episode: %.2f, total step: %.2f, last_episode length: %.2f, last_episode_reward: %.2f, '
+                            'loss: %.4f, lr: %.4f' % (episode, step, episode_length, total_episode_reward, self.loss,
+                                                        self.scheduler.get_last_lr()[0]))
 
-                    self.env.reset()
+                        self.env.reset()
 
-                    break
+                        break
 
-            if episode % self.update_freq == 0:
-                for _ in range(self.k_epoch):
-                    self.update_network()
+                if episode % self.update_freq == 0:
+                    for _ in range(self.k_epoch):
+                        self.update_network()
 
-            if episode % self.plot_every == 0:
-                plot_graph(reward_history, avg_reward)
+                if episode % self.plot_every == 0:
+                    plot_graph(reward_history, avg_reward)
 
-        self.env.close()
-
-def plot_graph(reward_history, avg_reward):
-    df = pd.DataFrame({'x': range(len(reward_history)), 'Reward': reward_history, 'Average': avg_reward})
-    plt.style.use('seaborn-darkgrid')
-    palette = plt.get_cmap('Set1')
-
-    plt.plot(df['x'], df['Reward'], marker='', color=palette(1), linewidth=0.8, alpha=0.9, label='Reward')
-    # plt.plot(df['x'], df['Average'], marker='', color='tomato', linewidth=1, alpha=0.9, label='Average')
-
-    # plt.legend(loc='upper left')
-    plt.title("CartPole", fontsize=14)
-    plt.xlabel("episode", fontsize=12)
-    plt.ylabel("score", fontsize=12)
-
-    plt.savefig('score.png')
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self.env.close()
