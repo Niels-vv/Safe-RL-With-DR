@@ -36,6 +36,9 @@ from env_pysc2.ppo_variants.ppo_base import AgentLoop as BaseAgent
 FLAGS = flags.FLAGS
 flags.DEFINE_bool("test", False, "Whether we are training or testing")
 flags.DEFINE_string("variant", "base", "Whether to use VAE, PCA or Shielding")
+flags.DEFINE_integer("max_episodes", 3, "Total episodes.")
+flags.DEFINE_integer("max_agent_steps", 10, "Total agent steps.")
+
 flags.DEFINE_bool("render", True, "Whether to render with pygame.")
 point_flag.DEFINE_point("feature_screen_size", "84",
                         "Resolution for screen feature layers.")
@@ -53,10 +56,8 @@ flags.DEFINE_bool("use_feature_units", False,
 flags.DEFINE_bool("use_raw_units", False,
                   "Whether to include raw units.")
 flags.DEFINE_bool("disable_fog", False, "Whether to disable Fog of War.")
-
-flags.DEFINE_integer("max_agent_steps", 0, "Total agent steps.")
 flags.DEFINE_integer("game_steps_per_episode", None, "Game steps per episode.")
-flags.DEFINE_integer("max_episodes", 0, "Total episodes.")
+
 flags.DEFINE_integer("step_mul", 8, "Game steps per agent step.")
 
 flags.DEFINE_string("agent", "pysc2.agents.random_agent.RandomAgent",
@@ -65,7 +66,6 @@ flags.DEFINE_string("agent_name", None,
                     "Name of the agent in replays. Defaults to the class name.")
 flags.DEFINE_enum("agent_race", "random", sc2_env.Race._member_names_,  # pylint: disable=protected-access
                   "Agent 1's race.")
-
 flags.DEFINE_string("agent2", "Bot", "Second agent, either Bot or agent class.")
 flags.DEFINE_string("agent2_name", None,
                     "Name of the agent in replays. Defaults to the class name.")
@@ -80,7 +80,7 @@ flags.DEFINE_bool("profile", False, "Whether to turn on code profiling.")
 flags.DEFINE_bool("trace", False, "Whether to trace the code execution.")
 flags.DEFINE_integer("parallel", 1, "How many instances to run in parallel.")
 
-flags.DEFINE_bool("save_replay", True, "Whether to save a replay at the end.")
+flags.DEFINE_bool("save_replay", False, "Whether to save a replay at the end.")
 
 flags.DEFINE_string("map", None, "Name of a map to use.")
 flags.DEFINE_bool("battle_net_map", False, "Use the battle.net map version.")
