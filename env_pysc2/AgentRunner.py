@@ -32,10 +32,15 @@ from pysc2.lib import point_flag
 from pysc2.lib import stopwatch
 
 from env_pysc2.ppo_variants.ppo_base import AgentLoop as BaseAgent
+from env_pysc2.ppo_variants.ppo_vae import AgentLoop as VAEAgent
+from env_pysc2.ppo_variants.ppo_pca import AgentLoop as PCAAgent
 
 FLAGS = flags.FLAGS
-flags.DEFINE_bool("test", False, "Whether we are training or testing")
-flags.DEFINE_string("variant", "base", "Whether to use VAE, PCA or Shielding")
+flags.DEFINE_string("variant", "base", "Whether to use VAE, PCA, or none.")
+flags.DEFINE_bool("shield", False, "Whether to use shielding.")
+flags.DEFINE_bool("store_obs", False, "Whether to store observations.")
+flags.DEFINE_bool("train", False, "Whether we are training or evaluating.")
+flags.DEFINE_bool("train_component", False, "Whether to train a sub component, like PCA or VAE, on stored observations.")
 flags.DEFINE_integer("max_episodes", 3, "Total episodes.")
 flags.DEFINE_integer("max_agent_steps", 10, "Total agent steps.")
 
@@ -82,7 +87,7 @@ flags.DEFINE_integer("parallel", 1, "How many instances to run in parallel.")
 
 flags.DEFINE_bool("save_replay", False, "Whether to save a replay at the end.")
 
-flags.DEFINE_string("map", None, "Name of a map to use.")
+flags.DEFINE_string("map", "MoveToBeacon", "Name of a map to use.")
 flags.DEFINE_bool("battle_net_map", False, "Use the battle.net map version.")
 flags.mark_flag_as_required("map")
 
@@ -108,16 +113,25 @@ def run_thread(players, map_name, visualize):
       disable_fog=FLAGS.disable_fog,
       visualize=visualize) as env:
     env = available_actions_printer.AvailableActionsPrinter(env)
-    agent = get_agent(env, FLAGS.max_agent_steps, FLAGS.max_episodes)
+    agent = get_agent(env)
     agent.run_agent()
     if FLAGS.save_replay:
       env.save_replay(agent_class_name)
 
-def get_agent(env, max_steps, max_episodes):
+def get_agent(env):
   global agent_class_name
-  if FLAGS.variant == "base":
+  if FLAGS.variant.lower() in ["base", "ppo_base"]:
     agent_class_name = BaseAgent.__name__
-    return BaseAgent(env, max_steps, max_episodes, FLAGS.test)
+    return BaseAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.store_obs, FLAGS.map)
+  elif FLAGS.variants in ["pca", "ppo_pca"]:
+    agent_class_name = PCAAgent.__name__
+    return PCAAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map)
+  elif FLAGS.variants in ["vae", "ppo_vae"]:
+    agent_class_name = VAEAgent.__name__
+    return VAEAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map)
+  else:
+    raise NotImplementedError
+
 
 
 def main(unused_argv):

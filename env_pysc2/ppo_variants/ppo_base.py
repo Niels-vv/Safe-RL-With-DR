@@ -4,6 +4,7 @@ from ppo.PPO import Agent
 from pysc2.lib import actions
 from pysc2.lib import features
 from torch.autograd import Variable
+from utils.DataManager import DataManager
 
 # Based on: https://github.com/whathelll/DeepRLBootCampLabs, https://github.com/whathelll/DeepRLBootCampLabs/blob/master/pytorch/sc2_agents/base_rl_agent.py
 # For info on obs from env.step, see: https://github.com/deepmind/pysc2/blob/master/pysc2/env/environment.py and https://github.com/deepmind/pysc2/blob/master/docs/environment.md
@@ -27,13 +28,18 @@ def _xy_locs(mask):
   y, x = mask.nonzero()
   return list(zip(x, y))
 class AgentLoop(Agent):
-    def __init__(self, env, max_steps, max_episodes, test=False):
+    def __init__(self, env, shield, max_steps, max_episodes, train, store_observations, map_name):
         self.screen_size_x = env.observation_spec()[0].feature_screen[2]
         self.screen_size_y = env.observation_spec()[0].feature_screen[1]
         observations_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.observation_spec() #TODO incorrect
         action_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.action_spec()    #TODO incorrect
-        super(AgentLoop, self).__init__(env, observations_space, action_space, max_steps, max_episodes, test)
+        
+        super(AgentLoop, self).__init__(env, observations_space, action_space, max_steps, max_episodes)
 
+        self.train = train  # TODO
+        self.shield = shield #TODO
+        self.store_obs = store_observations #TODO
+        self.map = map_name #TODO
         self.reward = 0
         self.episode = 0
         self.step = 0
@@ -66,6 +72,17 @@ class AgentLoop(Agent):
         self.env.reset()
         select_friendly = self.select_friendly_action()
         return self.env.step([select_friendly])
+
+    def run_agent(self):
+        if self.store_obs:
+            self.data_manager = DataManager(observation_sub_dir=f'env_pysc2/observations/{self.map}')
+            self.data_manager.create_observation_file()
+            self.train = False
+        if self.train:
+            DataManager.ge
+            self.data_manager = DataManager(results_sub_dir=f'env_pysc2/results/{self.map}')
+            self.data_manager.create_results_files()
+        self.run_loop()
 
     def run_loop(self):
         reward_history = []

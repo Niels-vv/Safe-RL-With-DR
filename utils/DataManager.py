@@ -8,54 +8,65 @@ import os.path, sys, csv, json
 #import pandas as pd
 import numpy as np
 
-#create directories and files for observations and results
 PATH = os.path.dirname(os.path.realpath(__file__))
-observations_path = f'{PATH}/../../Observations'
-results_path = f'{PATH}/../../Results'
-if not os.path.isdir(f'{observations_path}'): os.mkdir(observations_path)
-if not os.path.isdir(f'{results_path}'): os.mkdir(results_path)
-
-observations_file = f'{observations_path}/Observations.csv'
-i = 1
-while (os.path.isfile(f'{observations_file}')):
-    observations_file = f'{observations_path}/Observations{i}.csv'
-    i += 1
-with open(observations_file, mode='w') as fp:
-    pass
 
 class DataManager:
-    @staticmethod
-    def store_observation(data):
+    def __init__(self, observation_sub_dir = None , results_sub_dir = None):
+        self.obs_sub_dir = observation_sub_dir
+        self.results_sub_dir = results_sub_dir
+        self.obs_file = None
+        self.results_file = None
+        self.setup_file = None
+
+    def create_observation_file(self):
+        observations_path = f'{PATH}/{self.obs_sub_dir}'
+        if not os.path.isdir(f'{observations_path}'): os.mkdir(observations_path)
+        observations_file = f'{observations_path}/Observations.csv'
+        with open(observations_file, mode='w') as fp:
+            pass
+        self.obs_file = observations_file
+
+    def create_results_files(self):
+        results_path = f'{PATH}/{self.results_sub_dir}'
+        if not os.path.isdir(f'{results_path}'): os.mkdir(results_path)
+        i = 1
+        results_file = f'{results_path}/results_{i}.csv'
+        while(os.path.isfile(results_file)):
+            i += 1
+            results_file = f'{results_path}/results_{i}.csv'
+        with open(self.results_file, mode = 'w') as fp:
+            pass
+        self.setup_file = f'{results_path}/setup_{i}.json'
+        # TODO network weights path?
+
+
+    def store_observation(self, data):
         if not (isinstance(data, list) or isinstance(data, np.ndarray)):
-            print("Invalid observation data type for function write\_data in PCA. Expected list or numpy.ndarray, got: " + str(type(data)))
-            sys.exit()
+            raise TypeError
         try:
-            with open(observations_file, mode='a') as fp:
+            with open(self.obs_file, mode='a') as fp:
                 data_writer = csv.writer(fp, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 data_writer.writerow(data)
         except Exception as e:
             print("Writing data to csv failed.")
             print(e)
-            sys.exit()
 
     @staticmethod
     def get_observations():
         pass
 
-    @staticmethod
-    def write_results(filename_base, rewards, steps, duration, setup):
-        global results_path
-        results_file = results_path + '/' + filename_base
+    def write_results(self, rewards, steps, duration, setup, network_weights):
         rows = zip(rewards, steps, duration)
         try:
-            with open(f'{results_file}_results.csv', "w") as f:
+            with open(self.results_file, "a") as f:
                 writer = csv.writer(f)
                 writer.writerow(["Rewards", "steps", "Duration"])
                 for row in rows:
                     writer.writerow(row)
             
-            with open(f'{results_file}_setup.json', 'w') as f:
+            with open(self.setup_file, 'w') as f:
                 json.dump(setup, f)
+            # TODO network weights opslaan
         except Exception as e:
             print("writing results failed")
             print(e)

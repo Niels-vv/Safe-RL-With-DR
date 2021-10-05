@@ -45,9 +45,8 @@ class AgentConfig:
     memory_size = 400
 
 class Agent(AgentConfig):
-    def __init__(self, env, observation_space, action_space, max_steps, max_episodes, test=False):
+    def __init__(self, env, observation_space, action_space, max_steps, max_episodes):
         self.env = env
-        self.test = test
         self.max_steps = max_steps
         self.max_episodes = max_episodes
         self.policy_network = MlpPolicy(action_size=action_space, input_size = observation_space).to(device)
@@ -61,8 +60,7 @@ class Agent(AgentConfig):
             'advantage': [], 'td_target': torch.tensor([],dtype=torch.float)
         }
 
-    def run_agent(self):
-        self.run_loop()
+        self.data_manager = None
 
     def run_loop(self):
         raise NotImplementedError
