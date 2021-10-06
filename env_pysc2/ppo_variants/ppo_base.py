@@ -1,13 +1,18 @@
-import torch
+from matplotlib.pyplot import flag
+import torch, time
 import numpy as np
 from ppo.PPO import Agent
 from pysc2.lib import actions
 from pysc2.lib import features
-from torch.autograd import Variable
 from utils.DataManager import DataManager
 
 # Based on: https://github.com/whathelll/DeepRLBootCampLabs, https://github.com/whathelll/DeepRLBootCampLabs/blob/master/pytorch/sc2_agents/base_rl_agent.py
 # For info on obs from env.step, see: https://github.com/deepmind/pysc2/blob/master/pysc2/env/environment.py and https://github.com/deepmind/pysc2/blob/master/docs/environment.md
+
+seed = 3
+torch.manual_seed(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 _PLAYER_FRIENDLY = features.PlayerRelative.SELF
 _PLAYER_NEUTRAL = features.PlayerRelative.NEUTRAL  # beacon/minerals
@@ -36,13 +41,18 @@ class AgentLoop(Agent):
         
         super(AgentLoop, self).__init__(env, observations_space, action_space, max_steps, max_episodes)
 
-        self.train = train  # TODO
-        self.shield = shield #TODO
-        self.store_obs = store_observations #TODO
-        self.map = map_name #TODO
+        self.train = train 
+        self.reduce_dim = False
+        self.shield = shield
+        self.pca = False
+        self.vae = False
+        self.dim_reduction_component = None
+        self.store_obs = store_observations
+        self.map = map_name
         self.reward = 0
         self.episode = 0
         self.step = 0
+        self.duration = 0
         self.obs_spec = env.observation_spec()[0]
         self.action_spec = env.action_spec()[0]
 
@@ -68,24 +78,34 @@ class AgentLoop(Agent):
     def reset(self):
         self.step = 0
         self.reward = 0
+        self.duration = 0
         self.episode += 1
         self.env.reset()
         select_friendly = self.select_friendly_action()
         return self.env.step([select_friendly])
 
     def run_agent(self):
+        # Setup file storage
         if self.store_obs:
             self.data_manager = DataManager(observation_sub_dir=f'env_pysc2/observations/{self.map}')
             self.data_manager.create_observation_file()
             self.train = False
         if self.train:
-            DataManager.ge
             self.data_manager = DataManager(results_sub_dir=f'env_pysc2/results/{self.map}')
             self.data_manager.create_results_files()
-        self.run_loop()
+
+        # Run agent
+        rewards, steps, durations = self.run_loop()
+
+        # Store results
+        if self.train:
+            variant = {'pca' : self.pca, 'vae' : self.vae, 'shield' : self.shield}
+            self.data_manager.write_results(rewards, steps, durations, self.config, variant, self.policy_network)
 
     def run_loop(self):
         reward_history = []
+        duration_history = []
+        step_history = []
         avg_reward = []
 
         try:
@@ -98,29 +118,44 @@ class AgentLoop(Agent):
                 state = obs.observation.feature_screen.player_relative.flatten()
                 state_mem = state
                 state = torch.tensor(state, dtype=torch.float, device=device)
+                if self.reduce_dim:
+                    state = self.dim_reduction_component.state_dim_reduction(state)
+                    state_mem = state.tolist()
+
+                if self.store_obs: self.data_manager.store_observation(state_mem)
 
                 # A step in an episode
                 while self.step < self.max_steps:
                     self.step += 1
 
+                    start_duration = time.time()
                     # Choose action
-                    prob_a = self.policy_network.pi(state)
-                    action = torch.distributions.Categorical(prob_a).sample().item()
+                    if self.train:
+                        prob_a = self.policy_network.pi(state)
+                        action = torch.distributions.Categorical(prob_a).sample().item()
+                    else:
+                        with torch.no_grad():
+                            prob_a = self.policy_network.pi(state)
+                            action = torch.distributions.Categorical(prob_a).sample().item()
                     
                     # Act
                     act = self.get_env_action(action, obs)
+                    end_duration = time.time()
+                    self.duration += end_duration - start_duration
                     obs = self.env.step([act])[0]
                     new_state = obs.observation.feature_screen.player_relative.flatten()
                     new_state_mem = new_state
                     new_state = torch.tensor(new_state, dtype=torch.float, device=device)
+                    if self.reduce_dim:
+                        new_state = self.dim_reduction_component.state_dim_reduction(state)
+                        new_state_mem = state.tolist()
                     
                     reward = obs.reward
                     terminal = obs.last()
                     self.reward += reward
 
                     #reward = -1 if terminal else reward
-
-                    self.add_memory(state_mem, action, reward, new_state_mem, terminal, prob_a[action].item())
+                    if self.train: self.add_memory(state_mem, action, reward, new_state_mem, terminal, prob_a[action].item())
 
                     state = new_state
                     state_mem = new_state_mem
@@ -128,9 +163,14 @@ class AgentLoop(Agent):
                     if terminal:
                         print("Terminal")
                         reward_history.append(self.reward)
+                        duration_history.append(self.duration)
+                        step_history.append(self.step)
                         avg_reward.append(sum(reward_history[-10:])/10.0)
 
-                        self.finish_path(self.step)
+                        start_duration = time.time()
+                        if self.train: self.finish_path(self.step)
+                        end_duration = time.time()
+                        self.duration += end_duration - start_duration
 
                         #print('episode: %.2f, total step: %.2f, last_episode length: %.2f, last_episode_reward: %.2f, '
                         #   'loss: %.4f, lr: %.4f' % (episode, step, episode_length, total_episode_reward, self.loss,
@@ -140,12 +180,12 @@ class AgentLoop(Agent):
 
                         break
                         
-                if self.episode % self.update_freq == 0:
-                    for _ in range(self.k_epoch):
+                if self.train and self.episode % self.config['update_freq'] == 0:
+                    for _ in range(self.config['k_epoch']):
                         print("updating network")
                         self.update_network()
 
-                if self.episode % self.plot_every == 0:
+                if self.episode % self.config['plot_every'] == 0:
                     pass #plot
 
         except KeyboardInterrupt:
@@ -154,3 +194,4 @@ class AgentLoop(Agent):
             print(e)
         finally:
             self.env.close()
+            return reward_history, step_history, duration_history

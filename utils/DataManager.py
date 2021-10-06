@@ -4,7 +4,7 @@
 # Writing results (rewards, steps and physcial time per episode and model setup) (in drive/MyDrive/Thesis/Code/PySC2/Results/fileName.csv and /fileName.txt)
 # Creating plots from results file
 
-import os.path, sys, csv, json
+import os.path, sys, csv, json, torch
 #import pandas as pd
 import numpy as np
 
@@ -17,6 +17,8 @@ class DataManager:
         self.obs_file = None
         self.results_file = None
         self.setup_file = None
+        self.variant_file = None
+        self.policy_network_file = None
 
     def create_observation_file(self):
         observations_path = f'{PATH}/{self.obs_sub_dir}'
@@ -37,7 +39,8 @@ class DataManager:
         with open(self.results_file, mode = 'w') as fp:
             pass
         self.setup_file = f'{results_path}/setup_{i}.json'
-        # TODO network weights path?
+        self.variant_file = f'{results_path}/variant_{i}.json'
+        self.policy_network_file = f'{results_path}/policy_network_{i}.pt'
 
 
     def store_observation(self, data):
@@ -55,8 +58,8 @@ class DataManager:
     def get_observations():
         pass
 
-    def write_results(self, rewards, steps, duration, setup, network_weights):
-        rows = zip(rewards, steps, duration)
+    def write_results(self, rewards, steps, durations, setup, variant, network):
+        rows = zip(rewards, steps, durations)
         try:
             with open(self.results_file, "a") as f:
                 writer = csv.writer(f)
@@ -66,7 +69,12 @@ class DataManager:
             
             with open(self.setup_file, 'w') as f:
                 json.dump(setup, f)
-            # TODO network weights opslaan
+
+            with open(self.variant_file, 'w') as f:
+                json.dump(variant, f)
+            
+            torch.save(network, self.policy_network_file)
+
         except Exception as e:
             print("writing results failed")
             print(e)
@@ -77,11 +85,5 @@ class DataManager:
 
     @staticmethod
     def load_setup_dict(filename):
-        filename = results_path + '/' + filename
         with open(filename) as f:
             return json.load(f)
-
-DataManager.store_observation([0,1,2,3])
-DataManager.write_results("test",[0,1,2], [1,2,3],[3,4,5],{'r':2,'s':3})
-print(DataManager.load_setup_dict(f'test_setup.json'))
-#TODO: get observations. Test on colab/drive

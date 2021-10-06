@@ -1,8 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import abc
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+seed = 3
+torch.manual_seed(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 class MlpPolicy(nn.Module):
     def __init__(self, action_size, input_size=4):
@@ -30,28 +35,34 @@ class MlpPolicy(nn.Module):
         return x
 
 class AgentConfig:
-    # Learning
-    gamma = 0.99
-    plot_every = 10
-    update_freq = 1
-    k_epoch = 3
-    learning_rate = 0.02
-    lmbda = 0.95
-    eps_clip = 0.2
-    v_coef = 1
-    entropy_coef = 0.01
+    def __init__(self):
+        self.config = {
+                        # Learning
+                        'gamma' : 0.99,
+                        'plot_every' : 10,
+                        'update_freq' : 1,
+                        'k_epoch' : 3,
+                        'learning_rate' : 0.02,
+                        'lmbda' : 0.95,
+                        'eps_clip' : 0.2,
+                        'v_coef' : 1,
+                        'entropy_coef' : 0.01,
 
-    # Memory
-    memory_size = 400
+                        # Memory
+                        'memory_size' : 400
+        }
 
 class Agent(AgentConfig):
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, env, observation_space, action_space, max_steps, max_episodes):
+        super(Agent, self).__init__()
         self.env = env
         self.max_steps = max_steps
         self.max_episodes = max_episodes
         self.policy_network = MlpPolicy(action_size=action_space, input_size = observation_space).to(device)
-        self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)
-        self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=self.k_epoch,
+        self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.config['learning_rate'])
+        self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=self.config['k_epoch'],
                                                    gamma=0.999)
         self.loss = 0
         self.criterion = nn.MSELoss()
@@ -62,8 +73,15 @@ class Agent(AgentConfig):
 
         self.data_manager = None
 
+    @abc.abstractmethod
     def run_loop(self):
-        raise NotImplementedError
+        return
+
+    @abc.abstractmethod
+    def run_agent(self):
+        return
+
+    
 
     def update_network(self):
         # get ratio
@@ -74,12 +92,12 @@ class Agent(AgentConfig):
 
         # surrogate loss
         surr1 = ratio * torch.tensor(self.memory['advantage'], dtype=torch.float, device=device)
-        surr2 = torch.clamp(ratio, 1 - self.eps_clip, 1 + self.eps_clip) * torch.tensor(self.memory['advantage'], dtype=torch.float, device=device)
+        surr2 = torch.clamp(ratio, 1 - self.config['eps_clip'], 1 + self.config['eps_clip']) * torch.tensor(self.memory['advantage'], dtype=torch.float, device=device)
         pred_v = self.policy_network.v(torch.tensor(self.memory['state'], dtype=torch.float, device=device))
         v_loss = (0.5 * (pred_v - self.memory['td_target']).pow(2)).to('cpu')  # Huber loss
         entropy = torch.distributions.Categorical(pi).entropy()
         entropy = torch.tensor([[e] for e in entropy])
-        self.loss = ((-torch.min(surr1, surr2)).to('cpu') + self.v_coef * v_loss - self.entropy_coef * entropy).mean()
+        self.loss = ((-torch.min(surr1, surr2)).to('cpu') + self.config['v_coef'] * v_loss - self.config['entropy_coef'] * entropy).mean()
 
         self.optimizer.zero_grad()
         self.loss.backward()
@@ -87,7 +105,7 @@ class Agent(AgentConfig):
         self.scheduler.step()
 
     def add_memory(self, s, a, r, next_s, t, prob):
-        if self.memory['count'] < self.memory_size:
+        if self.memory['count'] < self.config['memory_size']:
             self.memory['count'] += 1
         else:
             self.memory['state'] = self.memory['state'][1:]
@@ -113,7 +131,7 @@ class Agent(AgentConfig):
         terminal = self.memory['terminal'][-length:]
 
         td_target = torch.tensor(reward, device=device) + \
-                    self.gamma * self.policy_network.v(torch.tensor(next_state, dtype=torch.float, device=device)) * torch.tensor(terminal, device = device)
+                    self.config['gamma'] * self.policy_network.v(torch.tensor(next_state, dtype=torch.float, device=device)) * torch.tensor(terminal, device = device)
         delta = (td_target - self.policy_network.v(torch.tensor(state, dtype=torch.float, device=device))).to('cpu')
         delta = delta.detach().numpy()
 
@@ -121,7 +139,7 @@ class Agent(AgentConfig):
         advantages = []
         adv = 0.0
         for d in delta[::-1]:
-            adv = self.gamma * self.lmbda * adv + d[0]
+            adv = self.config['gamma'] * self.config['lmbda'] * adv + d[0]
             advantages.append([adv])
         advantages.reverse()
 
