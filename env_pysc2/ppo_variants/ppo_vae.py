@@ -4,25 +4,50 @@ from torch.nn import functional as F
 import torch.optim as optim
 import pandas as pd
 from env_pysc2.ppo_variants.ppo_base import AgentLoop as Agent
+from utils.DataManager import DataManager
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AgentLoop(Agent):
     def __init__(self, env, shield, max_steps, max_episodes, train, train_component, map_name):
-        super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name)
+        if not train_component:
+            super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, self.get_latent_space())
 
         self.train_component = train_component
         self.reduce_dim = not train_component
         self.vae = True
 
     def run_agent(self):
-        self.store_obs = False
         if self.train_component:
-            pass
+            self.train_vae()
         else:
-            raise NotImplementedError
-            self.data_manager = DataManager(results_sub_dir=f'env_pysc2/results/{self.map}')
-            self.dim_reduction_component  = self.data_manager.get_vae()
+            self.data_manager = DataManager(results_sub_dir=f'env_pysc2/results_vae/{self.map}')
+            self.dim_reduction_component  = self.data_manager.get_dim_reduction_component("vae.pt")
             super(AgentLoop, self).run_agent()
 
+    def train_vae(self):
+        # Hyperparameters VAE
+        latent_space = 100 # TODO
+        vae_lr = 0.0001 # TODO
+        vae_batch_size = 10 # TODO
+
+        # Create VAE model
+        vae_model = VAE(in_channels = self.observation_space, latent_dim = latent_space).to(device)
+        vae_optimizer = optim.Adam(params=vae_model.parameters(), lr=vae_lr)
+        vae_manager = VaeManager(vae_model, vae_optimizer, vae_batch_size, latent_space)
+
+        # Train VAE on observation trace
+        self.data_manager = DataManager(observation_sub_dir = f'env_pysc2/observations/{self.map}', results_sub_dir = f'env_pysc2/results_vae/{self.map}')
+        observation_trace = self.data_manager.get_observations()
+        vae_manager.train_on_trace(observation_trace)
+
+        # Store VAE
+        self.data_manager.store_dim_reduction_component(vae_manager, "vae.pt")
+
+    def get_latent_space(self):
+        self.data_manager = DataManager(results_sub_dir=f'env_pysc2/results_vae/{self.map}')
+        self.dim_reduction_component = self.data_manager.get_dim_reduction_component("vae.pt")
+        return self.dim_reduction_component.latent_space
 
 class VAE(nn.Module):
 # Use Linear instead of convs
@@ -154,11 +179,12 @@ class VAE(nn.Module):
 
 
 class VaeManager():
-  def __init__(self, vae_model, optimizer, obs_file, batch_size):
+  def __init__(self, vae_model, optimizer, obs_file, batch_size, latent_space):
     self.vae_model = vae_model
     self.optimizer = optimizer
     self.obs_file = obs_file
     self.batch_size = batch_size
+    self.latent_space = latent_space
 
   def train_step(self, batch):
     reconstruction, input, mu, log_var = self.vae_model(batch)
@@ -168,11 +194,13 @@ class VaeManager():
     self.optimizer.step()
     return loss
 
-  def train_with_file(self):
-    #TODO
-    df = pd.read_csv(self.fileNames[0])
-    for index, row in df.iterrows():
-      pass
+  def train_on_trace(self, obs):
+    batch = []
+    for index, row in obs.iterrows():
+        batch.append(row)
+        if len(batch) % self.batch_size == 0:
+            self.train_step(torch.tensor(batch, dtype=torch.float, device=device))
+            batch = []
 
   def state_dim_reduction(self, state):
     return self.vae_model.state_dim_reduction(state).squeeze()

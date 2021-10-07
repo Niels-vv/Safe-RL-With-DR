@@ -32,14 +32,16 @@ def _xy_locs(mask):
   """Mask should be a set of bools from comparison with a feature layer."""
   y, x = mask.nonzero()
   return list(zip(x, y))
+
+''' Base class for PPO in pysc2.'''
 class AgentLoop(Agent):
-    def __init__(self, env, shield, max_steps, max_episodes, train, store_observations, map_name):
+    def __init__(self, env, shield, max_steps, max_episodes, train, store_observations, map_name, latent_space = None):
         self.screen_size_x = env.observation_spec()[0].feature_screen[2]
         self.screen_size_y = env.observation_spec()[0].feature_screen[1]
-        observations_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.observation_spec() #TODO incorrect
-        action_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.action_spec()    #TODO incorrect
-        
-        super(AgentLoop, self).__init__(env, observations_space, action_space, max_steps, max_episodes)
+        self.observation_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.observation_spec() #TODO incorrect
+        self.action_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.action_spec()    #TODO incorrect
+        self.latent_space = latent_space if latent_space is not None else self.observation_space
+        super(AgentLoop, self).__init__(env, self.latent_space, self.action_space, max_steps, max_episodes)
 
         self.train = train 
         self.reduce_dim = False

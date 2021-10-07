@@ -39,7 +39,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("variant", "base", "Whether to use VAE, PCA, or none.")
 flags.DEFINE_bool("shield", False, "Whether to use shielding.")
 flags.DEFINE_bool("store_obs", False, "Whether to store observations.")
-flags.DEFINE_bool("train", False, "Whether we are training or evaluating.")
+flags.DEFINE_bool("train", True, "Whether we are training or evaluating.")
 flags.DEFINE_bool("train_component", False, "Whether to train a sub component, like PCA or VAE, on stored observations.")
 flags.DEFINE_integer("max_episodes", 3, "Total episodes.")
 flags.DEFINE_integer("max_agent_steps", 10, "Total agent steps.")
@@ -123,10 +123,10 @@ def get_agent(env):
   if FLAGS.variant.lower() in ["base", "ppo_base"]:
     agent_class_name = BaseAgent.__name__
     return BaseAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.store_obs, FLAGS.map)
-  elif FLAGS.variants in ["pca", "ppo_pca"]:
+  elif FLAGS.variants.lower() in ["pca", "ppo_pca"]:
     agent_class_name = PCAAgent.__name__
     return PCAAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map)
-  elif FLAGS.variants in ["vae", "ppo_vae"]:
+  elif FLAGS.variants.lower() in ["vae", "ppo_vae"]:
     agent_class_name = VAEAgent.__name__
     return VAEAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map)
   else:
