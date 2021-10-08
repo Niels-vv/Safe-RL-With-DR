@@ -89,7 +89,7 @@ class Agent(AgentConfig):
         new_probs_a = torch.gather(pi, 1, torch.tensor(self.memory['action'], device= device))
         old_probs_a = torch.tensor(self.memory['action_prob'], dtype=torch.float, device=device)
         ratio = torch.exp(torch.log(new_probs_a) - torch.log(old_probs_a))
-
+        
         # surrogate loss
         surr1 = ratio * torch.tensor(self.memory['advantage'], dtype=torch.float, device=device)
         surr2 = torch.clamp(ratio, 1 - self.config['eps_clip'], 1 + self.config['eps_clip']) * torch.tensor(self.memory['advantage'], dtype=torch.float, device=device)
@@ -103,6 +103,7 @@ class Agent(AgentConfig):
         self.loss.backward()
         self.optimizer.step()
         self.scheduler.step()
+ 
 
     def add_memory(self, s, a, r, next_s, t, prob):
         if self.memory['count'] < self.config['memory_size']:

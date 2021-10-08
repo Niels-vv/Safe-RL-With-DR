@@ -41,8 +41,9 @@ flags.DEFINE_bool("shield", False, "Whether to use shielding.")
 flags.DEFINE_bool("store_obs", False, "Whether to store observations.")
 flags.DEFINE_bool("train", True, "Whether we are training or evaluating.")
 flags.DEFINE_bool("train_component", False, "Whether to train a sub component, like PCA or VAE, on stored observations.")
-flags.DEFINE_integer("max_episodes", 3, "Total episodes.")
-flags.DEFINE_integer("max_agent_steps", 10, "Total agent steps.")
+flags.DEFINE_bool("load_policy", False, "Whether to load an existing policy network.")
+flags.DEFINE_integer("max_episodes", 500, "Total episodes.")
+flags.DEFINE_integer("max_agent_steps", 1000, "Total agent steps.")
 
 flags.DEFINE_bool("render", True, "Whether to render with pygame.")
 point_flag.DEFINE_point("feature_screen_size", "84",
@@ -122,13 +123,13 @@ def get_agent(env):
   global agent_class_name
   if FLAGS.variant.lower() in ["base", "ppo_base"]:
     agent_class_name = BaseAgent.__name__
-    return BaseAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.store_obs, FLAGS.map)
-  elif FLAGS.variants.lower() in ["pca", "ppo_pca"]:
+    return BaseAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.store_obs, FLAGS.map, FLAGS.load_policy)
+  elif FLAGS.variant.lower() in ["pca", "ppo_pca"]:
     agent_class_name = PCAAgent.__name__
-    return PCAAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map)
-  elif FLAGS.variants.lower() in ["vae", "ppo_vae"]:
+    return PCAAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
+  elif FLAGS.variant.lower() in ["vae", "ppo_vae"]:
     agent_class_name = VAEAgent.__name__
-    return VAEAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map)
+    return VAEAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
   else:
     raise NotImplementedError
 

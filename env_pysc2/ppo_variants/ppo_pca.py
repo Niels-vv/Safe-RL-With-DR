@@ -1,4 +1,4 @@
-import sys, csv
+import sys, csv, torch
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -6,11 +6,14 @@ import numpy as np
 from env_pysc2.ppo_variants.ppo_base import AgentLoop as Agent
 from utils.DataManager import DataManager
 
-class AgentLoop(Agent):
-    def __init__(self, env, shield, max_steps, max_episodes, train, train_component, map_name):
-        if not train_component:
-            super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, self.get_latent_space())
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+class AgentLoop(Agent):
+    def __init__(self, env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy):
+        if not train_component:
+            super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, load_policy, self.get_latent_space(map_name))
+        else:
+            self.map = map_name
         self.train_component = train_component
         self.reduce_dim = not train_component
         self.pca = True
@@ -19,31 +22,37 @@ class AgentLoop(Agent):
         if self.train_component:
             self.train_pca()
         else:
-            self.data_manager = DataManager(results_sub_dir=f'env_pysc2/results_pca/{self.map}')
-            self.dim_reduction_component = self.data_manager.get_dim_reduction_component("pca.pt")
+            self.dim_reduction_component = DataManager.get_component(f'env_pysc2/results_pca/{self.map}',"pca.pt")
             super(AgentLoop, self).run_agent()
 
     def train_pca(self):
         # Get demo trajectory from observations file
         self.data_manager = DataManager(observation_sub_dir = f'env_pysc2/observations/{self.map}', results_sub_dir = f'env_pysc2/results_pca/{self.map}')
         obs = self.data_manager.get_observations()
+        print(obs.shape)
 
         # Create initial PCA and get statistics on latent space
         pca_component = PCACompression()
         pca_component.create_pca(obs)
-        print(pca_component.get_pca_dimension_info())
+        statistics = pca_component.get_pca_dimension_info()
+        
 
         # Set latent space and create final PCA
         latent_space = 100 # TODO
+        for i in range(len(statistics)):
+            if statistics[i] > 0.90: #TODO magic nr
+                latent_space = i + 1
+                break
+        print(latent_space)
+        print(len(statistics)) # TODO klopt niet? pakt aantal rows ipv columns als max laten space wtf
         pca_component.update_pca(obs, latent_space)
 
         # Store PCA object as file
         self.data_manager.store_dim_reduction_component(pca_component, "pca.pt")
         print(f'Trained PCA on latent space {latent_space}')
 
-    def get_latent_space(self):
-        self.data_manager = DataManager(results_sub_dir=f'env_pysc2/results_pca/{self.map}')
-        self.dim_reduction_component = self.data_manager.get_dim_reduction_component("pca.pt")
+    def get_latent_space(self, map):
+        self.dim_reduction_component = DataManager.get_component(f'env_pysc2/results_pca/{map}',"pca.pt")
         return self.dim_reduction_component.latent_space
 
 class PCACompression:
@@ -57,7 +66,6 @@ class PCACompression:
     def create_pca(self, observations):
         self.scaler.fit(observations)
         df = self.scaler.transform(observations)
-        self.pca_main.fit(df)
         self.pcaStatistic.fit(df)
         
     def update_pca(self, observations, dimensions):
@@ -68,7 +76,7 @@ class PCACompression:
 
     def state_dim_reduction(self, observation):
         obs = self.scaler.transform([observation.cpu().numpy()])
-        return self.pca_main.transform(obs)[0]
+        return torch.tensor(self.pca_main.transform(obs)[0], dtype=torch.float, device=device)
 
     def get_pca_dimension_info(self):
         return np.cumsum(self.pcaStatistic.explained_variance_ratio_) 

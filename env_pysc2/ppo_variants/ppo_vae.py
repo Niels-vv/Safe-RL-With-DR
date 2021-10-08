@@ -9,10 +9,11 @@ from utils.DataManager import DataManager
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AgentLoop(Agent):
-    def __init__(self, env, shield, max_steps, max_episodes, train, train_component, map_name):
+    def __init__(self, env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy):
         if not train_component:
-            super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, self.get_latent_space())
-
+            super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, load_policy, self.get_latent_space())
+        else:
+            self.map = map_name
         self.train_component = train_component
         self.reduce_dim = not train_component
         self.vae = True
@@ -21,8 +22,7 @@ class AgentLoop(Agent):
         if self.train_component:
             self.train_vae()
         else:
-            self.data_manager = DataManager(results_sub_dir=f'env_pysc2/results_vae/{self.map}')
-            self.dim_reduction_component  = self.data_manager.get_dim_reduction_component("vae.pt")
+            self.dim_reduction_component  = DataManager.get_component(f'env_pysc2/results_vae/{self.map}', "vae.pt")
             super(AgentLoop, self).run_agent()
 
     def train_vae(self):
