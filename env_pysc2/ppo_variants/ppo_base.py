@@ -42,6 +42,9 @@ class AgentLoop(Agent):
         self.action_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.action_spec()    #TODO incorrect
         self.latent_space = latent_space if latent_space is not None else self.observation_space
         super(AgentLoop, self).__init__(env, self.latent_space, self.action_space, max_steps, max_episodes)
+        if load_policy:
+            checkpoint = DataManager.get_network(f'env_pysc2/results/{map}', "policy_network.pt")
+            self.load_policy_checkpoint(checkpoint)
 
         self.train = train 
         self.reduce_dim = False
@@ -50,7 +53,6 @@ class AgentLoop(Agent):
         self.vae = False
         self.dim_reduction_component = None
         self.store_obs = store_observations
-        self.load_policy = load_policy
         self.map = map_name
 
         self.reward = 0
@@ -98,17 +100,13 @@ class AgentLoop(Agent):
             self.data_manager = DataManager(results_sub_dir=f'env_pysc2/results/{self.map}')
             self.data_manager.create_results_files()
 
-        # TODO load corresponding optimizer and scheduler
-        if self.load_policy:
-            self.policy_network = DataManager.get_component(f'env_pysc2/results/{self.map}', "policy_network.pt")
-
         # Run agent
         rewards, steps, durations = self.run_loop()
 
         # Store results
         if self.train:
-            variant = {'pca' : self.pca, 'vae' : self.vae, 'shield' : self.shield}
-            self.data_manager.write_results(rewards, steps, durations, self.config, variant, self.policy_network)
+            variant = {'pca' : self.pca, 'vae' : self.vae, 'shield' : self.shield, 'latent_space' : self.latent_space}
+            self.data_manager.write_results(rewards, steps, durations, self.config, variant, self.get_policy_checkpoint())
 
     def run_loop(self):
         reward_history = []

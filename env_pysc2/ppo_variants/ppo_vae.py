@@ -10,8 +10,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AgentLoop(Agent):
     def __init__(self, env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy):
-        if not train_component:
-            super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, load_policy, self.get_latent_space())
+        if not train_component: # We're not training vae, but using it in PPO
+            self.get_component(map_name)
+            latent_space = self.dim_reduction_component.latent_space
+            super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, load_policy, latent_space)
         else:
             self.map = map_name
         self.train_component = train_component
@@ -22,9 +24,17 @@ class AgentLoop(Agent):
         if self.train_component:
             self.train_vae()
         else:
-            self.dim_reduction_component  = DataManager.get_component(f'env_pysc2/results_vae/{self.map}', "vae.pt")
             super(AgentLoop, self).run_agent()
 
+    def get_component(self, map):
+        checkpoint = DataManager.get_network(f'env_pysc2/results_vae/{map}', "vae.pt")
+        vae_model = VAE(in_channels = self.observation_space, latent_dim = checkpoint['latent_space']).to(device)
+        vae_model.load_state_dict(checkpoint['model_state_dict'])
+        vae_optimizer = optim.Adam(params=vae_model.parameters(), lr = checkpoint['vae_lr'])
+        vae_optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        vae_model.eval()
+        self.dim_reduction_component = VaeManager(vae_model, vae_optimizer, checkpoint['batch_size'], checkpoint['latent_space'])
+        
     def train_vae(self):
         # Hyperparameters VAE
         latent_space = 100 # TODO
@@ -34,7 +44,7 @@ class AgentLoop(Agent):
         # Create VAE model
         vae_model = VAE(in_channels = self.observation_space, latent_dim = latent_space).to(device)
         vae_optimizer = optim.Adam(params=vae_model.parameters(), lr=vae_lr)
-        vae_manager = VaeManager(vae_model, vae_optimizer, vae_batch_size, latent_space)
+        vae_manager = VaeManager(vae_model, vae_optimizer, vae_batch_size, latent_space, vae_lr)
 
         # Train VAE on observation trace
         self.data_manager = DataManager(observation_sub_dir = f'env_pysc2/observations/{self.map}', results_sub_dir = f'env_pysc2/results_vae/{self.map}')
@@ -42,12 +52,8 @@ class AgentLoop(Agent):
         vae_manager.train_on_trace(observation_trace)
 
         # Store VAE
-        self.data_manager.store_dim_reduction_component(vae_manager, "vae.pt")
-
-    def get_latent_space(self):
-        self.data_manager = DataManager(results_sub_dir=f'env_pysc2/results_vae/{self.map}')
-        self.dim_reduction_component = self.data_manager.get_dim_reduction_component("vae.pt")
-        return self.dim_reduction_component.latent_space
+        checkpoint = vae_manager.get_checkpoint()
+        self.data_manager.store_network(checkpoint, "vae.pt")
 
 class VAE(nn.Module):
 # Use Linear instead of convs
@@ -179,12 +185,13 @@ class VAE(nn.Module):
 
 
 class VaeManager():
-  def __init__(self, vae_model, optimizer, obs_file, batch_size, latent_space):
+  def __init__(self, vae_model, optimizer, obs_file, batch_size, latent_space, vae_lr):
     self.vae_model = vae_model
     self.optimizer = optimizer
     self.obs_file = obs_file
     self.batch_size = batch_size
     self.latent_space = latent_space
+    self.vae_lr = vae_lr
 
   def train_step(self, batch):
     reconstruction, input, mu, log_var = self.vae_model(batch)
@@ -204,3 +211,12 @@ class VaeManager():
 
   def state_dim_reduction(self, state):
     return self.vae_model.state_dim_reduction(state).squeeze()
+
+  def get_checkpoint(self):
+    return {'model_state_dict' : self.vae_model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'latent_space' : self.latent_space,
+            'vae_lr' : self.vae_lr,
+            'batch_size' : self.batch_size,
+            'obs_file' : self.obs_file
+    }

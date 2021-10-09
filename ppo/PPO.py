@@ -63,7 +63,7 @@ class Agent(AgentConfig):
         self.policy_network = MlpPolicy(action_size=action_space, input_size = observation_space).to(device)
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.config['learning_rate'])
         self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=self.config['k_epoch'],
-                                                   gamma=0.999)
+                                                   gamma=0.999) # TODO magic nr, same in load_policy_checkpoint
         self.loss = 0
         self.criterion = nn.MSELoss()
         self.memory = {
@@ -81,7 +81,24 @@ class Agent(AgentConfig):
     def run_agent(self):
         return
 
-    
+    def load_policy_checkpoint(self, checkpoint):
+        self.policy_network.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer = optim.Adam(self.policy_network.parameters(), lr=checkpoint['lr'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=checkpoint['step_size'],
+                                                   gamma=checkpoint['gamma'])        
+        if self.train:
+            self.policy_network.train()
+        else:
+            self.policy_network.eval()
+
+    def get_policy_checkpoint(self):
+        return {'model_state_dict' : self.policy_network.state_dict(),
+                'optimizer_state_dict': self.optimizer.state_dict(),
+                'lr' : self.vae_lr,
+                'step_size' : self.config['k_epoch'],
+                'gamma' : 0.999
+        }
 
     def update_network(self):
         # get ratio

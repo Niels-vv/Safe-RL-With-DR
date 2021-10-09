@@ -62,6 +62,14 @@ class DataManager:
         with open(f'{self.results_path}/{name}', 'wb') as fp:
           pickle.dump(component, fp)
 
+    def store_network(self, checkpoint, name):
+        if not os.path.isdir(f'{self.results_path}'): os.mkdir(self.results_path)
+        torch.save(checkpoint, f'{self.results_path}/{name}')
+
+    @staticmethod
+    def get_network(rel_path, network_name):
+        return torch.load(f'{PATH}/../{rel_path}/{network_name}')
+
     @staticmethod
     def get_component(rel_path, component_name):
         with open(f'{PATH}/../{rel_path}/{component_name}', 'rb') as fp:
@@ -69,7 +77,7 @@ class DataManager:
 
 
     '''Store results of PPO after training; storing setup info, training results and policy network'''
-    def write_results(self, rewards, steps, durations, setup, variant, network):
+    def write_results(self, rewards, steps, durations, setup, variant, network_checkpoint):
         eps = [x for x in range(len(rewards))]
         rows = zip(eps, rewards, steps, durations)
         try:
@@ -85,7 +93,7 @@ class DataManager:
             with open(self.variant_file, 'w') as f:
                 json.dump(variant, f)
             
-            torch.save(network, self.policy_network_file)
+            torch.save(network_checkpoint, self.policy_network_file)
 
         except Exception as e:
             print("writing results failed")
