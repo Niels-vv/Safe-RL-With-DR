@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 import abc
 
+# Based on https://github.com/RPC2/PPO
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 seed = 3
 torch.manual_seed(seed)

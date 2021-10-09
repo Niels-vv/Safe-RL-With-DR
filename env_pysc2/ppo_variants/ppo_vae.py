@@ -6,6 +6,8 @@ import pandas as pd
 from env_pysc2.ppo_variants.ppo_base import AgentLoop as Agent
 from utils.DataManager import DataManager
 
+# Based on https://github.com/AntixK/PyTorch-VAE/blob/master/models/vanilla_vae.py
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AgentLoop(Agent):

@@ -6,7 +6,6 @@ from pysc2.lib import actions
 from pysc2.lib import features
 from utils.DataManager import DataManager
 
-# Based on: https://github.com/whathelll/DeepRLBootCampLabs, https://github.com/whathelll/DeepRLBootCampLabs/blob/master/pytorch/sc2_agents/base_rl_agent.py
 # For info on obs from env.step, see: https://github.com/deepmind/pysc2/blob/master/pysc2/env/environment.py and https://github.com/deepmind/pysc2/blob/master/docs/environment.md
 
 seed = 3
@@ -141,7 +140,8 @@ class AgentLoop(Agent):
                     else:
                         with torch.no_grad():
                             prob_a = self.policy_network.pi(state)
-                            action = torch.distributions.Categorical(prob_a).sample().item()
+                            action = np.argmax(prob_a.cpu().numpy())
+                            # action = torch.distributions.Categorical(prob_a).sample().item()
 
                     # Act
                     act = self.get_env_action(action, obs)
