@@ -11,9 +11,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class AgentLoop(Agent):
     def __init__(self, env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy):
         if not train_component: # We're not training PCA, but using it in PPO
-            self.get_component(map_name)
-            latent_space = self.dim_reduction_component.latent_space
-            super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, load_policy, latent_space)
+            pca_component = self.get_component(map_name)
+            latent_space = pca_component.latent_space
+            super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, load_policy, latent_space, pca_component)
         else:
             self.map = map_name
         self.train_component = train_component
@@ -27,7 +27,7 @@ class AgentLoop(Agent):
             super(AgentLoop, self).run_agent()
 
     def get_component(self, map):
-        self.dim_reduction_component = DataManager.get_component(f'env_pysc2/results_pca/{map}',"pca.pt")
+        return DataManager.get_component(f'env_pysc2/results_pca/{map}',"pca.pt")
 
     def train_pca(self):
         # Get demo trajectory from observations file

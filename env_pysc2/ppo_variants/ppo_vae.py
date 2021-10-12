@@ -12,10 +12,14 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AgentLoop(Agent):
     def __init__(self, env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy):
+        screen_size_x = env.observation_spec()[0].feature_screen[2]
+        screen_size_y = env.observation_spec()[0].feature_screen[1]
+        self.observation_space = screen_size_x * screen_size_y # iets met flatten van env.observation_spec() #TODO incorrect
+            
         if not train_component: # We're not training vae, but using it in PPO
-            self.get_component(map_name)
-            latent_space = self.dim_reduction_component.latent_space
-            super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, load_policy, latent_space)
+            vae_component = self.get_component(map_name)
+            latent_space = vae_component.latent_space
+            super(AgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, load_policy, latent_space, vae_component)
         else:
             self.map = map_name
         self.train_component = train_component
@@ -35,8 +39,8 @@ class AgentLoop(Agent):
         vae_optimizer = optim.Adam(params=vae_model.parameters(), lr = checkpoint['vae_lr'])
         vae_optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         vae_model.eval()
-        self.dim_reduction_component = VaeManager(vae_model, vae_optimizer, checkpoint['batch_size'], checkpoint['latent_space'])
-        
+        return VaeManager(vae_model, vae_optimizer, checkpoint['obs_file'],checkpoint['batch_size'], checkpoint['latent_space'], checkpoint['vae_lr'])
+
     def train_vae(self):
         # Hyperparameters VAE
         latent_space = 100 # TODO
@@ -46,7 +50,7 @@ class AgentLoop(Agent):
         # Create VAE model
         vae_model = VAE(in_channels = self.observation_space, latent_dim = latent_space).to(device)
         vae_optimizer = optim.Adam(params=vae_model.parameters(), lr=vae_lr)
-        vae_manager = VaeManager(vae_model, vae_optimizer, vae_batch_size, latent_space, vae_lr)
+        vae_manager = VaeManager(vae_model, vae_optimizer, f'env_pysc2/results_vae/{self.map}', vae_batch_size, latent_space, vae_lr)
 
         # Train VAE on observation trace
         self.data_manager = DataManager(observation_sub_dir = f'env_pysc2/observations/{self.map}', results_sub_dir = f'env_pysc2/results_vae/{self.map}')
@@ -121,12 +125,10 @@ class VAE(nn.Module):
         """
         result = self.encoder(input)
         result = torch.flatten(result, start_dim=1)
-
         # Split the result into mu and var components
         # of the latent Gaussian distribution
         mu = self.fc_mu(result)
         log_var = self.fc_var(result)
-
         return [mu, log_var]
 
     def decode(self, z):
@@ -210,6 +212,7 @@ class VaeManager():
         if len(batch) % self.batch_size == 0:
             self.train_step(torch.tensor(batch, dtype=torch.float, device=device))
             batch = []
+            break # TODO remove
 
   def state_dim_reduction(self, state):
     return self.vae_model.state_dim_reduction(state).squeeze()

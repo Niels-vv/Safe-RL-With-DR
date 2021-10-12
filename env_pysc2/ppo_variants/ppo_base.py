@@ -34,7 +34,7 @@ def _xy_locs(mask):
 
 ''' Base class for PPO in pysc2.'''
 class AgentLoop(Agent):
-    def __init__(self, env, shield, max_steps, max_episodes, train, store_observations, map_name, load_policy, latent_space = None):
+    def __init__(self, env, shield, max_steps, max_episodes, train, store_observations, map_name, load_policy, latent_space = None, dim_reduction_component = None):
         self.screen_size_x = env.observation_spec()[0].feature_screen[2]
         self.screen_size_y = env.observation_spec()[0].feature_screen[1]
         self.observation_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.observation_spec() #TODO incorrect
@@ -50,7 +50,7 @@ class AgentLoop(Agent):
         self.shield = shield
         self.pca = False
         self.vae = False
-        self.dim_reduction_component = None
+        self.dim_reduction_component = dim_reduction_component
         self.store_obs = store_observations
         self.map = map_name
 
@@ -124,6 +124,7 @@ class AgentLoop(Agent):
                 state_mem = state
                 state = torch.tensor(state, dtype=torch.float, device=device)
                 if self.reduce_dim:
+                    state = state.unsqueeze(dim=0)
                     state = self.dim_reduction_component.state_dim_reduction(state)
                     state_mem = state.tolist()
                 if self.store_obs: self.data_manager.store_observation(state_mem)
@@ -131,7 +132,6 @@ class AgentLoop(Agent):
                 # A step in an episode
                 while self.step < self.max_steps:
                     self.step += 1
-
                     start_duration = time.time()
                     # Choose action
                     if self.train:
@@ -153,6 +153,7 @@ class AgentLoop(Agent):
                     new_state = torch.tensor(new_state, dtype=torch.float, device=device)
 
                     if self.reduce_dim:
+                        new_state = new_state.unsqueeze(dim=0)
                         new_state = self.dim_reduction_component.state_dim_reduction(new_state)
                         new_state_mem = new_state.tolist()
 
@@ -164,7 +165,6 @@ class AgentLoop(Agent):
 
                     #reward = -1 if terminal else reward
                     if self.train: self.add_memory(state_mem, action, reward, new_state_mem, terminal, prob_a[action].item())
-
                     state = new_state
                     state_mem = new_state_mem
 

@@ -97,7 +97,7 @@ class Agent(AgentConfig):
     def get_policy_checkpoint(self):
         return {'model_state_dict' : self.policy_network.state_dict(),
                 'optimizer_state_dict': self.optimizer.state_dict(),
-                'lr' : self.vae_lr,
+                'lr' : self.config['learning_rate'],
                 'step_size' : self.config['k_epoch'],
                 'gamma' : 0.999
         }
