@@ -1,0 +1,5 @@
+500 eps training
+Tried setups:
+	- self.hidden_dims = [input_size*2, int(input_size/2),int(input_size/10),24]
+		Results: random
+        

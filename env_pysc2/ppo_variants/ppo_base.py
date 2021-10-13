@@ -73,6 +73,7 @@ class AgentLoop(Agent):
         command = _MOVE_SCREEN
         if command in obs.observation.available_actions:
             #return FUNCTIONS.move_screen("now",target)
+            print(f'Target: {target}')
             return actions.FunctionCall(command, [[0],target])
         else:
             return actions.FunctionCall(_NO_OP, [])
@@ -105,6 +106,9 @@ class AgentLoop(Agent):
         # Store results
         if self.train:
             variant = {'pca' : self.pca, 'vae' : self.vae, 'shield' : self.shield, 'latent_space' : self.latent_space}
+            print("Rewards history:")
+            for r in rewards:
+                print(r)
             self.data_manager.write_results(rewards, steps, durations, self.config, variant, self.get_policy_checkpoint())
 
     def run_loop(self):
@@ -116,7 +120,6 @@ class AgentLoop(Agent):
         try:
             # A new episode
             while self.episode < self.max_episodes:
-                print("new episode")
                 obs = self.reset()[0]
                 
                 # Get initial state

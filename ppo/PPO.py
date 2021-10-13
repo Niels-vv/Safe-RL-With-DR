@@ -16,8 +16,22 @@ class MlpPolicy(nn.Module):
         super(MlpPolicy, self).__init__()
         self.action_size = action_size
         self.input_size = input_size
-        self.fc1 = nn.Linear(self.input_size, 24)
-        self.fc2 = nn.Linear(24, 24)
+        self.hidden_dims = [input_size*2, int(input_size/2),int(input_size/10),24]
+        #self.hidden_dims = [512, 128, 24]
+        # Build network
+        modules = []
+        for h_dim in self.hidden_dims:
+            modules.append(
+                nn.Sequential(
+                    nn.Linear(input_size, h_dim),
+                    nn.ReLU())
+            )
+            input_size = h_dim
+
+        self.fc = nn.Sequential(*modules)
+
+        #self.fc1 = nn.Linear(self.input_size, 24)
+        #self.fc2 = nn.Linear(24, 24)
         self.fc3_pi = nn.Linear(24, self.action_size)
         self.fc3_v = nn.Linear(24, 1)
         self.tanh = nn.Tanh()
@@ -25,14 +39,16 @@ class MlpPolicy(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
 
     def pi(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
+        #x = self.relu(self.fc1(x))
+        #x = self.relu(self.fc2(x))
+        x = self.fc(x)
         x = self.fc3_pi(x)
         return self.softmax(x)
 
     def v(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
+        #x = self.relu(self.fc1(x))
+        #x = self.relu(self.fc2(x))
+        x = self.fc(x)
         x = self.fc3_v(x)
         return x
 
@@ -42,9 +58,9 @@ class AgentConfig:
                         # Learning
                         'gamma' : 0.99,
                         'plot_every' : 10,
-                        'update_freq' : 1,
+                        'update_freq' : 10,
                         'k_epoch' : 3,
-                        'learning_rate' : 0.02,
+                        'learning_rate' : 0.0001,
                         'lmbda' : 0.95,
                         'eps_clip' : 0.2,
                         'v_coef' : 1,
@@ -96,6 +112,7 @@ class Agent(AgentConfig):
 
     def get_policy_checkpoint(self):
         return {'model_state_dict' : self.policy_network.state_dict(),
+                'model_layers' : self.policy_network.hidden_dims,
                 'optimizer_state_dict': self.optimizer.state_dict(),
                 'lr' : self.config['learning_rate'],
                 'step_size' : self.config['k_epoch'],
@@ -108,7 +125,7 @@ class Agent(AgentConfig):
         new_probs_a = torch.gather(pi, 1, torch.tensor(self.memory['action'], device= device))
         old_probs_a = torch.tensor(self.memory['action_prob'], dtype=torch.float, device=device)
         ratio = torch.exp(torch.log(new_probs_a) - torch.log(old_probs_a))
-        
+
         # surrogate loss
         surr1 = ratio * torch.tensor(self.memory['advantage'], dtype=torch.float, device=device)
         surr2 = torch.clamp(ratio, 1 - self.config['eps_clip'], 1 + self.config['eps_clip']) * torch.tensor(self.memory['advantage'], dtype=torch.float, device=device)
