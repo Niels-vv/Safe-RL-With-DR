@@ -122,7 +122,10 @@ class AgentLoop(Agent):
                 obs = self.reset()[0]
                 
                 # Get initial state
-                state = obs.observation.feature_screen.player_relative.flatten()
+                #state = obs.observation.feature_screen.player_relative.flatten()
+                state = obs.observation.feature_screen.player_relative
+                state = np.expand_dims(state, 0)
+                
                 state_mem = state
                 state = torch.tensor(state, dtype=torch.float, device=device)
                 if self.reduce_dim:
@@ -137,23 +140,24 @@ class AgentLoop(Agent):
                     start_duration = time.time()
                     # Choose action
                     if self.train:
-                        prob_a = self.policy_network.pi(state)
+                        #prob_a = self.policy_network.pi(state)
+                        prob_a = self.policy_network.pi(state.unsqueeze(0)).squeeze()
                         action = torch.distributions.Categorical(prob_a).sample().item()
                     else:
                         with torch.no_grad():
                             prob_a = self.policy_network.pi(state)
                             action = np.argmax(prob_a.cpu().numpy())
                             # action = torch.distributions.Categorical(prob_a).sample().item()
-
                     # Act
                     act = self.get_env_action(action, obs)
                     end_duration = time.time()
                     self.duration += end_duration - start_duration
                     obs = self.env.step([act])[0]
-                    new_state = obs.observation.feature_screen.player_relative.flatten()
+                    #new_state = obs.observation.feature_screen.player_relative.flatten()
+                    new_state = obs.observation.feature_screen.player_relative
+                    new_state = np.expand_dims(new_state, 0)
                     new_state_mem = new_state
                     new_state = torch.tensor(new_state, dtype=torch.float, device=device)
-
                     if self.reduce_dim:
                         new_state = new_state.unsqueeze(dim=0)
                         new_state = self.dim_reduction_component.state_dim_reduction(new_state)
@@ -164,7 +168,7 @@ class AgentLoop(Agent):
                     reward = obs.reward
                     terminal = reward > 0 # Agent found beacon
                     self.reward += reward
-
+                    
                     #reward = -1 if terminal else reward
                     if self.train: self.add_memory(state_mem, action, reward, new_state_mem, terminal, prob_a[action].item())
                     state = new_state
