@@ -1,30 +1,18 @@
 500 eps training
 Tried setups:
+
+PPO
+Linear
 	- self.hidden_dims = [input_size*2, int(input_size/2),int(input_size/10),24]
 		Results: random
 		
 	- self.hidden_dims = [input_size, 512, 128,24]
         	Results: r r r random
         	
-	-   
-	    import torch.nn.functional as F
-
-	    def __init__(self, *args):
-		super(BeaconCNN2, self).__init__()
-		self.conv1 = nn.Conv2d(1, 24, kernel_size=3, stride=1, padding=1)
-		self.conv2 = nn.Conv2d(24, 24, kernel_size=3, stride=1, padding=1)
-		self.conv3 = nn.Conv2d(24, 1, kernel_size=3, stride=1, padding=1)
-		self.name = 'BeaconCNN'
-
-	    def forward(self, x):
-		x = F.relu(self.conv1(x))
-		x = F.relu(self.conv2(x))
-		# x = F.relu(self.conv3(x))
-		x = self.conv3(x)
-		return x
+conv
+	- Results: random
+	
+	- update_freq 4 ipv 10, epoch 7 ipv 3:
+		results: 
 		
-		
-            new_state = obs.observation.feature_screen.player_relative
-	    state = torch.tensor(state, dtype=torch.float, device=device).unsqueeze(0)
-		Results: 
 	
