@@ -1,7 +1,7 @@
 from matplotlib.pyplot import flag
 import torch, time, copy
 import numpy as np
-from ppo.PPO import Agent
+from dqn.dqn import Agent
 from pysc2.lib import actions
 from pysc2.lib import features
 from utils.DataManager import DataManager
@@ -39,8 +39,8 @@ def _xy_locs(mask):
 class AgentLoop(Agent):
     def __init__(self, env, shield, max_steps, max_episodes, train, store_observations, map_name, load_policy, latent_space = None, dim_reduction_component = None):
         self.device = device
-        self.screen_size_x = env.observation_spec()[0].feature_screen[2]
-        self.screen_size_y = env.observation_spec()[0].feature_screen[1]
+        self.screen_size_x = 32#env.observation_spec()[0].feature_screen[2]
+        self.screen_size_y = 32#env.observation_spec()[0].feature_screen[1]
         self.observation_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.observation_spec() #TODO incorrect
         self.action_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.action_spec()    #TODO incorrect
         self.latent_space = latent_space if latent_space is not None else self.observation_space
@@ -111,6 +111,7 @@ class AgentLoop(Agent):
         return self.env.step([select_friendly])
 
     def run_agent(self):
+        print("Running dqn")
         # Setup file storage
         if self.store_obs:
             self.data_manager = DataManager(observation_sub_dir=f'env_pysc2/observations/{self.map}')
@@ -138,12 +139,12 @@ class AgentLoop(Agent):
         duration_history = []
         step_history = []
         avg_reward = []
+        total_steps = 0
 
         try:
             # A new episode
             while self.episode < self.max_episodes:
                 obs = self.reset()[0]
-                total_steps = 0
 
                 state = obs.observation.feature_screen.player_relative
                 state = np.expand_dims(state, 0)                    

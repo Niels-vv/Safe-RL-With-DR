@@ -38,7 +38,8 @@ class AgentConfig:
                         'train_q_batch_size' : 256,
                         'steps_before_training' : 5000,
                         'target_q_update_frequency' : 10000,
-                        'lr' : 1e-8
+                        'lr' : 1e-8,
+                        'plot_every' : 10
         }
 
 class Agent(AgentConfig):
@@ -58,7 +59,7 @@ class Agent(AgentConfig):
         self.loss_history = []
         self.max_q_history = []
         self.criterion = nn.MSELoss()
-        self.memory = ReplayMemory(100000)
+        self.memory = ReplayMemory(50000)
 
         self.data_manager = None
 
@@ -90,7 +91,7 @@ class Agent(AgentConfig):
         }
 
     def train_q(self, squeeze=False):
-        if self.train_q_batch_size >= len(self._memory):
+        if self.config['train_q_batch_size'] >= len(self.memory):
             return
 
         s, a, s_1, r, done = self.memory.sample(self.config['train_q_batch_size'])

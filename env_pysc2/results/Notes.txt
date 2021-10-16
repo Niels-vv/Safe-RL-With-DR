@@ -15,4 +15,7 @@ conv
 	- update_freq 4 ipv 10, epoch 7 ipv 3:
 		results: 
 		
+DQN
+	- conv: ?
+	- screen size 32 ipv 84: ?
 	
