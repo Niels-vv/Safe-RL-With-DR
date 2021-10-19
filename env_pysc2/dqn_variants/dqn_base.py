@@ -11,10 +11,10 @@ from utils.ReplayMemory import ReplayMemory, Transition
 # For info on obs from env.step, see: https://github.com/deepmind/pysc2/blob/master/pysc2/env/environment.py and https://github.com/deepmind/pysc2/blob/master/docs/environment.md
 # Based on https://github.com/alanxzhou/sc2bot/blob/master/sc2bot/agents/rl_agent.py
 
-seed = 3
+seed = 0
 torch.manual_seed(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
+#torch.backends.cudnn.deterministic = True
+#torch.backends.cudnn.benchmark = False
 
 _PLAYER_FRIENDLY = features.PlayerRelative.SELF
 _PLAYER_NEUTRAL = features.PlayerRelative.NEUTRAL  # beacon/minerals
@@ -45,6 +45,7 @@ class AgentLoop(Agent):
         self.action_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.action_spec()    #TODO incorrect
         self.latent_space = latent_space if latent_space is not None else self.observation_space
         super(AgentLoop, self).__init__(env, self.latent_space, self.action_space, max_steps, max_episodes)
+        
         if load_policy:
             checkpoint = DataManager.get_network(f'env_pysc2/results/dqn/{map}', "policy_network.pt")
             self.load_policy_checkpoint(checkpoint)
@@ -74,7 +75,7 @@ class AgentLoop(Agent):
 
         action = np.unravel_index(action, [1,self.screen_size_x, self.screen_size_y])
         target = [action[2], action[1]]
-        command = _MOVE_SCREEN
+
         if command in obs.observation.available_actions:
             #return FUNCTIONS.move_screen("now",target)
             return actions.FunctionCall(command, [[0],target])

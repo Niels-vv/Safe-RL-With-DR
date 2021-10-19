@@ -9,10 +9,10 @@ from collections import deque
 
 # Based on https://github.com/alanxzhou/sc2bot/blob/master/sc2bot/agents/rl_agent.py
 
-seed = 3
+seed = 0
 torch.manual_seed(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
+#torch.backends.cudnn.deterministic = True
+#torch.backends.cudnn.benchmark = False
 
 class MlpPolicy(nn.Module):
     def __init__(self):
@@ -32,11 +32,10 @@ class AgentConfig:
     def __init__(self):
         self.config = {
                         # Learning
-                        'features' : 5,
                         'train_q_per_step' : 4,
                         'gamma' : 0.99,
                         'train_q_batch_size' : 256,
-                        'steps_before_training' : 5000,
+                        'steps_before_training' : 10000,
                         'target_q_update_frequency' : 10000,
                         'lr' : 1e-8,
                         'plot_every' : 10
@@ -75,7 +74,9 @@ class Agent(AgentConfig):
         self.policy_network.load_state_dict(checkpoint['policy_model_state_dict'])
         self.target_network.load_state_dict(checkpoint['target_model_state_dict'])
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr=checkpoint['lr'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])      
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        self.epsilon._value = checkpoint['epsilon']
+        self.episode = checkpoint['episode']      
         if self.train:
             self.policy_network.train()
             self.target_network.train()
@@ -87,7 +88,9 @@ class Agent(AgentConfig):
         return {'policy_model_state_dict' : self.policy_network.state_dict(),
                 'target_model_state_dict' : self.target_network.state_dict(),
                 'optimizer_state_dict': self.optimizer.state_dict(),
-                'lr' : self.config['lr']
+                'lr' : self.config['lr'],
+                'episode' : self.episode,
+                'epsilon' : self.epsilon._value
         }
 
     def train_q(self, squeeze=False):

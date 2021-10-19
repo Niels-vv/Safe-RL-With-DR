@@ -16,6 +16,5 @@ conv
 		results: 
 		
 DQN
-	- conv: ?
-	- screen size 32 ipv 84: ?
-	
+	- Conv, screen size 32 ipv 84: random
+		- Seed 0 ipv 3, deterministic en benchmark weggecomment, steps before training 10000 ipv 5000: 
