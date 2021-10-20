@@ -135,7 +135,7 @@ class AgentLoop(Agent):
                 print(r)
             self.data_manager.write_results(rewards, steps, durations, self.config, variant, self.get_policy_checkpoint())
 
-    def run_loop(self):
+    def run_loop(self, evaluate_checkpoints = 10):
         reward_history = []
         duration_history = []
         step_history = []
@@ -221,7 +221,18 @@ class AgentLoop(Agent):
                         #self.env.reset()
 
                         break
-                        
+
+                #TODO:
+                if evaluate_checkpoints > 0 and ((self.episode % evaluate_checkpoints) - (evaluate_checkpoints - 1) == 0 or self.episode == 0):
+                    print('Evaluating...')
+                    self.epsilon.isTraining = False  # we need to make sure that we act greedily when we evaluate
+                    self.run_loop(evaluate_checkpoints=0)
+                    self.epsilon.isTraining = True
+                if evaluate_checkpoints == 0:  # this should only activate when we're inside the evaluation loop
+                    self.reward_evaluation.append(self.reward)
+                    print(f'Evaluation Complete: Episode reward = {self.reward}')
+                    break
+
                 if len(self.loss) > 0:
                     self.loss_history.append(self.loss[-1])
                     self.max_q_history.append(self.max_q[-1])

@@ -57,6 +57,7 @@ class Agent(AgentConfig):
         self.max_q = deque(maxlen=int(1e5))
         self.loss_history = []
         self.max_q_history = []
+        self.reward_evaluation = []
         self.criterion = nn.MSELoss()
         self.memory = ReplayMemory(50000)
 
