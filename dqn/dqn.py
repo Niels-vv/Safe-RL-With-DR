@@ -6,6 +6,7 @@ import abc
 from utils.Epsilon import Epsilon
 from utils.ReplayMemory import ReplayMemory
 from collections import deque
+import numpy as np
 
 # Based on https://github.com/alanxzhou/sc2bot/blob/master/sc2bot/agents/rl_agent.py
 
@@ -21,6 +22,7 @@ class MlpPolicy(nn.Module):
         self.conv2 = nn.Conv2d(24, 24, kernel_size=3, stride=1, padding=1)
         self.conv3 = nn.Conv2d(24, 1, kernel_size=3, stride=1, padding=1)
         self.name = 'BeaconCNN'
+        self.conv = True #Whether we're using a conv or linear network. Needed in def train_q(self)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -32,11 +34,11 @@ class AgentConfig:
     def __init__(self):
         self.config = {
                         # Learning
-                        'train_q_per_step' : 1,
+                        'train_q_per_step' : 10,
                         'gamma' : 0.99,
                         'train_q_batch_size' : 256,
                         'batches_before_training' : 10,
-                        'target_q_update_frequency' : 10,
+                        'target_q_update_frequency' : 3000,
                         'lr' : 0.0005,
                         'plot_every' : 10
         }
@@ -52,13 +54,14 @@ class Agent(AgentConfig):
         self.policy_network = MlpPolicy().to(self.device)
         self.target_network = copy.deepcopy(self.policy_network)
         self.optimizer = optim.RMSprop(self.policy_network.parameters(), lr = self.config['lr'])
-        self.epsilon = Epsilon(start=1.0, end=0.1, decay_Steps=80000)
+        self.epsilon = Epsilon(start=1.0, end=0.1, decay_steps=80000)
         self.loss = deque(maxlen=int(1e5))
         self.max_q = deque(maxlen=int(1e5))
         self.loss_history = []
         self.max_q_history = []
         self.reward_evaluation = []
         self.criterion = nn.MSELoss()
+        self.max_gradient_norm = float('inf')
         self.memory = ReplayMemory(50000)
 
         self.data_manager = None
@@ -91,7 +94,7 @@ class Agent(AgentConfig):
                 'optimizer_state_dict': self.optimizer.state_dict(),
                 'lr' : self.config['lr'],
                 'episode' : self.episode,
-                'epsilon' : self.epsilon._value
+                'epsilon' : self.epsilon._value,
                 'epsilon_t' : self.epsilon.t
         }
 
@@ -106,13 +109,17 @@ class Agent(AgentConfig):
         r = torch.from_numpy(r).to(self.device).float()
         done = torch.from_numpy(done).to(self.device).float()
 
-        Q = self.policy_network(s)
+        if self.policy_network.conv:
+            Q = self.policy_network(s).view(self.config['train_q_batch_size'], -1)
+            Qt = self.target_network(s_1).view(self.config['train_q_batch_size'], -1).detach()
+            best_action = self.policy_network(s_1).view(self.config['train_q_batch_size'], -1).max(1)[1]
+        else:
+            Q = self.policy_network(s)
+            Qt = self.target_network(s_1).detach()
+            best_action = self.policy_network(s_1).max(1)[1]
         Q = Q.gather(1, a)
 
-        Qt = self.target_network(s_1).detach()
-
         # double Q
-        best_action = self.policy_network(s_1).max(1)[1]
         max_a_q_sp = Qt[
             np.arange(self.config['train_q_batch_size']), best_action].unsqueeze(1)
         y = r + (self.config['gamma'] * max_a_q_sp * (1-done))

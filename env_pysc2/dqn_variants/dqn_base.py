@@ -75,9 +75,10 @@ class AgentLoop(Agent):
         #print(beacon_center)
         #return FUNCTIONS.Move_screen("now", beacon_center)
 
-        action = np.unravel_index(action, [1,self.screen_size_x, self.screen_size_y])
-        target = [action[2], action[1]]
-
+        action = np.unravel_index(action, [self.screen_size_x, self.screen_size_y])
+        target = [action[1], action[0]]
+        
+        command = _MOVE_SCREEN
         if command in obs.observation.available_actions:
             #return FUNCTIONS.move_screen("now",target)
             return actions.FunctionCall(command, [[0],target])
@@ -100,7 +101,7 @@ class AgentLoop(Agent):
             #action = 0
             target = np.random.randint(0, self.screen_size_x, size=2)
             #action =  action * self.screen_size_x * self.screen_size_y + target[0] * self.screen_size_x + target[1]
-            action = target
+            action = target[0] * self.screen_size_x + target[1]
         self.epsilon.increment()
         return action
 
@@ -203,8 +204,8 @@ class AgentLoop(Agent):
                         self.train_q()
 
                     if total_steps % self.config['target_q_update_frequency'] == 0 and total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
-                    for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
-                        target.data.copy_(online.data)
+		        for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
+			    target.data.copy_(online.data)
                     
                     state = new_state
 
