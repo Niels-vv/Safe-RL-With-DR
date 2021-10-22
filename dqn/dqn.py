@@ -32,12 +32,12 @@ class AgentConfig:
     def __init__(self):
         self.config = {
                         # Learning
-                        'train_q_per_step' : 4,
+                        'train_q_per_step' : 1,
                         'gamma' : 0.99,
                         'train_q_batch_size' : 256,
-                        'steps_before_training' : 10000,
-                        'target_q_update_frequency' : 10000,
-                        'lr' : 1e-8,
+                        'batches_before_training' : 10,
+                        'target_q_update_frequency' : 10,
+                        'lr' : 0.0005,
                         'plot_every' : 10
         }
 
@@ -51,8 +51,8 @@ class Agent(AgentConfig):
         self.max_episodes = max_episodes
         self.policy_network = MlpPolicy().to(self.device)
         self.target_network = copy.deepcopy(self.policy_network)
-        self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.config['lr'])
-        self.epsilon = Epsilon(start=0.9, end=0.1, update_increment=0.0001)
+        self.optimizer = optim.RMSprop(self.policy_network.parameters(), lr = self.config['lr'])
+        self.epsilon = Epsilon(start=1.0, end=0.1, decay_Steps=80000)
         self.loss = deque(maxlen=int(1e5))
         self.max_q = deque(maxlen=int(1e5))
         self.loss_history = []
@@ -92,39 +92,37 @@ class Agent(AgentConfig):
                 'lr' : self.config['lr'],
                 'episode' : self.episode,
                 'epsilon' : self.epsilon._value
+                'epsilon_t' : self.epsilon.t
         }
 
-    def train_q(self, squeeze=False):
+    def train_q(self):
         if self.config['train_q_batch_size'] >= len(self.memory):
             return
 
         s, a, s_1, r, done = self.memory.sample(self.config['train_q_batch_size'])
         s = torch.from_numpy(s).to(self.device).float()
-        a = torch.from_numpy(a).to(self.device).long().unsqueeze(1)
+        a = torch.from_numpy(a).to(self.device).long()
         s_1 = torch.from_numpy(s_1).to(self.device).float()
         r = torch.from_numpy(r).to(self.device).float()
-        done = torch.from_numpy(1 - done).to(self.device).float()
+        done = torch.from_numpy(done).to(self.device).float()
 
-        if squeeze:
-            s = s.squeeze()
-            s_1 = s_1.squeeze()
-
-        # Q_sa = r + gamma * max(Q_s'a')
-        Q = self.policy_network(s).view(self.config['train_q_batch_size'], -1)
+        Q = self.policy_network(s)
         Q = Q.gather(1, a)
 
-        Qt = self.target_network(s_1).view(self.config['train_q_batch_size'], -1)
+        Qt = self.target_network(s_1).detach()
 
         # double Q
-        best_action = self.policy_network(s_1).view(self.config['train_q_batch_size'], -1).max(dim=1, keepdim=True)[1]
-        y = r + done * self.config['gamma'] * Qt.gather(1, best_action)
-        # y = r + done * self.gamma * Qt.max(dim=1)[0].unsqueeze(1)
-
-        # y.volatile = False
-        # with y.no_grad():
-        loss = self.criterion(Q, y)
+        best_action = self.policy_network(s_1).max(1)[1]
+        max_a_q_sp = Qt[
+            np.arange(self.config['train_q_batch_size']), best_action].unsqueeze(1)
+        y = r + (self.config['gamma'] * max_a_q_sp * (1-done))
+        
+        td_error = Q - y
+        loss = td_error.pow(2).mul(0.5).mean()
         self.loss.append(loss.sum().cpu().data.numpy())
         self.max_q.append(Q.max().cpu().data.numpy().reshape(-1)[0])
         self.optimizer.zero_grad()  # zero the gradient buffers
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.policy_network.parameters(), 
+                                       self.max_gradient_norm)
         self.optimizer.step()

@@ -1,5 +1,5 @@
 from matplotlib.pyplot import flag
-import torch, time, copy
+import torch, time, copy, random
 import numpy as np
 from dqn.dqn import Agent
 from pysc2.lib import actions
@@ -13,6 +13,8 @@ from utils.ReplayMemory import ReplayMemory, Transition
 
 seed = 0
 torch.manual_seed(seed)
+np.random.seed(seed)
+random.seed(seed)
 #torch.backends.cudnn.deterministic = True
 #torch.backends.cudnn.benchmark = False
 
@@ -91,13 +93,16 @@ class AgentLoop(Agent):
             else:
                 s = s.float()
             with torch.no_grad():
-                action = self.policy_network(s).squeeze().cpu().data.numpy()
-            return action.argmax()
+                action = self.policy_network(s).detach().cpu().data.numpy().squeeze()
+            action = np.argmax(action)
         # explore
         else:
-            action = 0
+            #action = 0
             target = np.random.randint(0, self.screen_size_x, size=2)
-            return action * self.screen_size_x * self.screen_size_y + target[0] * self.screen_size_x + target[1]
+            #action =  action * self.screen_size_x * self.screen_size_y + target[0] * self.screen_size_x + target[1]
+            action = target
+        self.epsilon.increment()
+        return action
 
     def select_friendly_action(self):
         return FUNCTIONS.select_army("select")
@@ -135,7 +140,7 @@ class AgentLoop(Agent):
                 print(r)
             self.data_manager.write_results(rewards, steps, durations, self.config, variant, self.get_policy_checkpoint())
 
-    def run_loop(self, evaluate_checkpoints = 10):
+    def run_loop(self, evaluate_checkpoints = 15):
         reward_history = []
         duration_history = []
         step_history = []
@@ -194,11 +199,12 @@ class AgentLoop(Agent):
                         transition = Transition(state, action, new_state, reward, terminal)
                         self.memory.push(transition)
 
-                    if total_steps % self.config['train_q_per_step'] == 0 and total_steps > self.config['steps_before_training'] and self.epsilon.isTraining:
+                    if total_steps % self.config['train_q_per_step'] == 0 and total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
                         self.train_q()
 
-                    if total_steps % self.config['target_q_update_frequency'] == 0 and total_steps > self.config['steps_before_training'] and self.epsilon.isTraining:
-                        self.target_network = copy.deepcopy(self.policy_network)
+                    if total_steps % self.config['target_q_update_frequency'] == 0 and total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
+                    for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
+                        target.data.copy_(online.data)
                     
                     state = new_state
 
@@ -222,11 +228,14 @@ class AgentLoop(Agent):
 
                         break
 
-                #TODO:
                 if evaluate_checkpoints > 0 and ((self.episode % evaluate_checkpoints) - (evaluate_checkpoints - 1) == 0 or self.episode == 0):
                     print('Evaluating...')
                     self.epsilon.isTraining = False  # we need to make sure that we act greedily when we evaluate
-                    self.run_loop(evaluate_checkpoints=0)
+                    tr = self.train
+                    self.train = False
+                    with torch.no_grad():
+                    	self.run_loop(evaluate_checkpoints=0)
+                    self.train = tr
                     self.epsilon.isTraining = True
                 if evaluate_checkpoints == 0:  # this should only activate when we're inside the evaluation loop
                     self.reward_evaluation.append(self.reward)
