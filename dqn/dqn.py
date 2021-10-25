@@ -38,9 +38,10 @@ class AgentConfig:
                         'gamma' : 0.99,
                         'train_q_batch_size' : 256,
                         'batches_before_training' : 10,
-                        'target_q_update_frequency' : 3000,
-                        'lr' : 0.0005,
-                        'plot_every' : 10
+                        'target_q_update_frequency' : 500,
+                        'lr' : 0.00005,
+                        'plot_every' : 10,
+                        'decay_steps' : 100000
         }
 
 class Agent(AgentConfig):
@@ -54,7 +55,7 @@ class Agent(AgentConfig):
         self.policy_network = MlpPolicy().to(self.device)
         self.target_network = copy.deepcopy(self.policy_network)
         self.optimizer = optim.RMSprop(self.policy_network.parameters(), lr = self.config['lr'])
-        self.epsilon = Epsilon(start=1.0, end=0.1, decay_steps=80000)
+        self.epsilon = Epsilon(start=1.0, end=0.1, self.config['decay_steps'])
         self.loss = deque(maxlen=int(1e5))
         self.max_q = deque(maxlen=int(1e5))
         self.loss_history = []

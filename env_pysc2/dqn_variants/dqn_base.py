@@ -1,5 +1,5 @@
 from matplotlib.pyplot import flag
-import torch, time, copy, random
+import torch, time, copy, random, traceback
 import numpy as np
 from dqn.dqn import Agent
 from pysc2.lib import actions
@@ -131,7 +131,7 @@ class AgentLoop(Agent):
             self.epsilon.isTraining = False # Act greedily
 
         # Run agent
-        rewards, steps, durations = self.run_loop()
+        rewards, epsilons, durations = self.run_loop()
 
         # Store results
         if self.train:
@@ -139,12 +139,13 @@ class AgentLoop(Agent):
             print("Rewards history:")
             for r in rewards:
                 print(r)
-            self.data_manager.write_results(rewards, steps, durations, self.config, variant, self.get_policy_checkpoint())
+            self.data_manager.write_results(rewards, epsilons, durations, self.config, variant, self.get_policy_checkpoint())
 
     def run_loop(self, evaluate_checkpoints = 15):
         reward_history = []
         duration_history = []
         step_history = []
+        epsilon_history = []
         avg_reward = []
         total_steps = 0
 
@@ -177,8 +178,6 @@ class AgentLoop(Agent):
 
                     # Act
                     act = self.get_env_action(action, obs)
-                    end_duration = time.time()
-                    self.duration += end_duration - start_duration
                     obs = self.env.step([act])[0]
 
                     # Get state observation
@@ -204,23 +203,23 @@ class AgentLoop(Agent):
                         self.train_q()
 
                     if total_steps % self.config['target_q_update_frequency'] == 0 and total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
-		        for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
-			    target.data.copy_(online.data)
+                        for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
+                            target.data.copy_(online.data)
                     
                     state = new_state
 
                     # 120s passed, i.e. episode done
                     if obs.last():
-                        print(f'Episode {self.episode} done. Score: {self.reward}. Steps: {self.step}.')
-                        reward_history.append(self.reward)
-                        duration_history.append(self.duration)
-                        step_history.append(self.step)
-                        avg_reward.append(sum(reward_history[-10:])/10.0)
-
-                        start_duration = time.time()
                         end_duration = time.time()
                         self.duration += end_duration - start_duration
 
+                        print(f'Episode {self.episode} done. Score: {self.reward}. Steps: {self.step}. Epsilon: {self.epsilon._value}')
+                        reward_history.append(self.reward)
+                        duration_history.append(self.duration)
+                        epsilon_history.append(self.epsilon._value)
+                        avg_reward.append(sum(reward_history[-10:])/10.0)
+
+                        
                         #print('episode: %.2f, total step: %.2f, last_episode length: %.2f, last_episode_reward: %.2f, '
                         #   'loss: %.4f, lr: %.4f' % (episode, step, episode_length, total_episode_reward, self.loss,
                         #                                self.scheduler.get_last_lr()[0]))
@@ -235,11 +234,11 @@ class AgentLoop(Agent):
                     tr = self.train
                     self.train = False
                     with torch.no_grad():
-                    	self.run_loop(evaluate_checkpoints=0)
+                        self.run_loop(evaluate_checkpoints=0)
                     self.train = tr
                     self.epsilon.isTraining = True
                 if evaluate_checkpoints == 0:  # this should only activate when we're inside the evaluation loop
-                    self.reward_evaluation.append(self.reward)
+                    #self.reward_evaluation.append(self.reward)
                     print(f'Evaluation Complete: Episode reward = {self.reward}')
                     break
 
@@ -249,11 +248,12 @@ class AgentLoop(Agent):
 
                 if self.episode % self.config['plot_every'] == 0:
                     pass #plot             
-
         except KeyboardInterrupt:
             pass
         except Exception as e:
             print(e)
+            print(traceback.format_exc())
         finally:
-            self.env.close()
-            return reward_history, step_history, duration_history
+            if evaluate_checkpoints > 0:
+              self.env.close()
+              return reward_history, epsilon_history, duration_history

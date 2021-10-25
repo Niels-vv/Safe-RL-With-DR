@@ -77,13 +77,13 @@ class DataManager:
 
 
     '''Store results of PPO after training; storing setup info, training results and policy network'''
-    def write_results(self, rewards, steps, durations, setup, variant, network_checkpoint):
+    def write_results(self, rewards, epsilons, durations, setup, variant, network_checkpoint):
         eps = [x for x in range(len(rewards))]
-        rows = zip(eps, rewards, steps, durations)
+        rows = zip(eps, rewards, epsilons, durations)
         try:
             with open(self.results_file, "a") as f:
                 writer = csv.writer(f)
-                writer.writerow(["Episode", "Reward", "step", "Duration"])
+                writer.writerow(["Episode", "Reward", "Epsilon", "Duration"])
                 for row in rows:
                     writer.writerow(row)
             
