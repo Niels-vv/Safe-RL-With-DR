@@ -1,10 +1,9 @@
 import sys, csv, torch
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
 import numpy as np
 from env_pysc2.ppo_variants.ppo_base import AgentLoop as Agent
 from utils.DataManager import DataManager
+from pca.PCA import PCACompression
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -55,28 +54,3 @@ class AgentLoop(Agent):
         self.data_manager.store_dim_reduction_component(pca_component, "pca.pt")
         print(f'Trained PCA on latent space {latent_space}')
 
-class PCACompression:
-    def __init__(self):
-        self.fileNames = []
-        self.pca_main = None
-        self.pcaStatistic = PCA()
-        self.scaler = StandardScaler()
-        self.latent_space = None
-
-    def create_pca(self, observations):
-        self.scaler.fit(observations)
-        df = self.scaler.transform(observations)
-        self.pcaStatistic.fit(df)
-        
-    def update_pca(self, observations, dimensions):
-        self.latent_space = dimensions
-        df = self.scaler.transform(observations)
-        self.pca_main = PCA(n_components=dimensions)
-        self.pca_main.fit(df)
-
-    def state_dim_reduction(self, observation):
-        obs = self.scaler.transform([observation.cpu().numpy()])
-        return torch.tensor(self.pca_main.transform(obs)[0], dtype=torch.float, device=device)
-
-    def get_pca_dimension_info(self):
-        return np.cumsum(self.pcaStatistic.explained_variance_ratio_) 

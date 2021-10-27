@@ -1,20 +1,30 @@
 500 eps training
 Tried setups:
 
-PPO
-Linear
-	- self.hidden_dims = [input_size*2, int(input_size/2),int(input_size/10),24]
-		Results: random
-		
-	- self.hidden_dims = [input_size, 512, 128,24]
-        	Results: r r r random
-        	
-conv
-	- Results: random
+DQN, 800 episodes, evaluation eposode every 15th episode
+	1. Conv, screen size 32 ipv 84: random
+	Seed 0 ipv 3, deterministic en benchmark weggecomment
 	
-	- update_freq 4 ipv 10, epoch 7 ipv 3:
-		results: 
-		
-DQN
-	- Conv, screen size 32 ipv 84: random
-		- Seed 0 ipv 3, deterministic en benchmark weggecomment, steps before training 10000 ipv 5000: 
+			 'train_q_per_step' : 10,
+                        'gamma' : 0.99,
+                        'train_q_batch_size' : 256,
+                        'batches_before_training' : 10,
+                        'target_q_update_frequency' : 500,
+                        'lr' : 0.00005,
+                        'plot_every' : 10,
+                        'decay_steps' : 100000
+                        
+         2.		train_q_per_step : 5, target_q_update_frequence: 250
+         
+         3.		train_q_per_setp : 4, 'batches_before_training' : 20,'target_q_update_frequency' : 500, 'lr' : 0.001, 
+         
+         4.		train_q_per_setp : 4, 'batches_before_training' : 20,'target_q_update_frequency' : 250, 'lr' : 0.0001, 
+         
+         Failed:
+         -		train_q_per_setp : 4, 'batches_before_training' : 20,'target_q_update_frequency' : 1000, 'lr' : 0.01, 
+         		
+         		Te hoge lr wsl, leerde even en zakte toen snel omlaag
+         		
+         -		train_q_per_setp : 4, 'batches_before_training' : 20,'target_q_update_frequency' : 250, 'lr' : 0.00001, decay_steps: 200000 
+         
+         te lage lr?
