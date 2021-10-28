@@ -46,13 +46,14 @@ class AgentLoop(Agent):
         self.observation_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.observation_spec() #TODO incorrect
         self.action_space = self.screen_size_x * self.screen_size_y # iets met flatten van env.action_spec()    #TODO incorrect
         self.latent_space = latent_space if latent_space is not None else self.observation_space
+        self.train = train 
+        
         super(AgentLoop, self).__init__(env, self.latent_space, self.action_space, max_steps, max_episodes)
         
         if load_policy:
-            checkpoint = DataManager.get_network(f'env_pysc2/results/dqn/{map}', "policy_network.pt")
+            checkpoint = DataManager.get_network(f'env_pysc2/results/dqn/{map_name}', "policy_network.pt", self.device)
             self.load_policy_checkpoint(checkpoint)
 
-        self.train = train 
         self.reduce_dim = False
         self.shield = shield
         self.pca = False
@@ -102,7 +103,8 @@ class AgentLoop(Agent):
             target = np.random.randint(0, self.screen_size_x, size=2)
             #action =  action * self.screen_size_x * self.screen_size_y + target[0] * self.screen_size_x + target[1]
             action = target[0] * self.screen_size_x + target[1]
-        self.epsilon.increment()
+        if self.train:
+            self.epsilon.increment()
         return action
 
     def select_friendly_action(self):
@@ -155,14 +157,16 @@ class AgentLoop(Agent):
                 obs = self.reset()[0]
 
                 state = obs.observation.feature_screen.player_relative
+
+                if self.store_obs: self.data_manager.store_observation(state.flatten())
+                
                 state = np.expand_dims(state, 0)                    
                 if self.reduce_dim:
                     state = torch.tensor(state, dtype=torch.float, device=device)
                     state = state.unsqueeze(dim=0)
                     state = self.dim_reduction_component.state_dim_reduction(state)
                     state = state.tolist()
-                if self.store_obs: self.data_manager.store_observation(state)
-
+                
                 # A step in an episode
                 while self.step < self.max_steps:
                     self.step += 1
@@ -182,13 +186,13 @@ class AgentLoop(Agent):
 
                     # Get state observation
                     new_state = obs.observation.feature_screen.player_relative
+                    if self.store_obs: self.data_manager.store_observation(new_state.flatten())
                     new_state = np.expand_dims(new_state, 0)                    
                     if self.reduce_dim:
                         new_state = torch.tensor(new_state, dtype=torch.float, device=device)
                         new_state = new_state.unsqueeze(dim=0)
                         new_state = self.dim_reduction_component.state_dim_reduction(new_state)
                         new_state = new_state.tolist()
-                    if self.store_obs: self.data_manager.store_observation(new_state)
 
                     reward = obs.reward
                     #reward = -1 if terminal else reward

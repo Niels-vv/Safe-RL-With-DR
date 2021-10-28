@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 import torch.optim as optim
+import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -17,6 +18,7 @@ class VAE(nn.Module):
                  **kwargs) -> None:
         super(VAE, self).__init__()
 
+        self.conv = True # Whether we are using input for CNN or linear
         self.latent_dim = latent_dim
         out_channels = in_channels
 
@@ -33,9 +35,27 @@ class VAE(nn.Module):
             )
             in_channels = h_dim
 
-        self.encoder = nn.Sequential(*modules)
-        self.fc_mu = nn.Linear(hidden_dims[-1], latent_dim)
-        self.fc_var = nn.Linear(hidden_dims[-1], latent_dim)
+        #self.encoder = nn.Sequential(*modules)
+        c_hid = 32
+        act_fn = nn.GELU
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, c_hid, kernel_size=3, padding=1, stride=2), # 32x32 => 16x16
+            act_fn(),
+            nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
+            act_fn(),
+            nn.Conv2d(c_hid, 2*c_hid, kernel_size=3, padding=1, stride=2), # 16x16 => 8x8
+            act_fn(),
+            nn.Conv2d(2*c_hid, 2*c_hid, kernel_size=3, padding=1),
+            act_fn(),
+            nn.Conv2d(2*c_hid, 2*c_hid, kernel_size=3, padding=1, stride=2), # 8x8 => 4x4
+            act_fn(),
+            nn.Flatten()
+        )
+
+        #self.fc_mu = nn.Linear(hidden_dims[-1], latent_dim)
+        #self.fc_var = nn.Linear(hidden_dims[-1], latent_dim)
+        self.fc_mu = nn.Linear(2*16*c_hid, latent_dim)
+        self.fc_var = nn.Linear(2*16*c_hid, latent_dim)
 
 
         # Build Decoder
@@ -54,8 +74,23 @@ class VAE(nn.Module):
 
 
 
-        self.decoder = nn.Sequential(*modules)
-
+        #self.decoder = nn.Sequential(*modules)
+        self.linear = nn.Sequential(
+            nn.Linear(latent_dim, 2*16*c_hid),
+            act_fn()
+        )
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(2*c_hid, 2*c_hid, kernel_size=3, output_padding=1, padding=1, stride=2), # 4x4 => 8x8
+            act_fn(),
+            nn.Conv2d(2*c_hid, 2*c_hid, kernel_size=3, padding=1),
+            act_fn(),
+            nn.ConvTranspose2d(2*c_hid, c_hid, kernel_size=3, output_padding=1, padding=1, stride=2), # 8x8 => 16x16
+            act_fn(),
+            nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
+            act_fn(),
+            nn.ConvTranspose2d(c_hid, 1, kernel_size=3, output_padding=1, padding=1, stride=2), # 16x16 => 32x32
+            nn.Tanh() # The input images is scaled between -1 and 1, hence the output has to be bounded as well
+        )
         self.final_layer = nn.Sequential(
                             nn.Linear(hidden_dims[-1],hidden_dims[-1]),
                             nn.LeakyReLU(),
@@ -70,7 +105,7 @@ class VAE(nn.Module):
         :return: (Tensor) List of latent codes
         """
         result = self.encoder(input)
-        result = torch.flatten(result, start_dim=1)
+        #result = torch.flatten(result, start_dim=1)
         # Split the result into mu and var components
         # of the latent Gaussian distribution
         mu = self.fc_mu(result)
@@ -84,10 +119,13 @@ class VAE(nn.Module):
         :param z: (Tensor) [B x D]
         :return: (Tensor) [B x C x H x W]
         """
-        result = self.decoder_input(z)
-        #result = result.view(-1, 512, 2, 2)
-        result = self.decoder(result)
-        result = self.final_layer(result)
+        #result = self.decoder_input(z)
+        ##result = result.view(-1, 512, 2, 2)
+        #result = self.decoder(result)
+        #result = self.final_layer(result)
+        x = self.linear(z)
+        x = x.reshape(x.shape[0], -1, 4, 4)
+        result = self.decoder(x)
         return result
 
     def reparameterize(self, mu, logvar):
@@ -153,12 +191,20 @@ class VaeManager():
 
   def train_on_trace(self, obs):
     batch = []
+    i = 0
     for index, row in obs.iterrows():
+        i += 1
+        row = row.to_numpy()
+        if self.vae_model.conv:
+            row = row.reshape(32,32) # TODO this is pysc2 specific
+            row = np.expand_dims(row, 0)  
         batch.append(row)
         if len(batch) % self.batch_size == 0:
-            self.train_step(torch.tensor(batch, dtype=torch.float, device=device))
+            batch = np.array(batch)
+            #self.train_step(torch.tensor(batch, dtype=torch.float, device=device))
+            self.train_step(torch.from_numpy(batch).to(device).float())
             batch = []
-            break # TODO remove
+    print("donezo")
 
   def state_dim_reduction(self, state):
     return self.vae_model.state_dim_reduction(state).squeeze()

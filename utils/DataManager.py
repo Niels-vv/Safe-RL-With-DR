@@ -67,8 +67,11 @@ class DataManager:
         torch.save(checkpoint, f'{self.results_path}/{name}')
 
     @staticmethod
-    def get_network(rel_path, network_name):
-        return torch.load(f'{PATH}/../{rel_path}/{network_name}')
+    def get_network(rel_path, network_name, device):
+        if device.type == "cpu":
+            return torch.load(f'{PATH}/../{rel_path}/{network_name}', map_location="cpu")
+        else:
+            return torch.load(f'{PATH}/../{rel_path}/{network_name}')
 
     @staticmethod
     def get_component(rel_path, component_name):
