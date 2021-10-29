@@ -31,10 +31,11 @@ from pysc2.env import sc2_env
 from pysc2.lib import point_flag
 from pysc2.lib import stopwatch
 
-from env_pysc2.ppo_variants.ppo_base import AgentLoop as BaseAgent
-from env_pysc2.ppo_variants.ppo_vae import AgentLoop as VAEAgent
-from env_pysc2.ppo_variants.ppo_pca import AgentLoop as PCAAgent
+from env_pysc2.ppo_variants.ppo_base import AgentLoop as PPOBaseAgent
 from env_pysc2.dqn_variants.dqn_base import AgentLoop as DQNBaseAgent
+from env_pysc2.vae_agent import get_agent as get_vae_agent
+from env_pysc2.pca_agent import get_agent as get_pca_agent
+from env_pysc2.scripted_beacon_agent import Agent as BeaconAgent
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("strategy", "dqn", "Which RL strategy to use.")
@@ -123,21 +124,25 @@ def run_thread(players, map_name, visualize):
 
 def get_agent(env):
   global agent_class_name
-  if FLAGS.strategy.lower() in ["dqn"]:
-    agent_class_name = DQNBaseAgent.__name__
-    return DQNBaseAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.store_obs, FLAGS.map, FLAGS.load_policy)
-  else:
-    if FLAGS.variant.lower() in ["base", "ppo_base"]:
-      agent_class_name = BaseAgent.__name__
-      return BaseAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.store_obs, FLAGS.map, FLAGS.load_policy)
-    elif FLAGS.variant.lower() in ["pca", "ppo_pca"]:
-      agent_class_name = PCAAgent.__name__
-      return PCAAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
-    elif FLAGS.variant.lower() in ["vae", "ppo_vae"]:
-      agent_class_name = VAEAgent.__name__
-      return VAEAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
+
+  if FLAGS.variant.lower() in ["scripted"]:
+    FLAGS.save_replay = False
+    return BeaconAgent(env, FLAGS.max_episodes, FLAGS.store_obs)
+  elif FLAGS.variant.lower() in ["base"]:
+    if FLAGS.strategy.lower() in ["dqn"]:
+      agent_class_name = DQNBaseAgent.__name__
+      return DQNBaseAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.map, FLAGS.load_policy)
     else:
-      raise NotImplementedError
+      agent_class_name = PPOBaseAgent.__name__
+      return PPOBaseAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.map, FLAGS.load_policy)
+  elif FLAGS.variant.lower() in ["pca"]:
+    agent_class_name, agent = get_pca_agent(FLAGS.variant.lower(), env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
+    return agent
+  elif FLAGS.variant.lower() in ["vae"]:
+    agent_class_name, agent = get_vae_agent(FLAGS.variant.lower(), env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
+    return agent
+  else:
+    raise NotImplementedError
 
 
 

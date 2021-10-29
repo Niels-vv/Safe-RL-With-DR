@@ -103,10 +103,6 @@ class DataManager:
             print(e)
 
     @staticmethod
-    def show_plot():
-        pass
-
-    @staticmethod
     def load_setup_dict(filename):
         with open(filename) as f:
             return json.load(f)
