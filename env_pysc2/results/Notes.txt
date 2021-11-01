@@ -20,6 +20,8 @@ DQN, 800 episodes, evaluation eposode every 15th episode
          
          4.		train_q_per_setp : 4, 'batches_before_training' : 20,'target_q_update_frequency' : 250, 'lr' : 0.0001, 
          
+         4 Geeft beste resultaat
+         
          
          Failed:
          -		train_q_per_setp : 4, 'batches_before_training' : 20,'target_q_update_frequency' : 1000, 'lr' : 0.01, 
@@ -31,3 +33,5 @@ DQN, 800 episodes, evaluation eposode every 15th episode
          - 		Linear: self.hidden_dims = [input_size*2, input_size*10,input_size*2]
          
          te lage lr?
+         
+         

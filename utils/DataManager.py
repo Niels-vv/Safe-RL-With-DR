@@ -14,6 +14,7 @@ PATH = os.path.dirname(os.path.realpath(__file__))
 class DataManager:
     def __init__(self, observation_sub_dir = None , results_sub_dir = None):
         self.observations_path = f'{PATH}/../{observation_sub_dir}'
+        self.observations_sub_dir = observation_sub_dir
         self.results_path = f'{PATH}/../{results_sub_dir}'
         self.obs_file = None
         self.results_file = None
@@ -55,7 +56,7 @@ class DataManager:
             print(e)
 
     def get_observations(self):
-        return pd.read_csv(f'{self.observations_path}/Observations.csv')
+        return pd.read_csv(f'{self.observations_sub_dir}/Observations.csv')
 
     def store_dim_reduction_component(self, component, name):
         if not os.path.isdir(f'{self.results_path}'): os.mkdir(self.results_path)

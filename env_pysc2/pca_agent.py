@@ -49,9 +49,10 @@ def get_component(map):
 
 def train_pca(map):
     # Get demo trajectory from observations file
-    data_manager = DataManager(observation_sub_dir = f'env_pysc2/observations/{map}', results_sub_dir = f'env_pysc2/results_pca/{map}')
+    data_manager = DataManager(observation_sub_dir = f'/content/drive/MyDrive/Thesis/Code/PySC2/Observations/{map}', results_sub_dir = f'env_pysc2/results_pca/{map}')
+    print("Retrieving observations...")
     obs = data_manager.get_observations()
-    print(obs.shape)
+    print(f'Observations shape:{obs.shape}')
 
     # Create initial PCA and get statistics on latent space
     pca_component = PCACompression()
@@ -64,7 +65,7 @@ def train_pca(map):
         if statistics[i] > 0.90 and isSquare(i): #TODO magic nr
             latent_space = i + 1
             break
-    pca_component.update_pca(obs, latent_space)
+    pca_component.update_pca(latent_space)
 
     # Store PCA object as file
     data_manager.store_dim_reduction_component(pca_component, "pca.pt")
