@@ -58,14 +58,17 @@ def train_pca(map):
     pca_component = PCACompression()
     pca_component.create_pca(obs)
     statistics = pca_component.get_pca_dimension_info()
-    
 
     # Set latent space and create final PCA
     for i in range(len(statistics)):
-        if statistics[i] > 0.90 and isSquare(i): #TODO magic nr
+        if statistics[i] > 0.95 and isSquare(i+1): #TODO magic nr
             latent_space = i + 1
             break
     pca_component.update_pca(latent_space)
+
+    # Free up memory before storing PCA
+    pca_component.df = None
+    pca_component.pcaStatistic = None
 
     # Store PCA object as file
     data_manager.store_dim_reduction_component(pca_component, "pca.pt")
