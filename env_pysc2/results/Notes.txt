@@ -22,6 +22,8 @@ DQN, 800 episodes, evaluation eposode every 15th episode
          
          4 Geeft beste resultaat
          
+         5.		Zoals 4 maar met flatten obs naar linear layer voor conv layers (tussendoor reshape(x.shape[0]),1,32,32)
+         
          
          Failed:
          -		train_q_per_setp : 4, 'batches_before_training' : 20,'target_q_update_frequency' : 1000, 'lr' : 0.01, 

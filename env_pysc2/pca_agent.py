@@ -13,6 +13,8 @@ class DQNAgentLoop(DQNAgent):
         if not train_component: # We're not training PCA, but using it in PPO
             pca_component = get_component(map_name)
             latent_space = pca_component.latent_space
+            print(f'PCA latent space: {latent_space}')
+            print(f'PCA scalar: {pca_component.use_scalar}')
             super(DQNAgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, load_policy, latent_space, pca_component)
         else:
             self.map = map_name

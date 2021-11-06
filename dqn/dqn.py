@@ -16,13 +16,13 @@ torch.manual_seed(seed)
 #torch.backends.cudnn.benchmark = False
 
 class MlpPolicy(nn.Module):
-    def __init__(self):
+    def __init__(self, input_dim, output_dim):
         super(MlpPolicy, self).__init__()
         self.conv1 = nn.Conv2d(1, 24, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(24, 24, kernel_size=3, stride=1, padding=1)
         self.conv3 = nn.Conv2d(24, 1, kernel_size=3, stride=1, padding=1)
         self.name = 'BeaconCNN'
-        self.conv = True #Whether we're using a conv or linear network. Needed in def train_q(self)
+        self.conv = True # Whether we're using a conv or linear output layer. Needed in def train_q(self)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -34,12 +34,12 @@ class AgentConfig:
     def __init__(self):
         self.config = {
                         # Learning
-                        'train_q_per_step' : 10,
+                        'train_q_per_step' : 4,
                         'gamma' : 0.99,
                         'train_q_batch_size' : 256,
-                        'batches_before_training' : 10,
-                        'target_q_update_frequency' : 500,
-                        'lr' : 0.00005,
+                        'batches_before_training' : 20,
+                        'target_q_update_frequency' : 250,
+                        'lr' : 0.0001,
                         'plot_every' : 10,
                         'decay_steps' : 100000
         }
@@ -52,7 +52,7 @@ class Agent(AgentConfig):
         self.env = env
         self.max_steps = max_steps
         self.max_episodes = max_episodes
-        self.policy_network = MlpPolicy().to(self.device)
+        self.policy_network = MlpPolicy(self.latent_space, self.observation_space).to(self.device)
         self.target_network = copy.deepcopy(self.policy_network)
         self.optimizer = optim.RMSprop(self.policy_network.parameters(), lr = self.config['lr'])
         self.epsilon = Epsilon(start=1.0, end=0.1, decay_steps=self.config['decay_steps'])
