@@ -146,107 +146,107 @@ class AgentLoop(Agent):
         avg_reward = []
         total_steps = 0
 
-        #try:
-        # A new episode
-        while self.episode < self.max_episodes:
-            obs = self.reset()[0]
+        try:
+            # A new episode
+            while self.episode < self.max_episodes:
+                obs = self.reset()[0]
 
-            state = obs.observation.feature_screen.player_relative                    
-            if self.reduce_dim:
-                state = torch.tensor(state, dtype=torch.float, device=device)
-                state = self.dim_reduction_component.state_dim_reduction(state)
-                state = state.tolist()
-            state = np.expand_dims(state, 0)
-            
-            # A step in an episode
-            while self.step < self.max_steps:
-                self.step += 1
-                total_steps += 1
-                start_duration = time.time()
-                # Choose action
-                if self.train:
-                    action = self.get_action(state)
-                else:
-                    with torch.no_grad():
-                        action = self.get_action(state)
-                        # action = torch.distributions.Categorical(prob_a).sample().item()
-
-                # Act
-                act = self.get_env_action(action, obs)
-                obs = self.env.step([act])[0]
-
-                # Get state observation
-                new_state = obs.observation.feature_screen.player_relative              
+                state = obs.observation.feature_screen.player_relative                    
                 if self.reduce_dim:
-                    new_state = torch.tensor(new_state, dtype=torch.float, device=device)
-                    new_state = self.dim_reduction_component.state_dim_reduction(new_state)
-                    new_state = new_state.tolist()
-                new_state = np.expand_dims(new_state, 0)   
-
-                reward = obs.reward
-                #reward = -1 if terminal else reward
-                terminal = reward > 0 # Agent found beacon
-                self.reward += reward
-
-                if self.train: 
-                    transition = Transition(state, action, new_state, reward, terminal)
-                    self.memory.push(transition)
-
-                if total_steps % self.config['train_q_per_step'] == 0 and total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
-                    self.train_q()
-
-                if total_steps % self.config['target_q_update_frequency'] == 0 and total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
-                    for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
-                        target.data.copy_(online.data)
+                    state = torch.tensor(state, dtype=torch.float, device=device)
+                    state = self.dim_reduction_component.state_dim_reduction(state)
+                    state = state.tolist()
+                state = np.expand_dims(state, 0)
                 
-                state = new_state
+                # A step in an episode
+                while self.step < self.max_steps:
+                    self.step += 1
+                    total_steps += 1
+                    start_duration = time.time()
+                    # Choose action
+                    if self.train:
+                        action = self.get_action(state)
+                    else:
+                        with torch.no_grad():
+                            action = self.get_action(state)
+                            # action = torch.distributions.Categorical(prob_a).sample().item()
 
-                # 120s passed, i.e. episode done
-                if obs.last():
-                    end_duration = time.time()
-                    self.duration += end_duration - start_duration
+                    # Act
+                    act = self.get_env_action(action, obs)
+                    obs = self.env.step([act])[0]
 
-                    print(f'Episode {self.episode} done. Score: {self.reward}. Steps: {self.step}. Epsilon: {self.epsilon._value}')
-                    reward_history.append(self.reward)
-                    duration_history.append(self.duration)
-                    epsilon_history.append(self.epsilon._value)
-                    avg_reward.append(sum(reward_history[-10:])/10.0)
+                    # Get state observation
+                    new_state = obs.observation.feature_screen.player_relative              
+                    if self.reduce_dim:
+                        new_state = torch.tensor(new_state, dtype=torch.float, device=device)
+                        new_state = self.dim_reduction_component.state_dim_reduction(new_state)
+                        new_state = new_state.tolist()
+                    new_state = np.expand_dims(new_state, 0)   
 
+                    reward = obs.reward
+                    #reward = -1 if terminal else reward
+                    terminal = reward > 0 # Agent found beacon
+                    self.reward += reward
+
+                    if self.train: 
+                        transition = Transition(state, action, new_state, reward, terminal)
+                        self.memory.push(transition)
+
+                    if total_steps % self.config['train_q_per_step'] == 0 and total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
+                        self.train_q()
+
+                    if total_steps % self.config['target_q_update_frequency'] == 0 and total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
+                        for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
+                            target.data.copy_(online.data)
                     
-                    #print('episode: %.2f, total step: %.2f, last_episode length: %.2f, last_episode_reward: %.2f, '
-                    #   'loss: %.4f, lr: %.4f' % (episode, step, episode_length, total_episode_reward, self.loss,
-                    #                                self.scheduler.get_last_lr()[0]))
+                    state = new_state
 
-                    #self.env.reset()
+                    # 120s passed, i.e. episode done
+                    if obs.last():
+                        end_duration = time.time()
+                        self.duration += end_duration - start_duration
 
+                        print(f'Episode {self.episode} done. Score: {self.reward}. Steps: {self.step}. Epsilon: {self.epsilon._value}')
+                        reward_history.append(self.reward)
+                        duration_history.append(self.duration)
+                        epsilon_history.append(self.epsilon._value)
+                        avg_reward.append(sum(reward_history[-10:])/10.0)
+
+                        
+                        #print('episode: %.2f, total step: %.2f, last_episode length: %.2f, last_episode_reward: %.2f, '
+                        #   'loss: %.4f, lr: %.4f' % (episode, step, episode_length, total_episode_reward, self.loss,
+                        #                                self.scheduler.get_last_lr()[0]))
+
+                        #self.env.reset()
+
+                        break
+
+                if evaluate_checkpoints > 0 and ((self.episode % evaluate_checkpoints) - (evaluate_checkpoints - 1) == 0 or self.episode == 0):
+                    print('Evaluating...')
+                    self.epsilon.isTraining = False  # we need to make sure that we act greedily when we evaluate
+                    tr = self.train
+                    self.train = False
+                    with torch.no_grad():
+                        self.run_loop(evaluate_checkpoints=0)
+                    self.train = tr
+                    self.epsilon.isTraining = True
+                if evaluate_checkpoints == 0:  # this should only activate when we're inside the evaluation loop
+                    #self.reward_evaluation.append(self.reward)
+                    print(f'Evaluation Complete: Episode reward = {self.reward}')
                     break
 
-            if evaluate_checkpoints > 0 and ((self.episode % evaluate_checkpoints) - (evaluate_checkpoints - 1) == 0 or self.episode == 0):
-                print('Evaluating...')
-                self.epsilon.isTraining = False  # we need to make sure that we act greedily when we evaluate
-                tr = self.train
-                self.train = False
-                with torch.no_grad():
-                    self.run_loop(evaluate_checkpoints=0)
-                self.train = tr
-                self.epsilon.isTraining = True
-            if evaluate_checkpoints == 0:  # this should only activate when we're inside the evaluation loop
-                #self.reward_evaluation.append(self.reward)
-                print(f'Evaluation Complete: Episode reward = {self.reward}')
-                break
+                if len(self.loss) > 0:
+                    self.loss_history.append(self.loss[-1])
+                    self.max_q_history.append(self.max_q[-1])
 
-            if len(self.loss) > 0:
-                self.loss_history.append(self.loss[-1])
-                self.max_q_history.append(self.max_q[-1])
-
-            if self.episode % self.config['plot_every'] == 0:
-                pass #plot             
-        #except KeyboardInterrupt:
-         #   pass
-        #except Exception as e:
-         #   print(e)
-          #  print(traceback.format_exc())
-        #finally:
-         #   if evaluate_checkpoints > 0:
-          #    self.env.close()
-           #   return reward_history, epsilon_history, duration_history
+                if self.episode % self.config['plot_every'] == 0:
+                    pass #plot             
+        except KeyboardInterrupt:
+           pass
+        except Exception as e:
+           print(e)
+           print(traceback.format_exc())
+        finally:
+           if evaluate_checkpoints > 0:
+             self.env.close()
+             return reward_history, epsilon_history, duration_history
