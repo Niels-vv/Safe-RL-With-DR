@@ -15,7 +15,7 @@ class DQNAgentLoop(DQNAgent):
             latent_space = pca_component.latent_space
             print(f'PCA latent space: {latent_space}')
             print(f'PCA scalar: {pca_component.use_scalar}')
-            super(DQNAgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, load_policy, latent_space, pca_component)
+            super(DQNAgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, map_name, load_policy, latent_space, pca_component)
         else:
             self.map = map_name
         self.train_component = train_component
@@ -66,6 +66,8 @@ def train_pca(map):
         if statistics[i] > 0.95 and isSquare(i+1): #TODO magic nr
             latent_space = i + 1
             break
+    latent_space = 16*16 # TODO
+    print(f'Latent space 16*16 info: {statistics[latent_space-1]}')
     pca_component.update_pca(latent_space)
 
     # Free up memory before storing PCA

@@ -136,10 +136,10 @@ def get_agent(env):
       agent_class_name = PPOBaseAgent.__name__
       return PPOBaseAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.map, FLAGS.load_policy)
   elif FLAGS.variant.lower() in ["pca"]:
-    agent_class_name, agent = get_pca_agent(FLAGS.variant.lower(), env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
+    agent_class_name, agent = get_pca_agent(FLAGS.strategy.lower(), env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
     return agent
   elif FLAGS.variant.lower() in ["vae"]:
-    agent_class_name, agent = get_vae_agent(FLAGS.variant.lower(), env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
+    agent_class_name, agent = get_vae_agent(FLAGS.strategy.lower(), env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
     return agent
   else:
     raise NotImplementedError

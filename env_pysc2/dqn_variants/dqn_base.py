@@ -7,6 +7,7 @@ from pysc2.lib import features
 from utils.DataManager import DataManager
 from utils.Epsilon import Epsilon
 from utils.ReplayMemory import ReplayMemory, Transition
+from math import sqrt
 
 # For info on obs from env.step, see: https://github.com/deepmind/pysc2/blob/master/pysc2/env/environment.py and https://github.com/deepmind/pysc2/blob/master/docs/environment.md
 # Based on https://github.com/alanxzhou/sc2bot/blob/master/sc2bot/agents/rl_agent.py
@@ -155,7 +156,7 @@ class AgentLoop(Agent):
                 if self.reduce_dim:
                     state = torch.tensor(state, dtype=torch.float, device=device)
                     state = self.dim_reduction_component.state_dim_reduction(state)
-                    state = state.tolist()
+                    state = torch.reshape(state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).cpu().numpy()
                 state = np.expand_dims(state, 0)
                 
                 # A step in an episode
