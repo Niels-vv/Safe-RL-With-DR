@@ -18,7 +18,8 @@ torch.manual_seed(seed)
 class MlpPolicy(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(MlpPolicy, self).__init__()
-        self.conv0 = nn.ConvTranspose2d(1, 1, kernel_size=3, stride=1, padding=1)
+        self.conv0 = nn.ConvTranspose2d(1, 1, kernel_size=3, stride=2, padding=1, output_padding = 1)
+        #self.conv0 = nn.ConvTranspose2d(1, 1, kernel_size=3, stride=1, padding=1)
         self.conv1 = nn.Conv2d(1, 24, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(24, 24, kernel_size=3, stride=1, padding=1)
         self.conv3 = nn.Conv2d(24, 1, kernel_size=3, stride=1, padding=1)

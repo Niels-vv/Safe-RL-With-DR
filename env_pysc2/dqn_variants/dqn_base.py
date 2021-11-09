@@ -181,7 +181,7 @@ class AgentLoop(Agent):
                     if self.reduce_dim:
                         new_state = torch.tensor(new_state, dtype=torch.float, device=device)
                         new_state = self.dim_reduction_component.state_dim_reduction(new_state)
-                        new_state = new_state.tolist()
+                        new_state = torch.reshape(new_state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).cpu().numpy()
                     new_state = np.expand_dims(new_state, 0)   
 
                     reward = obs.reward

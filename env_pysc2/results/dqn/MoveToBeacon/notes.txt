@@ -1,4 +1,5 @@
 1-6 zijn normale dqn agents
 
-Experiment gedaan met pca met scalar (onopgeslagen): latent space 256, met conv2dtranspose stride 2 padding 1 output padding 1
+Experiment gedaan met pca getraind met scalar en een pca getraind zonder scalar (onopgeslagen): latent space 256, met conv2dtranspose stride 2 padding 1 output padding 1
 	Gaf random agent
+	
