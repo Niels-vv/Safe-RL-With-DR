@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torchvision
 import torchvision.datasets as datasets
+import torchvision.transforms as transforms
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -45,13 +46,14 @@ class VAE(nn.Module):
         self.encoder = nn.Sequential(
             nn.Conv2d(1, c_hid, kernel_size=3, padding=1, stride=2), # 32x32 => 16x16
             act_fn(),
-            nn.Flatten()
+            nn.Flatten(), # Image grid to single feature vector
+            nn.Linear(256*c_hid, latent_dim)
         )
 
         #self.fc_mu = nn.Linear(hidden_dims[-1], latent_dim)
         #self.fc_var = nn.Linear(hidden_dims[-1], latent_dim)
-        self.fc_mu = nn.Linear(256*c_hid, latent_dim)
-        self.fc_var = nn.Linear(256*c_hid, latent_dim)
+        #self.fc_mu = nn.Linear(256*c_hid, latent_dim)
+        #self.fc_var = nn.Linear(256*c_hid, latent_dim)
 
 
         # Build Decoder
@@ -77,6 +79,7 @@ class VAE(nn.Module):
         )
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(c_hid, 1, kernel_size=3, output_padding=1, padding=1, stride=2), # 16x16 => 32x32
+            #nn.Tanh() # The input images is scaled between -1 and 1, hence the output has to be bounded as well
         )
         # self.final_layer = nn.Sequential(
         #                     nn.Linear(hidden_dims[-1],hidden_dims[-1]),
@@ -91,16 +94,13 @@ class VAE(nn.Module):
         :param input: (Tensor) Input tensor to encoder [N x C x H x W]
         :return: (Tensor) List of latent codes
         """
-        print(f'Shape initial:{input.shape}')
         result = self.encoder(input)
-        print(f'Shape after conv encode flatten {result.shape}')
-        #result = torch.flatten(result, start_dim=1)
+        ##result = torch.flatten(result, start_dim=1)
         # Split the result into mu and var components
         # of the latent Gaussian distribution
-        mu = self.fc_mu(result)
-        print(f'Shape after linear to latent {mu.shape}')
-        log_var = self.fc_var(result)
-        return [mu, log_var]
+        #mu = self.fc_mu(result)
+        #log_var = self.fc_var(result)
+        return result
 
     def decode(self, z):
         """
@@ -113,14 +113,9 @@ class VAE(nn.Module):
         ##result = result.view(-1, 512, 2, 2)
         #result = self.decoder(result)
         #result = self.final_layer(result)
-        print(f'Shape before decode {z.shape}')
         x = self.linear(z)
-        print(f'Shape after linear {x.shape}')
-        x = x.reshape(x.shape[0], 1, 16, 16)
-        print(f'Shape after reshape {x.shape}')
+        x = x.reshape(x.shape[0], -1, 16, 16)
         result = self.decoder(x)
-        print(f'Shape after decoding {result.shape}')
-        raise NotImplementedError
         return result
 
     def reparameterize(self, mu, logvar):
@@ -136,9 +131,12 @@ class VAE(nn.Module):
         return eps * std + mu
 
     def forward(self, input, **kwargs):
-        mu, log_var = self.encode(input)
-        z = self.reparameterize(mu, log_var)
-        return  self.decode(z), input, mu, log_var
+        #mu, log_var = self.encode(input)
+        #z = self.reparameterize(mu, log_var)
+        #return  self.decode(z), input, mu, log_var
+        z = self.encode(input)
+        x = self.decode(z)
+        return x
 
     def state_dim_reduction(self, state):
         mu, log_var = self.encode(state)
@@ -177,8 +175,11 @@ class VaeManager():
         self.vae_lr = vae_lr
 
     def train_step(self, batch):
-        reconstruction, input, mu, log_var = self.vae_model(batch)
-        loss = self.vae_model.loss_function(reconstruction, input, mu, log_var)['loss']
+        #reconstruction, input, mu, log_var = self.vae_model(batch)
+        #loss = self.vae_model.loss_function(reconstruction, input, mu, log_var)['loss']
+        reconstruction = self.vae_model(batch)
+        loss = F.mse_loss(batch, reconstruction, reduction="none")
+        loss = loss.sum(dim=[1,2,3]).mean(dim=[0])
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
@@ -214,32 +215,36 @@ class VaeManager():
                 'obs_file' : self.obs_file
         }
 
-    def train_test_set(self,input):
-        i = 0
-        while i + self.batch_size < len(input):
+    def train_test_set(self,dataloader):
+        i=0
+        for batch, _ in dataloader:
             print(f'Traning images {i} - {i+self.batch_size}.')
-            batch = input[i:i+self.batch_size]
-            self.train_step(batch)
-            i += self.batch_size
+            self.train_step(batch.to(device).float())
+            i+=self.batch_size
 
-    def recons_test(self, input):
+    def recons_test(self, batch):
         for i in range(5):
-            image = input[i:i+1]
-            reconstruction, input, mu, log_var = self.vae_model(image)
-            loss = self.vae_model.loss_function(reconstruction, input, mu, log_var)['loss']
-            print(f'Loss: {loss}')
+            image = batch[i].unsqueeze(0).to(device).float()
+            reconstruction = self.vae_model(image)
             fig = plt.figure
-            plt.imshow(input[i], cmap='gray')
+            plt.imshow(batch[i].reshape(32,32), cmap='gray')
             plt.show()
             fig = plt.figure
-            plt.imshow(reconstruction, cmap='gray')
+            plt.imshow(reconstruction.reshape(32,32).cpu().detach(), cmap='gray')
             plt.show()
 
 if __name__ == "__main__":
-    mnist_trainset = datasets.MNIST(root='./data', train=True, download=True, transform=None)
-    mnist_testset = datasets.MNIST(root='./data', train=False, download=True, transform=None)
-    vae_model = VAE(in_channels = 2, latent_dim = 16*16).to(device)
-    vae_optimizer = optim.Adam(params=vae_model.parameters(), lr=0.001)
-    vae_manager = VaeManager(vae_model, vae_optimizer, f'env_pysc2/results_vae/{map}', 100, 16*16, 0.001)
-    vae_manager.train_test_set(mnist_trainset)
-    vae_manager.recons_test(mnist_testset)
+    mnist_trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transforms.Compose(
+        [torchvision.transforms.Resize(32), torchvision.transforms.ToTensor()]
+    ))
+    mnist_testset = datasets.MNIST(root='./data', train=False, download=True, transform=transforms.Compose(
+        [torchvision.transforms.Resize(32), torchvision.transforms.ToTensor()]
+    ))
+    dataloader_train = torch.utils.data.DataLoader(mnist_trainset, 25, True)
+    dataloader_test = torch.utils.data.DataLoader(mnist_testset, 5, True)
+   
+    vae_model = VAE(in_channels = 1, latent_dim = 16*16).to(device)
+    vae_optimizer = optim.Adam(params=vae_model.parameters(), lr=0.0001)
+    vae_manager = VaeManager(vae_model, vae_optimizer, f'env_pysc2/results_vae/{map}', 25, 16*16, 0.001)
+    vae_manager.train_test_set(dataloader_train)
+    vae_manager.recons_test(next(iter(dataloader_test))[0])
