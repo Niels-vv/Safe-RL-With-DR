@@ -139,8 +139,10 @@ class VAE(nn.Module):
         return x
 
     def state_dim_reduction(self, state):
-        mu, log_var = self.encode(state)
-        z = self.reparameterize(mu, log_var)
+        #mu, log_var = self.encode(state)
+        #z = self.reparameterize(mu, log_var)
+        state = state.unsqueeze(0).unsqueeze(0)
+        z = self.encode(state)
         return z
 
 
@@ -202,7 +204,6 @@ class VaeManager():
                 #self.train_step(torch.tensor(batch, dtype=torch.float, device=device))
                 self.train_step(torch.from_numpy(batch).to(device).float())
                 batch = []
-        print("donezo")
 
     def state_dim_reduction(self, state):
         return self.vae_model.state_dim_reduction(state).squeeze()

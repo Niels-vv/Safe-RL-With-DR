@@ -18,7 +18,14 @@ torch.manual_seed(seed)
 class MlpPolicy(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(MlpPolicy, self).__init__()
-        self.conv0 = nn.ConvTranspose2d(1, 1, kernel_size=3, stride=2, padding=1, output_padding = 1)
+        latent_dim = 256
+        c_hid = 32
+        act_fn = nn.GELU
+        self.linear = nn.Sequential(
+            nn.Linear(latent_dim, 256*c_hid),
+            act_fn()
+        )
+        self.conv0 = nn.ConvTranspose2d(c_hid, 1, kernel_size=3, stride=2, padding=1, output_padding = 1)
         #self.conv0 = nn.ConvTranspose2d(1, 1, kernel_size=3, stride=1, padding=1)
         self.conv1 = nn.Conv2d(1, 24, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(24, 24, kernel_size=3, stride=1, padding=1)
@@ -27,6 +34,8 @@ class MlpPolicy(nn.Module):
         self.conv = True # Whether we're using a conv or linear output layer. Needed in def train_q(self)
 
     def forward(self, x):
+        x = self.linear(x)
+        x = x.reshape(x.shape[0], -1, 16, 16)
         x = F.relu(self.conv0(x))
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))

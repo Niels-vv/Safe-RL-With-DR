@@ -19,7 +19,8 @@ class DQNAgentLoop(DQNAgent):
         if not train_component: # We're not training vae, but using it in PPO
             vae_component = get_component(map_name, self.observation_space)
             latent_space = vae_component.latent_space
-            super(DQNAgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, False, map_name, load_policy, latent_space, vae_component)
+            print(f'Latent space: {latent_space}')
+            super(DQNAgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, map_name, load_policy, latent_space, vae_component)
         else:
             self.map = map_name
         self.train_component = train_component
@@ -55,7 +56,7 @@ class PPOAgentLoop(PPOAgent):
             super(PPOAgentLoop, self).run_agent()
 
 def get_component(map, observation_space):
-    checkpoint = DataManager.get_network(f'env_pysc2/results_vae/{map}', "vae.pt")
+    checkpoint = DataManager.get_network(f'env_pysc2/results_vae/{map}', "vae.pt", device)
     vae_model = VAE(in_channels = observation_space, latent_dim = checkpoint['latent_space']).to(device)
     vae_model.load_state_dict(checkpoint['model_state_dict'])
     vae_optimizer = optim.Adam(params=vae_model.parameters(), lr = checkpoint['vae_lr'])
@@ -75,11 +76,14 @@ def train_vae(map, observation_space):
     vae_manager = VaeManager(vae_model, vae_optimizer, f'env_pysc2/results_vae/{map}', vae_batch_size, latent_space, vae_lr)
 
     # Train VAE on observation trace
+    print("Retreiving observations...")
     data_manager = DataManager(observation_sub_dir = f'/content/drive/MyDrive/Thesis/Code/PySC2/Observations/{map}', results_sub_dir = f'env_pysc2/results_vae/{map}')
     observation_trace = data_manager.get_observations()
+    print("Training VAE...")
     vae_manager.train_on_trace(observation_trace)
 
     # Store VAE
+    print("Training done. Storing VAE...")
     checkpoint = vae_manager.get_checkpoint()
     data_manager.store_network(checkpoint, "vae.pt")
 
@@ -93,9 +97,13 @@ def get_agent(strategy, env, shield, max_steps, max_episodes, train, train_compo
     return agent_class_name, agent
 
 if __name__ == "__main__":
-    train_vae("MoveToBeacon", 32*32)
-    print("Training done. Loading stored VAE and training again.")
-    vae_manager = get_component("MoveToBeacon", 32*32)
-    data_manager = DataManager(observation_sub_dir = f'/content/drive/MyDrive/Thesis/Code/PySC2/Observations/{map}', results_sub_dir = f'env_pysc2/results_vae/{map}')
+    print("Setup training VAE")
+    #train_vae("MoveToBeacon", 32*32)
+    print("Done training and storing VAE")
+    va = get_component("MoveToBeacon", 32*32)
+    data_manager = DataManager(observation_sub_dir = f'/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon', results_sub_dir = f'env_pysc2/results_vae/MoveToBeacon')
     observation_trace = data_manager.get_observations()
-    vae_manager.train_on_trace(observation_trace)
+    print("Training VAE...")
+    va.train_on_trace(observation_trace)
+
+    
