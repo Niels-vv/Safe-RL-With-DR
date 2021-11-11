@@ -65,9 +65,9 @@ def get_component(map, observation_space):
 
 def train_vae(map, observation_space):
     # Hyperparameters VAE
-    latent_space = 100 # TODO
+    latent_space = 256 # TODO
     vae_lr = 0.0001 # TODO
-    vae_batch_size = 10 # TODO
+    vae_batch_size = 25 # TODO
 
     # Create VAE model
     vae_model = VAE(in_channels = observation_space, latent_dim = latent_space).to(device)
@@ -75,7 +75,7 @@ def train_vae(map, observation_space):
     vae_manager = VaeManager(vae_model, vae_optimizer, f'env_pysc2/results_vae/{map}', vae_batch_size, latent_space, vae_lr)
 
     # Train VAE on observation trace
-    data_manager = DataManager(observation_sub_dir = f'env_pysc2/observations/{map}', results_sub_dir = f'env_pysc2/results_vae/{map}')
+    data_manager = DataManager(observation_sub_dir = f'/content/drive/MyDrive/Thesis/Code/PySC2/Observations/{map}', results_sub_dir = f'env_pysc2/results_vae/{map}')
     observation_trace = data_manager.get_observations()
     vae_manager.train_on_trace(observation_trace)
 
@@ -92,3 +92,10 @@ def get_agent(strategy, env, shield, max_steps, max_episodes, train, train_compo
         agent = PPOAgentLoop(env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy)
     return agent_class_name, agent
 
+if __name__ == "__main__":
+    train_vae("MoveToBeacon", 32*32)
+    print("Training done. Loading stored VAE and training again.")
+    vae_manager = get_component("MoveToBeacon", 32*32)
+    data_manager = DataManager(observation_sub_dir = f'/content/drive/MyDrive/Thesis/Code/PySC2/Observations/{map}', results_sub_dir = f'env_pysc2/results_vae/{map}')
+    observation_trace = data_manager.get_observations()
+    vae_manager.train_on_trace(observation_trace)

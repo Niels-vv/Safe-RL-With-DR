@@ -197,6 +197,7 @@ class VaeManager():
                 row = np.expand_dims(row, 0)  
             batch.append(row)
             if len(batch) % self.batch_size == 0:
+                print(f'Training observations {i-self.batch_size} - {i}')
                 batch = np.array(batch)
                 #self.train_step(torch.tensor(batch, dtype=torch.float, device=device))
                 self.train_step(torch.from_numpy(batch).to(device).float())
