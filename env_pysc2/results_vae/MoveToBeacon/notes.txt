@@ -1,0 +1,5 @@
+vae1: eindigend in linear layer naar latent space 256. Heeft loss van ong 2
+
+vae2: alleen conv in encoder en conv2transpose in decoder. Heeft loss van 0.1
+
+vae3: encoder 2 convs, 1 naar c_hid=32, terug naar 1 en decoder conv2dtranspose naar c_hid=32 en conv2d naar c_hid=1. Los van ong 3

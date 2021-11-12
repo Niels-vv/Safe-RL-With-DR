@@ -46,8 +46,10 @@ class VAE(nn.Module):
         self.encoder = nn.Sequential(
             nn.Conv2d(1, c_hid, kernel_size=3, padding=1, stride=2), # 32x32 => 16x16
             act_fn(),
-            nn.Flatten(), # Image grid to single feature vector
-            nn.Linear(256*c_hid, latent_dim)
+            nn.Conv2d(c_hid, 1, kernel_size=3, padding=1, stride=1),
+            act_fn(),
+            #nn.Flatten(), # Image grid to single feature vector
+            #nn.Linear(256*c_hid, latent_dim)
         )
 
         #self.fc_mu = nn.Linear(hidden_dims[-1], latent_dim)
@@ -73,12 +75,14 @@ class VAE(nn.Module):
 
 
         #self.decoder = nn.Sequential(*modules)
-        self.linear = nn.Sequential(
-            nn.Linear(latent_dim, 256*c_hid),
-            act_fn()
-        )
+        #self.linear = nn.Sequential(
+        #    nn.Linear(latent_dim, 256*c_hid),
+         #   act_fn()
+        #)
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(c_hid, 1, kernel_size=3, output_padding=1, padding=1, stride=2), # 16x16 => 32x32
+            nn.ConvTranspose2d(1, c_hid, kernel_size=3, output_padding=1, padding=1, stride=2), # 16x16 => 32x32
+            act_fn(),
+            nn.Conv2d(c_hid, 1, kernel_size=3, padding=1, stride=1)
             #nn.Tanh() # The input images is scaled between -1 and 1, hence the output has to be bounded as well
         )
         # self.final_layer = nn.Sequential(
@@ -113,9 +117,9 @@ class VAE(nn.Module):
         ##result = result.view(-1, 512, 2, 2)
         #result = self.decoder(result)
         #result = self.final_layer(result)
-        x = self.linear(z)
-        x = x.reshape(x.shape[0], -1, 16, 16)
-        result = self.decoder(x)
+        #x = self.linear(z)
+        #x = x.reshape(x.shape[0], -1, 16, 16)
+        result = self.decoder(z)
         return result
 
     def reparameterize(self, mu, logvar):

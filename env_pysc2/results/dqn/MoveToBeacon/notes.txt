@@ -1,5 +1,15 @@
 1-6 zijn normale dqn agents
+vae_1: agent met vae3
 
 Experiment gedaan met pca getraind met scalar en een pca getraind zonder scalar (onopgeslagen): latent space 256, met conv2dtranspose stride 2 padding 1 output padding 1
 	Gaf random agent
 	
+Met vae:
+	vae1 die eindigt in linear layer naar latent space; agent die begint met linear layer en dan conv2dtranspose en dan 2 convs: random
+	Agent met diezelfde Vae die obs recontrueert naar 32x32 leert wel goed
+	agent die linear layer overslaat: random
+	
+	Vae2 (loss 0.1) die alleen conv in encoder heeft; agent die begint met conv2dtranspose. Wel chid = 32 (channels). Traint goed! (niet opgeslagen)
+	
+	vae3 (loss 3.0) die 2 conv in encoder heeft van 32 naar 1 chid channel. 
+		Agent die begint met conv2dtranspose c_hid 1 naar 1 en dan de 3 convs van 1, 24, dan 24,24, dan 24,1: leert redelijk maar langzaam vanaf 480 15-24

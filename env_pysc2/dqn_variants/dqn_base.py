@@ -123,7 +123,7 @@ class AgentLoop(Agent):
     def run_agent(self):
         print("Running dqn")
         # Setup file storage
-        if not self.train:
+        if self.train:
             self.data_manager = DataManager(results_sub_dir=f'env_pysc2/results/dqn/{self.map}')
             self.data_manager.create_results_files()
         else:
@@ -133,7 +133,7 @@ class AgentLoop(Agent):
         rewards, epsilons, durations = self.run_loop()
 
         # Store results
-        if not self.train:
+        if self.train:
             variant = {'pca' : self.pca, 'vae' : self.vae, 'shield' : self.shield, 'latent_space' : self.latent_space}
             print("Rewards history:")
             for r in rewards:
@@ -158,8 +158,8 @@ class AgentLoop(Agent):
                     state = torch.tensor(state, dtype=torch.float, device=device)
                     state = self.dim_reduction_component.state_dim_reduction(state)
                     state = state.detach().cpu().numpy()
-                    #state = torch.reshape(state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).cpu().numpy()
-                #state = np.expand_dims(state, 0)
+                    #state = torch.reshape(state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
+                state = np.expand_dims(state, 0)
                 
                 # A step in an episode
                 while self.step < self.max_steps:
@@ -182,9 +182,10 @@ class AgentLoop(Agent):
                     new_state = obs.observation.feature_screen.player_relative              
                     if self.reduce_dim:
                         new_state = torch.tensor(new_state, dtype=torch.float, device=device)
-                        new_state = self.dim_reduction_component.state_dim_reduction(new_state).detach().cpu().numpy()
-                        #new_state = torch.reshape(new_state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).cpu().numpy()
-                    #new_state = np.expand_dims(new_state, 0)   
+                        new_state = self.dim_reduction_component.state_dim_reduction(new_state)
+                        new_state = new_state.detach().cpu().numpy()
+                        #new_state = torch.reshape(new_state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
+                    new_state = np.expand_dims(new_state, 0)   
 
                     reward = obs.reward
                     #reward = -1 if terminal else reward

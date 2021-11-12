@@ -98,12 +98,12 @@ def get_agent(strategy, env, shield, max_steps, max_episodes, train, train_compo
 
 if __name__ == "__main__":
     print("Setup training VAE")
-    #train_vae("MoveToBeacon", 32*32)
+    train_vae("MoveToBeacon", 32*32)
     print("Done training and storing VAE")
-    va = get_component("MoveToBeacon", 32*32)
-    data_manager = DataManager(observation_sub_dir = f'/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon', results_sub_dir = f'env_pysc2/results_vae/MoveToBeacon')
-    observation_trace = data_manager.get_observations()
-    print("Training VAE...")
-    va.train_on_trace(observation_trace)
+    #va = get_component("MoveToBeacon", 32*32)
+    #data_manager = DataManager(observation_sub_dir = f'/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon', results_sub_dir = f'env_pysc2/results_vae/MoveToBeacon')
+    #observation_trace = data_manager.get_observations()
+    #print("Training VAE...")
+    #va.train_on_trace(observation_trace)
 
     
