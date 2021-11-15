@@ -7,9 +7,17 @@ Experiment gedaan met pca getraind met scalar en een pca getraind zonder scalar 
 Met vae:
 	vae1 die eindigt in linear layer naar latent space; agent die begint met linear layer en dan conv2dtranspose en dan 2 convs: random
 	Agent met diezelfde Vae die obs recontrueert naar 32x32 leert wel goed
-	agent die linear layer overslaat: random
+	agent die linear layer overslaat: random (niet opgeslagen)
 	
 	Vae2 (loss 0.1) die alleen conv in encoder heeft; agent die begint met conv2dtranspose. Wel chid = 32 (channels). Traint goed! (niet opgeslagen)
 	
-	vae3 (loss 3.0) die 2 conv in encoder heeft van 32 naar 1 chid channel. 
-		Agent die begint met conv2dtranspose c_hid 1 naar 1 en dan de 3 convs van 1, 24, dan 24,24, dan 24,1: leert redelijk maar langzaam vanaf 480 15-24
+	1: vae3 
+		Agent: conv2dtranspose c_hid 1 naar 1 en dan de 3 convs van 1, 24, dan 24,24, dan 24,1: leert redelijk maar langzaam vanaf 480 15-24
+		
+	2: vae4 
+		Agent: conv2dtrans c_hid 1 naar 32, conv2d 32 naar 32, conv2d 32 naar 1: op en neer: van 0-4 naar 10-15 en terug; vanaf 530 meer steady en richting 20
+	
+	Opgeslagen:
+		
+	vae_1: vae5
+		Agent: conv2dtrans c_hid 1 naar 32, convd 32 naar 32, conv2d 32 naar 1: vanaf 200 rond de 20, vanaf 300 steady 20+

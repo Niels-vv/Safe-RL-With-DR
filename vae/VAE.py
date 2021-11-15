@@ -82,7 +82,10 @@ class VAE(nn.Module):
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(1, c_hid, kernel_size=3, output_padding=1, padding=1, stride=2), # 16x16 => 32x32
             act_fn(),
+            nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1, stride=1),
+            act_fn(),
             nn.Conv2d(c_hid, 1, kernel_size=3, padding=1, stride=1)
+            
             #nn.Tanh() # The input images is scaled between -1 and 1, hence the output has to be bounded as well
         )
         # self.final_layer = nn.Sequential(

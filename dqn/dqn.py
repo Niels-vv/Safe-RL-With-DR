@@ -25,11 +25,11 @@ class MlpPolicy(nn.Module):
         #    nn.Linear(latent_dim, 256*c_hid),
         #    act_fn()
         #)
-        self.conv0 = nn.ConvTranspose2d(1, 1, kernel_size=3, stride=2, padding=1, output_padding = 1)
-        #self.conv0 = nn.ConvTranspose2d(1, 1, kernel_size=3, stride=1, padding=1)
-        self.conv1 = nn.Conv2d(1, 24, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(24, 24, kernel_size=3, stride=1, padding=1)
-        self.conv3 = nn.Conv2d(24, 1, kernel_size=3, stride=1, padding=1)
+        self.conv0 = nn.ConvTranspose2d(1, c_hid, kernel_size=3, stride=2, padding=1, output_padding = 1)
+        #self.conv0 = nn.ConvTranspose2d(1, c_hid, kernel_size=3, stride=1, padding=1)
+        #self.conv1 = nn.Conv2d(1, 24, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(c_hid, c_hid, kernel_size=3, stride=1, padding=1)
+        self.conv3 = nn.Conv2d(c_hid, 1, kernel_size=3, stride=1, padding=1)
         self.name = 'BeaconCNN'
         self.conv = True # Whether we're using a conv or linear output layer. Needed in def train_q(self)
 
@@ -37,7 +37,7 @@ class MlpPolicy(nn.Module):
         #x = self.linear(x)
         #x = x.reshape(x.shape[0], -1, 16, 16)
         x = F.relu(self.conv0(x))
-        x = F.relu(self.conv1(x))
+        #x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         x = self.conv3(x)
         return x
