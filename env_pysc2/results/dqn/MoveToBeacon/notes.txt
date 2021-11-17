@@ -1,5 +1,5 @@
-1-6 zijn normale dqn agents
-vae_1: agent met vae3
+1: agent behorend bij vae_1 setup: conv2dtrans c_hid 1 naar 32, convd 32 naar 32, conv2d 32 naar 1
+
 
 Experiment gedaan met pca getraind met scalar en een pca getraind zonder scalar (onopgeslagen): latent space 256, met conv2dtranspose stride 2 padding 1 output padding 1
 	Gaf random agent
@@ -20,4 +20,4 @@ Met vae:
 	Opgeslagen:
 		
 	vae_1: vae5
-		Agent: conv2dtrans c_hid 1 naar 32, convd 32 naar 32, conv2d 32 naar 1: vanaf 200 rond de 20, vanaf 300 steady 20+
+		Agent: conv2dtrans c_hid 1 naar 32 (met stride 2 en output padding 1), convd 32 naar 32, conv2d 32 naar 1: vanaf 200 rond de 20, vanaf 300 steady 20+
