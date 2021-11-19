@@ -25,7 +25,7 @@ class VAE(nn.Module):
 
         self.conv = True # Whether we are using input for CNN or linear
         self.latent_dim = latent_dim
-        out_channels = in_channels
+        #out_channels = in_channels
 
         modules = []
         if hidden_dims is None:
