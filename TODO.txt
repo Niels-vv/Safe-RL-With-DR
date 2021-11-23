@@ -1,0 +1,17 @@
+### Code opschonen:
+	- Check hoe je code moet aanroepen wanneer je t niet vanuit notebook doet maar lokaal en zet dit in readme van github
+	- Credits voor code
+	- Train sub component (pca/vae) uit agentrunner halen en direct aanroepen via vae_agent / pca_agent (dus in main fixen) met map en obs space als arguments
+	- Plot printen na trainen
+	- vae opschonen: ongebruikte code verwijderen, inclusief parameters zoals vae argument in_channels. VAE -> AE
+	- obs_dir als argument aangezien die in drive staat
+
+### Generalisering:
+	- PPO specifiek voor movetobeacon uitbreiden naar alle minigames/obs+actions; dus dan iets van van network voor player_relative in + move_screen out naar algemeen network. Zie https://github.com/haroldmei/pysc2-study en https://github.com/simonmeister/pysc2-rl-agents/blob/master/run.py en https://github.com/pekaalto/sc2aibot
+
+### Shielding:
+	- Scripted agent maken die unsafe states vermijdt, zodat je idee hebt van beste policy score
+	
+### Algoritme
+	- Is t DQN, double DQN, en/of dueling dqn?
+	
