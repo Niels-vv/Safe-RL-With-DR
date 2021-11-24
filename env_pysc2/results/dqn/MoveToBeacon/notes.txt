@@ -1,4 +1,5 @@
 1: agent behorend bij vae_1 setup: conv2dtrans c_hid 1 naar 32, convd 32 naar 32, conv2d 32 naar 1
+vae_1: agent gebruikmakend van vae5
 
 
 Experiment gedaan met pca getraind met scalar en een pca getraind zonder scalar (onopgeslagen): latent space 256, met conv2dtranspose stride 2 padding 1 output padding 1
