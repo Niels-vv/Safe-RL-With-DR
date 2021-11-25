@@ -122,92 +122,77 @@ class AEAnalysis:
                 states = []
                 print("Retrieving states and reduced states...")
         print("Done calculating and storing correlation matrices")
-        
-    #TODO remove one or the other visualisation method
-    @staticmethod
-    def visualize_feature_maps_backup(model, obs_dir):
-        def visualize_layers(layer_results):
-            i = 1
-            for num_layer in range(len(layer_results)):
-                print(f'Feature maps for conv layer {i}')
-                plt.figure(figsize=(30, 30))
-                layer_viz = layer_results[num_layer][0, :, :, :]
-                layer_viz = layer_viz.data
-                for i, filter in enumerate(layer_viz):
-                    if i == 64: # we will visualize only 8x8 blocks from each layer
-                        break
-                    plt.subplot(8, 8, i + 1)
-                    plt.imshow(filter, cmap='gray')
-                    plt.axis("off")
-                plt.close()
-                i += 1
-
-        data_manager = DataManager(observation_sub_dir = obs_dir)
-        obs = data_manager.get_observations()
-
-        conv_layers = []
-        for layer in model.encoder.layer:
-            if type(layer) == nn.Conv2d:
-                conv_layers.append(layer)
-        
-        i = 1
-        max_num_states = 1
-        for index, row in obs.iterrows():
-            state = row.reshape(32,32)
-            plt.imshow(state)
-
-            state = torch.from_numpy(row).to(device).float().unsqueeze(0).unsqueeze(0)
-            results = [conv_layers[0](state)]
-            for i in range(1, len(conv_layers)):
-                # pass the result from the last layer to the next layer
-                results.append(conv_layers[i](results[-1]))
-
-            visualize_layers(results)
-
-            i += 1
-            if i > max_num_states: break
 
     @staticmethod
     def visualize_feature_maps(model, obs_dir):
-        def normalize_output(img):
-            img = img - img.min()
-            img = img / img.max()
-            return img
+        def get_rectangle(area):
+            for width in range(int(math.ceil(math.sqrt(area))), 1, -1):
+                if (area % width == 0): break
+            return width, int(area/width)
 
         activation = {}
+        # Get feature map data
         def get_activation(name):
             def hook(model, input, output):
-                activation[name] = output.detach()
+                activation[name] = output.detach().cpu()
             return hook
 
+        print("Retrieving observations...")
         data_manager = DataManager(observation_sub_dir = obs_dir)
         obs = data_manager.get_observations()
 
+        # Get conv layers from encoder
         conv_layers = []
-        for layer in model.encoder.layer:
+        for layer in model.encoder:
             if type(layer) == nn.Conv2d:
                 conv_layers.append(layer)
-        
-        i = 1
-        max_num_states = 1
+                
+        print("Getting feature maps and storing images...")
+        max_num_states = 2
+        state_num = 0 # Number of states we have analysed
+        jump = 10996 # Take every jumpth state, as to not get similar states
         for index, row in obs.iterrows():
+            if state_num >= max_num_states: break
+            if index % jump != 0: continue
+            row = row.to_numpy()
             state = row.reshape(32,32)
-            plt.imshow(state)
 
-            state = torch.from_numpy(row).to(device).float()
+            # Store original state as image
+            norm = plt.Normalize(vmin=state.min(), vmax=state.max())
+            fig, axarr = plt.subplots(1)
+            axarr.imshow(norm(state))
+            plt.savefig(f'State_{index+1}_original.png')
+
+            state = torch.from_numpy(state).to(device).float()
             for i in range(len(conv_layers)):
                 conv_layers[i].register_forward_hook(get_activation(f'conv{i}'))
-            result = model.state_dim_reduction(state).detach().cpu().numpy()
+            model.state_dim_reduction(state)
 
+            print(f'Creating feature maps for state {state_num+1} / {max_num_states}...')
             for i in range(len(conv_layers)):
-                print(f'Feature maps for conv layer {i}')
-                act = activation[f'conv{i}'].squeeze()
-                fig, axarr = plt.subplots(act.size(0))
-                for idx in range(act.size(0)):
-                    axarr[idx].imshow(act[idx])
+                image_name = f'State_{index+1}_Layer_{i+1}_Feature_Map.png'
 
-            i += 1
-            if i > max_num_states: break
+                # Conv layer only has 1 channel/feature map
+                if (activation[f'conv{i}'].shape[1] == 1):
+                    act = activation[f'conv{i}'].squeeze()
+                    fig, axarr = plt.subplots(1)
+                    axarr.imshow(act)
+                    plt.savefig(image_name)
+                    continue
+
+                # Conv layer only has > 1 channels/feature maps: show them in a rectangle grid
+                act = activation[f'conv{i}'].squeeze()
+                width, length = get_rectangle(act.size(0))
+                fig, axarr = plt.subplots(width, length)
+                r = axarr.shape[0]
+                c = axarr.shape[1]
+                for idxi in range(r):
+                    for idxj in range(c):
+                        if idxi*c+idxj >= len(act): break
+                        axarr[idxi, idxj].imshow(act[idxi*c+idxj])
+                plt.savefig(image_name)
+
+            state_num +=1
 
     @staticmethod
     def get_component(vae_dir, vae_name):
@@ -276,5 +261,6 @@ def test():
 
 if __name__ == "__main__":
     #show_reduced_features_correlation()
-    test()
+    show_feature_map_ae()
+    #test()
     

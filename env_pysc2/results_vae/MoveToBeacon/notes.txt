@@ -9,3 +9,5 @@ vae4: enncoder 3 convs: c_hid 1 naar 32, 32 naar 32, 32 naar 1 . Decoder conv2dt
 vae5: encoder 2 convs, 1 naar c_hid=32, terug naar 1 en decoder conv2dtranspose c_hid = 1 naar 32, conv2d 32 naar 32, conv2d 32 naar, loss van ong 0.98
 
 Correlation matrices 1-3: vae5
+
+Feature maps: vae5
