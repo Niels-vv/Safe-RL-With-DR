@@ -59,6 +59,7 @@ class AgentLoop(Agent):
         self.shield = shield
         self.pca = False
         self.vae = False
+        self.deepmdp = False
         self.dim_reduction_component = dim_reduction_component
         self.map = map_name
 

@@ -16,7 +16,7 @@ class DQNAgentLoop(DQNAgent):
         screen_size_y = env.observation_spec()[0].feature_screen[1]
         self.observation_space = screen_size_x * screen_size_y # iets met flatten van env.observation_spec() #TODO incorrect
             
-        if not train_component: # We're not training vae, but using it in PPO
+        if not train_component: # We're not training vae, but using it in DQN
             vae_component = get_component(map_name, self.observation_space)
             latent_space = vae_component.latent_space
             print(f'Latent space: {latent_space}')

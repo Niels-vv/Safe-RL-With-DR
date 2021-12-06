@@ -7,6 +7,7 @@
 	- obs_dir als argument aangezien die in drive staat
 	- Resultsmanager aanpassen; in notebook nu main aanroepen voor verschillende doeleindes
 	- Resultsmanager: visualize_feature_maps aanpassen/verkleinen
+	- Linear dingen en PPO weghalen als ongebruikt is
 
 ### Generalisering:
 	- PPO specifiek voor movetobeacon uitbreiden naar alle minigames/obs+actions; dus dan iets van van network voor player_relative in + move_screen out naar algemeen network. Zie https://github.com/haroldmei/pysc2-study en https://github.com/simonmeister/pysc2-rl-agents/blob/master/run.py en https://github.com/pekaalto/sc2aibot

@@ -10,7 +10,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class DQNAgentLoop(DQNAgent):
     def __init__(self, env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy):
-        if not train_component: # We're not training PCA, but using it in PPO
+        if not train_component: # We're not training PCA, but using it in DQN
             pca_component = get_component(map_name)
             latent_space = pca_component.latent_space
             print(f'PCA latent space: {latent_space}')
