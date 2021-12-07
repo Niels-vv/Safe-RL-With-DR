@@ -36,10 +36,16 @@ class MlpPolicy(nn.Module):
                 nn.Conv2d(c_hid, 1, kernel_size=3, padding=1, stride=1),
                 act_fn()
             )
-        self.conv0 = nn.ConvTranspose2d(1, c_hid, kernel_size=3, stride=2, padding=1, output_padding = 1) # 16 x 16 => 32 x 32
-        #self.conv0 = nn.ConvTranspose2d(1, c_hid, kernel_size=3, stride=1, padding=1) # 32 x 32 => 32 x 32
-        self.conv2 = nn.Conv2d(c_hid, c_hid, kernel_size=3, stride=1, padding=1)
-        self.conv3 = nn.Conv2d(c_hid, 1, kernel_size=3, stride=1, padding=1)
+
+        self.mlp = nn.Sequential(
+            nn.ConvTranspose2d(1, c_hid, kernel_size=3, stride=2, padding=1, output_padding = 1), # 16 x 16 => 32 x 32
+            #self.conv0 = nn.ConvTranspose2d(1, c_hid, kernel_size=3, stride=1, padding=1), # 32 x 32 => 32 x 32
+            F.relu(),
+            nn.Conv2d(c_hid, c_hid, kernel_size=3, stride=1, padding=1),
+            F.relu(),
+            nn.Conv2d(c_hid, 1, kernel_size=3, stride=1, padding=1)
+        )
+        
         self.name = 'BeaconCNN'
         self.conv = True # Whether we're using a conv or linear output layer. Needed in def train_q(self)
 
@@ -48,10 +54,7 @@ class MlpPolicy(nn.Module):
         #x = x.reshape(x.shape[0], -1, 16, 16)
         if self.deepmdp:
             z = self.encoder(z)
-        x = F.relu(self.conv0(z))
-        #x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = self.conv3(x)
+        x = self.mlp(z)
         if return_deepmdp:
             return z, x
         else:
@@ -81,7 +84,6 @@ class Agent(AgentConfig):
         self.max_episodes = max_episodes
         self.policy_network = MlpPolicy(self.latent_space, self.observation_space).to(self.device)
         self.target_network = copy.deepcopy(self.policy_network)
-        self.auxiliaryObjective = None # Only used for DeepMDP (initialized in def setup_deepmdp(self))
         self.optimizer = optim.RMSprop(self.policy_network.parameters(), lr = self.config['lr'])
         self.epsilon = Epsilon(start=1.0, end=0.1, decay_steps=self.config['decay_steps'])
         self.loss = deque(maxlen=int(1e5))
@@ -92,6 +94,10 @@ class Agent(AgentConfig):
         self.criterion = nn.MSELoss()
         self.max_gradient_norm = float('inf')
         self.memory = ReplayMemory(50000)
+
+        # DeepMDP
+        self.auxiliaryObjective = None # Only used for DeepMDP (initialized in def setup_deepmdp(self))
+        self.penalty = 0.01
 
         self.data_manager = None
         self.deepmdp = False
@@ -148,8 +154,8 @@ class Agent(AgentConfig):
         done = torch.from_numpy(done).to(self.device).float()
 
         if self.policy_network.conv:
-            embed, Q = self.policy_network(s, return_deepmdp = True).view(self.config['train_q_batch_size'], -1)
-            Qt = self.target_network(s_1).view(self.config['train_q_batch_size'], -1).detach()
+            state_embeds, Q = self.policy_network(s, return_deepmdp = True).view(self.config['train_q_batch_size'], -1)
+            next_state_embeds, Qt = self.target_network(s_1, return_deepmdp = True).view(self.config['train_q_batch_size'], -1).detach()
             best_action = self.policy_network(s_1).view(self.config['train_q_batch_size'], -1).max(1)[1]
         else:
             Q = self.policy_network(s) #TODO Not done for deepmdp; remove linear stuff if not used
@@ -165,7 +171,20 @@ class Agent(AgentConfig):
         td_error = Q - y
         loss = 0
         if self.deepmdp:
-            loss = self.auxiliaryObjective.compute_loss(embed)
+            loss += self.auxiliaryObjective.compute_loss(state_embeds, next_state_embeds, a)
+
+            new_states, _, _, _, _ = self.memory.sample(self.config['train_q_batch_size'])
+            loss += self.compute_gradient_penalty()
+            with torch.no_grad():
+                new_state_embeds, _ = self.policy_network(new_states, return_deepmdp = True)
+                new_state_embeds = torch.from_numpy(new_state_embeds).to(self.device).float()
+
+            gradient_penalty = 0
+            gradient_penalty += self.compute_gradient_penalty(self.policy_network.encoder, s, new_states)
+            gradient_penalty += self.compute_gradient_penalty(self.policy_network.mlp, state_embeds, new_state_embeds)
+            gradient_penalty += self.compute_gradient_penalty(self.auxiliaryObjective.network, state_embeds, new_state_embeds)
+            loss += self.penalty * gradient_penalty
+
         loss += td_error.pow(2).mul(0.5).mean()
 
         self.loss.append(loss.sum().cpu().data.numpy())
@@ -176,28 +195,29 @@ class Agent(AgentConfig):
                                        self.max_gradient_norm)
         self.optimizer.step()
 
-    def compute_gradient_penalty(self, samples_a, samples_b):
+    def compute_gradient_penalty(self, network, samples_a, samples_b):
         # https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/wgan_gp/wgan_gp.py
 
         """Calculates the gradient penalty loss for WGAN GP"""
         # Random weight term for interpolation between real and fake samples
+        batch_size = samples_a.size(0)
         alpha = torch.rand_like(samples_a)
         # Get random interpolation between real and fake samples
         interpolates = (alpha * samples_a + ((1 - alpha) * samples_b))
         interpolated_obs = torch.autograd.Variable(interpolates, requires_grad=True)
 
-        d_interpolates = D(interpolates)
-        fake = Variable(Tensor(real_samples.shape[0], 1).fill_(1.0), requires_grad=False)
-        
+        d_interpolates = network(interpolated_obs)
+        grad = torch.ones(d_interpolates.size(), requires_grad=False).to(self.device)
+
         # Get gradient w.r.t. interpolates
-        gradients = autograd.grad(
+        gradients = torch.autograd.grad(
             outputs=d_interpolates,
-            inputs=interpolates,
-            grad_outputs=fake,
+            inputs=interpolated_obs,
+            grad_outputs=grad,
             create_graph=True,
             retain_graph=True,
             only_inputs=True,
         )[0]
-        gradients = gradients.view(gradients.size(0), -1)
+        gradients = gradients.view(int(batch_size), -1)
         gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
         return gradient_penalty
