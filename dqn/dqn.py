@@ -1,13 +1,15 @@
-from deepmdp.TransitionAux import TransitionAux
 import torch, copy
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import abc
-from utils.Epsilon import Epsilon
-from utils.ReplayMemory import ReplayMemory
 from collections import deque
 import numpy as np
+from utils.Epsilon import Epsilon
+from utils.ReplayMemory import ReplayMemory
+from deepmdp.DeepMDP import TransitionAux
+from deepmdp.DeepMDP import compute_deepmdp_loss
+
 
 # Based on https://github.com/alanxzhou/sc2bot/blob/master/sc2bot/agents/rl_agent.py
 # DeepMDP based on paper en https://github.com/MkuuWaUjinga/DeepMDP-SSL4RL
@@ -96,7 +98,8 @@ class Agent(AgentConfig):
         self.memory = ReplayMemory(50000)
 
         # DeepMDP
-        self.auxiliaryObjective = None # Only used for DeepMDP (initialized in def setup_deepmdp(self))
+        self.auxiliary_objective = None # Only used for DeepMDP (initialized in def setup_deepmdp(self))
+        self.params = None
         self.penalty = 0.01
 
         self.data_manager = None
@@ -114,9 +117,9 @@ class Agent(AgentConfig):
         self.deepmdp = True
         self.policy_network = MlpPolicy(self.latent_space, self.observation_space, deepmdp = True).to(self.device)
         self.target_network = copy.deepcopy(self.policy_network)
-        self.auxiliaryObjective = TransitionAux()
-        params = self.policy_network.parameters() + self.aux.network.parameters()
-        self.optimizer = optim.RMSprop(params, lr = self.config['lr'])
+        self.auxiliary_objective = TransitionAux(self.device)
+        self.params = self.policy_network.parameters() + self.aux.network.parameters()
+        self.optimizer = optim.RMSprop(self.params, lr = self.config['lr'])
 
     def load_policy_checkpoint(self, checkpoint):
         self.policy_network.load_state_dict(checkpoint['policy_model_state_dict'])
@@ -154,9 +157,12 @@ class Agent(AgentConfig):
         done = torch.from_numpy(done).to(self.device).float()
 
         if self.policy_network.conv:
-            state_embeds, Q = self.policy_network(s, return_deepmdp = True).view(self.config['train_q_batch_size'], -1)
-            next_state_embeds, Qt = self.target_network(s_1, return_deepmdp = True).view(self.config['train_q_batch_size'], -1).detach()
+            Q = self.policy_network(s, return_deepmdp = self.deepmdp).view(self.config['train_q_batch_size'], -1)
+            Qt = self.target_network(s_1).view(self.config['train_q_batch_size'], -1).detach()
             best_action = self.policy_network(s_1).view(self.config['train_q_batch_size'], -1).max(1)[1]
+            if self.deepmdp:
+                state_embeds = Q[0]
+                Q = Q[1]
         else:
             Q = self.policy_network(s) #TODO Not done for deepmdp; remove linear stuff if not used
             Qt = self.target_network(s_1).detach()
@@ -171,53 +177,21 @@ class Agent(AgentConfig):
         td_error = Q - y
         loss = 0
         if self.deepmdp:
-            loss += self.auxiliaryObjective.compute_loss(state_embeds, next_state_embeds, a)
+            print(f'States mem: {s.shape}')
+            print(f'actions mem: {a.shape}')
+            print(f'Q values {Q.shape}')
+            print(f'States embed: {state_embeds.shape}')
 
             new_states, _, _, _, _ = self.memory.sample(self.config['train_q_batch_size'])
-            loss += self.compute_gradient_penalty()
-            with torch.no_grad():
-                new_state_embeds, _ = self.policy_network(new_states, return_deepmdp = True)
-                new_state_embeds = torch.from_numpy(new_state_embeds).to(self.device).float()
-
-            gradient_penalty = 0
-            gradient_penalty += self.compute_gradient_penalty(self.policy_network.encoder, s, new_states)
-            gradient_penalty += self.compute_gradient_penalty(self.policy_network.mlp, state_embeds, new_state_embeds)
-            gradient_penalty += self.compute_gradient_penalty(self.auxiliaryObjective.network, state_embeds, new_state_embeds)
-            loss += self.penalty * gradient_penalty
-
+            loss += compute_deepmdp_loss(self.policy_network, self.auxiliary_objective, s, s_1, a, state_embeds, new_states, self.penalty, self.device)
+            print(f'Loss after deepmdp {loss}')
         loss += td_error.pow(2).mul(0.5).mean()
+        print(f'Final loss {loss}')
 
         self.loss.append(loss.sum().cpu().data.numpy())
         self.max_q.append(Q.max().cpu().data.numpy().reshape(-1)[0])
         self.optimizer.zero_grad()  # zero the gradient buffers
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy_network.parameters(), 
-                                       self.max_gradient_norm)
+        parameters = self.params if self.deepmdp else self.policy_network.parameters()
+        torch.nn.utils.clip_grad_norm_(parameters, self.max_gradient_norm)
         self.optimizer.step()
-
-    def compute_gradient_penalty(self, network, samples_a, samples_b):
-        # https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/wgan_gp/wgan_gp.py
-
-        """Calculates the gradient penalty loss for WGAN GP"""
-        # Random weight term for interpolation between real and fake samples
-        batch_size = samples_a.size(0)
-        alpha = torch.rand_like(samples_a)
-        # Get random interpolation between real and fake samples
-        interpolates = (alpha * samples_a + ((1 - alpha) * samples_b))
-        interpolated_obs = torch.autograd.Variable(interpolates, requires_grad=True)
-
-        d_interpolates = network(interpolated_obs)
-        grad = torch.ones(d_interpolates.size(), requires_grad=False).to(self.device)
-
-        # Get gradient w.r.t. interpolates
-        gradients = torch.autograd.grad(
-            outputs=d_interpolates,
-            inputs=interpolated_obs,
-            grad_outputs=grad,
-            create_graph=True,
-            retain_graph=True,
-            only_inputs=True,
-        )[0]
-        gradients = gradients.view(int(batch_size), -1)
-        gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
-        return gradient_penalty
