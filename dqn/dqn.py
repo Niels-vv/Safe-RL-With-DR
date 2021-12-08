@@ -3,8 +3,9 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import abc
-from collections import deque
 import numpy as np
+from collections import deque
+from itertools import chain
 from utils.Epsilon import Epsilon
 from utils.ReplayMemory import ReplayMemory
 from deepmdp.DeepMDP import TransitionAux
@@ -42,9 +43,9 @@ class MlpPolicy(nn.Module):
         self.mlp = nn.Sequential(
             nn.ConvTranspose2d(1, c_hid, kernel_size=3, stride=2, padding=1, output_padding = 1), # 16 x 16 => 32 x 32
             #self.conv0 = nn.ConvTranspose2d(1, c_hid, kernel_size=3, stride=1, padding=1), # 32 x 32 => 32 x 32
-            F.relu(),
+            nn.ReLU(),
             nn.Conv2d(c_hid, c_hid, kernel_size=3, stride=1, padding=1),
-            F.relu(),
+            nn.ReLU(),
             nn.Conv2d(c_hid, 1, kernel_size=3, stride=1, padding=1)
         )
         
@@ -118,8 +119,8 @@ class Agent(AgentConfig):
         self.policy_network = MlpPolicy(self.latent_space, self.observation_space, deepmdp = True).to(self.device)
         self.target_network = copy.deepcopy(self.policy_network)
         self.auxiliary_objective = TransitionAux(self.device)
-        self.params = self.policy_network.parameters() + self.aux.network.parameters()
-        self.optimizer = optim.RMSprop(self.params, lr = self.config['lr'])
+        self.params = [self.policy_network.parameters()] + [self.auxiliary_objective.network.parameters()]
+        self.optimizer = optim.RMSprop(chain(*self.params), lr = self.config['lr'])
 
     def load_policy_checkpoint(self, checkpoint):
         self.policy_network.load_state_dict(checkpoint['policy_model_state_dict'])
@@ -157,12 +158,13 @@ class Agent(AgentConfig):
         done = torch.from_numpy(done).to(self.device).float()
 
         if self.policy_network.conv:
-            Q = self.policy_network(s, return_deepmdp = self.deepmdp).view(self.config['train_q_batch_size'], -1)
+            Q = self.policy_network(s, return_deepmdp = self.deepmdp)
             Qt = self.target_network(s_1).view(self.config['train_q_batch_size'], -1).detach()
             best_action = self.policy_network(s_1).view(self.config['train_q_batch_size'], -1).max(1)[1]
             if self.deepmdp:
                 state_embeds = Q[0]
                 Q = Q[1]
+            Q = Q.view(self.config['train_q_batch_size'], -1)
         else:
             Q = self.policy_network(s) #TODO Not done for deepmdp; remove linear stuff if not used
             Qt = self.target_network(s_1).detach()
@@ -175,23 +177,19 @@ class Agent(AgentConfig):
         y = r + (self.config['gamma'] * max_a_q_sp * (1-done))
         
         td_error = Q - y
-        loss = 0
-        if self.deepmdp:
-            print(f'States mem: {s.shape}')
-            print(f'actions mem: {a.shape}')
-            print(f'Q values {Q.shape}')
-            print(f'States embed: {state_embeds.shape}')
+        loss = td_error.pow(2).mul(0.5).mean()
 
+        if self.deepmdp:
             new_states, _, _, _, _ = self.memory.sample(self.config['train_q_batch_size'])
+            new_states  = torch.from_numpy(new_states).to(self.device).float()
+            #print(f'Loss before deepmdp {loss}')
             loss += compute_deepmdp_loss(self.policy_network, self.auxiliary_objective, s, s_1, a, state_embeds, new_states, self.penalty, self.device)
-            print(f'Loss after deepmdp {loss}')
-        loss += td_error.pow(2).mul(0.5).mean()
-        print(f'Final loss {loss}')
+            #print(f'Loss after deepmdp {loss}')
 
         self.loss.append(loss.sum().cpu().data.numpy())
         self.max_q.append(Q.max().cpu().data.numpy().reshape(-1)[0])
         self.optimizer.zero_grad()  # zero the gradient buffers
         loss.backward()
-        parameters = self.params if self.deepmdp else self.policy_network.parameters()
+        parameters = chain(*self.params) if self.deepmdp else self.policy_network.parameters()
         torch.nn.utils.clip_grad_norm_(parameters, self.max_gradient_norm)
         self.optimizer.step()

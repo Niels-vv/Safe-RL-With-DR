@@ -11,7 +11,7 @@ class TransitionAux(nn.Module):
 
         zero_pad = torch.nn.ZeroPad2d((0, 1, 0, 1)) # maintain input dimensionality.
         conv = torch.nn.Conv2d(in_channels = self.c_hid, out_channels = self.c_hid * self.action_dim,kernel_size = 2, stride = 1).to(device)
-        self.network = torch.nn.Sequential(zero_pad, conv, F.relu())
+        self.network = torch.nn.Sequential(zero_pad, conv, nn.ReLU())
 
     def compute_loss(self, embedding, embedding_next_observation, actions):
         """
@@ -23,18 +23,15 @@ class TransitionAux(nn.Module):
         """
         preds = self.network(embedding)
 
-        print(f'Auxiliary preds shape: {preds.shape}')
-
         batch_size = actions.size(0)
         # Reshape tensor: B x act * channels ... --> B x channels x ... x act
         preds = preds.unsqueeze(len(preds.size())).reshape(batch_size, self.c_hid, *preds.size()[2:4], self.action_dim)
-        print(f'Auxiliary preds shape: {preds.shape}')
 
         loss_func = torch.nn.SmoothL1Loss()
         loss = 0
         for i, act in enumerate(actions):
             predicted__next_observation_embedding = preds[i, ..., int(act.item())].squeeze()
-            ground_truth_embedding = embedding_next_observation[i, ...]
+            ground_truth_embedding = embedding_next_observation[i, ...].squeeze()
             assert(ground_truth_embedding.size() == predicted__next_observation_embedding.size())
             loss += loss_func(predicted__next_observation_embedding, ground_truth_embedding)
         return loss
@@ -47,21 +44,20 @@ def compute_deepmdp_loss(policy_network, auxiliary_objective, s, s_1, actions, s
         next_state_embeds, _ = policy_network(s_1, return_deepmdp = True)
     loss += auxiliary_objective.compute_loss(state_embeds, next_state_embeds, actions)
     
-    print(f'Loss after auxiliary: {loss}')
+    #print(f'Loss after auxiliary: {loss}')
 
-    
     with torch.no_grad():
         new_state_embeds, _ = policy_network(new_states, return_deepmdp = True)
-        new_state_embeds = torch.from_numpy(new_state_embeds).to(device).float()
-
+        
     gradient_penalty = 0
     gradient_penalty += compute_gradient_penalty(policy_network.encoder, s, new_states, device)
-    print(f'Gradient penalty after encoder: {gradient_penalty}')
+    #print(f'Gradient penalty after encoder: {gradient_penalty}')
     gradient_penalty += compute_gradient_penalty(policy_network.mlp, state_embeds, new_state_embeds, device)
-    print(f'Gradient penalty after dqn mlp: {gradient_penalty}')
+    #print(f'Gradient penalty after dqn mlp: {gradient_penalty}')
     gradient_penalty += compute_gradient_penalty(auxiliary_objective.network, state_embeds, new_state_embeds, device)
-    print(f'Gradient penalty after auxiliary: {gradient_penalty}')
+    #print(f'Gradient penalty after auxiliary: {gradient_penalty}')
     loss += penalty * gradient_penalty
+    return loss
 
 # Helper function computing Wasserstein Generative Adversarial Network penalty
 def compute_gradient_penalty(network, samples_a, samples_b, device):
@@ -89,4 +85,5 @@ def compute_gradient_penalty(network, samples_a, samples_b, device):
         )[0]
         gradients = gradients.view(int(batch_size), -1)
         gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
+        
         return gradient_penalty
