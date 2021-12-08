@@ -33,6 +33,7 @@ from pysc2.lib import stopwatch
 
 from env_pysc2.ppo_variants.ppo_base import AgentLoop as PPOBaseAgent
 from env_pysc2.dqn_variants.dqn_base import AgentLoop as DQNBaseAgent
+from env_pysc2.deepmdp_agent import DQNAgentLoop as DeepMDPAgent
 from env_pysc2.vae_agent import get_agent as get_vae_agent
 from env_pysc2.pca_agent import get_agent as get_pca_agent
 from env_pysc2.scripted_beacon_agent import Agent as BeaconAgent
@@ -122,6 +123,7 @@ def run_thread(players, map_name, visualize):
     if FLAGS.save_replay:
       env.save_replay(agent_class_name)
 
+# TODO remove PPO
 def get_agent(env):
   global agent_class_name
 
