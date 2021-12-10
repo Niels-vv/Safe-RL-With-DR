@@ -11,13 +11,13 @@ from vae.VAE import VAE, VaeManager
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class DQNAgentLoop(DQNAgent):
-    def __init__(self, env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy):
+    def __init__(self, env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy, train_ae_online):
         screen_size_x = env.observation_spec()[0].feature_screen[2]
         screen_size_y = env.observation_spec()[0].feature_screen[1]
         self.observation_space = screen_size_x * screen_size_y # iets met flatten van env.observation_spec() #TODO incorrect
             
         if not train_component: # We're not training vae, but using it in DQN
-            vae_component = get_component(map_name, self.observation_space)
+            vae_component = get_component(map_name, self.observation_space, train_ae_online)
             latent_space = vae_component.latent_space
             print(f'Latent space: {latent_space}')
             super(DQNAgentLoop, self).__init__(env, shield, max_steps, max_episodes, train, map_name, load_policy, latent_space, vae_component)
@@ -26,6 +26,7 @@ class DQNAgentLoop(DQNAgent):
         self.train_component = train_component
         self.reduce_dim = not train_component
         self.vae = True
+        self.train_ae_online = train_ae_online
 
     def run_agent(self):
         if self.train_component:
@@ -55,7 +56,18 @@ class PPOAgentLoop(PPOAgent):
         else:
             super(PPOAgentLoop, self).run_agent()
 
-def get_component(map, observation_space):
+def get_component(map, observation_space, train_online):
+    if train_online: # TODO
+        # Hyperparameters VAE
+        latent_space = 256 # TODO
+        vae_lr = 0.0001 # TODO
+        vae_batch_size = 25 # TODO
+
+        vae_model = VAE(in_channels = observation_space, latent_dim = latent_space).to(device)
+        vae_optimizer = optim.Adam(params=vae_model.parameters(), lr=vae_lr)
+        vae_manager = VaeManager(vae_model, vae_optimizer, f'env_pysc2/results_vae/{map}', vae_batch_size, latent_space, vae_lr)
+        return vae_manager
+        
     checkpoint = DataManager.get_network(f'env_pysc2/results_vae/{map}', "vae.pt", device)
     vae_model = VAE(in_channels = observation_space, latent_dim = checkpoint['latent_space']).to(device)
     vae_model.load_state_dict(checkpoint['model_state_dict'])
@@ -87,10 +99,10 @@ def train_vae(map, observation_space):
     checkpoint = vae_manager.get_checkpoint()
     data_manager.store_network(checkpoint, "vae.pt")
 
-def get_agent(strategy, env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy):
+def get_agent(strategy, env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy, train_ae_online):
     if strategy.lower() in ["dqn"]:
         agent_class_name = DQNAgentLoop.__name__
-        agent = DQNAgentLoop(env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy)
+        agent = DQNAgentLoop(env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy, train_ae_online)
     else:
         agent_class_name = PPOAgentLoop.__name__
         agent = PPOAgentLoop(env, shield, max_steps, max_episodes, train, train_component, map_name, load_policy)

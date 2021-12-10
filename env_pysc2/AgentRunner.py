@@ -46,6 +46,7 @@ flags.DEFINE_bool("store_obs", False, "Whether to store observations.")
 flags.DEFINE_bool("train", True, "Whether we are training or evaluating.")
 flags.DEFINE_bool("train_component", False, "Whether to train a sub component, like PCA or VAE, on stored observations.")
 flags.DEFINE_bool("load_policy", False, "Whether to load an existing policy network.")
+flags.DEFINE_bool("train_ae_online", False, "Whether to use train ae online.") # TODO do this differently
 flags.DEFINE_integer("max_episodes", 500, "Total episodes.")
 flags.DEFINE_integer("max_agent_steps", 1000, "Total agent steps.")
 
@@ -141,8 +142,11 @@ def get_agent(env):
     agent_class_name, agent = get_pca_agent(FLAGS.strategy.lower(), env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
     return agent
   elif FLAGS.variant.lower() in ["vae"]:
-    agent_class_name, agent = get_vae_agent(FLAGS.strategy.lower(), env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
+    agent_class_name, agent = get_vae_agent(FLAGS.strategy.lower(), env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy, FLAGS.train_ae_online)
     return agent
+  elif FLAGS.variant.lower() in ["deepmdp", "deep_mdp"]:
+    agent_class_name = DeepMDPAgent.__name__
+    return DeepMDPAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.map, FLAGS.load_policy)
   else:
     raise NotImplementedError
 

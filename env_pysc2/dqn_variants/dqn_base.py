@@ -60,6 +60,7 @@ class AgentLoop(Agent):
         self.pca = False
         self.vae = False
         self.deepmdp = False
+        self.train_ae_online = False
         self.dim_reduction_component = dim_reduction_component
         self.map = map_name
 
@@ -152,11 +153,13 @@ class AgentLoop(Agent):
         try:
             # A new episode
             while self.episode < self.max_episodes:
+                ae_batch = []
                 obs = self.reset()[0]
 
                 state = obs.observation.feature_screen.player_relative                    
                 if self.reduce_dim:
                     state = torch.tensor(state, dtype=torch.float, device=device)
+                    if self.train_ae_online: ae_batch.append(state.unsqueeze(0))
                     state = self.dim_reduction_component.state_dim_reduction(state)
                     state = state.detach().cpu().numpy()
                     #state = torch.reshape(state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
@@ -183,6 +186,7 @@ class AgentLoop(Agent):
                     new_state = obs.observation.feature_screen.player_relative              
                     if self.reduce_dim:
                         new_state = torch.tensor(new_state, dtype=torch.float, device=device)
+                        if self.train_ae_online: ae_batch.append(new_state.unsqueeze(0))
                         new_state = self.dim_reduction_component.state_dim_reduction(new_state)
                         new_state = new_state.detach().cpu().numpy()
                         #new_state = torch.reshape(new_state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
@@ -206,8 +210,17 @@ class AgentLoop(Agent):
                     
                     state = new_state
 
+                    if self.train_ae_online and len(ae_batch) >= self.dim_reduction_component.batch_size: 
+                        ae_batch = np.array(ae_batch)
+                        self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(device).float())
+                        ae_batch = []
+
                     # 120s passed, i.e. episode done
                     if obs.last():
+                        if self.train_ae_online and len(ae_batch) > 0: 
+                            ae_batch = np.array(ae_batch)
+                            self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(device).float())
+
                         end_duration = time.time()
                         self.duration += end_duration - start_duration
 
