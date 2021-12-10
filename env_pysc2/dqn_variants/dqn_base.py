@@ -158,8 +158,8 @@ class AgentLoop(Agent):
 
                 state = obs.observation.feature_screen.player_relative                    
                 if self.reduce_dim:
+                    if self.train_ae_online: ae_batch.append(np.array(np.expand_dims(state, 0)))
                     state = torch.tensor(state, dtype=torch.float, device=device)
-                    if self.train_ae_online: ae_batch.append(state.unsqueeze(0))
                     state = self.dim_reduction_component.state_dim_reduction(state)
                     state = state.detach().cpu().numpy()
                     #state = torch.reshape(state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
@@ -185,8 +185,8 @@ class AgentLoop(Agent):
                     # Get state observation
                     new_state = obs.observation.feature_screen.player_relative              
                     if self.reduce_dim:
+                        if self.train_ae_online: ae_batch.append(np.array(np.expand_dims(new_state, 0)))
                         new_state = torch.tensor(new_state, dtype=torch.float, device=device)
-                        if self.train_ae_online: ae_batch.append(new_state.unsqueeze(0))
                         new_state = self.dim_reduction_component.state_dim_reduction(new_state)
                         new_state = new_state.detach().cpu().numpy()
                         #new_state = torch.reshape(new_state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
