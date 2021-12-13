@@ -125,7 +125,14 @@ class Agent(AgentConfig):
     def load_policy_checkpoint(self, checkpoint):
         self.policy_network.load_state_dict(checkpoint['policy_model_state_dict'])
         self.target_network.load_state_dict(checkpoint['target_model_state_dict'])
-        self.optimizer = optim.Adam(self.policy_network.parameters(), lr=checkpoint['lr'])
+        if checkpoint['deepmdp_state_dict'] is not None:
+            self.auxiliary_objective = TransitionAux(self.device)
+            self.auxiliary_objective.network.load_state_dict(checkpoint['deepmdp_state_dict'])
+            self.params = [self.policy_network.parameters()] + [self.auxiliary_objective.network.parameters()]
+            self.optimizer = optim.RMSprop(chain(*self.params), lr = self.config['lr'])
+            self.auxiliary_objective.network.train()
+        else:
+            self.optimizer = optim.RMSprop(self.policy_network.parameters(), lr=checkpoint['lr'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.epsilon._value = checkpoint['epsilon']
         self.episode = checkpoint['episode']      
@@ -137,9 +144,11 @@ class Agent(AgentConfig):
             self.target_network.eval()
 
     def get_policy_checkpoint(self):
+        deepmdp_state_dict = None if self.auxiliary_objective is None else self.auxiliary_objective.network.state_dict()
         return {'policy_model_state_dict' : self.policy_network.state_dict(),
                 'target_model_state_dict' : self.target_network.state_dict(),
                 'optimizer_state_dict': self.optimizer.state_dict(),
+                'deepmdp_state_dict' : deepmdp_state_dict,
                 'lr' : self.config['lr'],
                 'episode' : self.episode,
                 'epsilon' : self.epsilon._value,
