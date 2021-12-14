@@ -142,7 +142,7 @@ class Agent(AgentConfig):
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.epsilon._value = checkpoint['epsilon']
         self.epsilon.t = checkpoint['epsilon_t']
-        self.episode = checkpoint['episode']      
+        self.episode = checkpoint['episode'] - 1     
         if self.train:
             self.policy_network.train()
             self.target_network.train()

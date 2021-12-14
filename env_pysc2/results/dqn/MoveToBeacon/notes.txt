@@ -1,7 +1,9 @@
 1: agent behorend bij vae_1 setup: conv2dtrans c_hid 1 naar 32, convd 32 naar 32, conv2d 32 naar 1
 vae_1: agent gebruikmakend van vae5
 ae_online_1: agent die ae online traint, voor vergelijking met deepmdp
-deepmdp_1-1: episode 1-86
+deepmdp_1:
+	-1: episode 1-86
+	-2: 87 - 133
 
 
 Experiment gedaan met pca getraind met scalar en een pca getraind zonder scalar (onopgeslagen): latent space 256, met conv2dtranspose stride 2 padding 1 output padding 1
