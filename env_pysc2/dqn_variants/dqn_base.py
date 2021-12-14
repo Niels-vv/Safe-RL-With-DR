@@ -50,10 +50,6 @@ class AgentLoop(Agent):
         self.train = train 
         
         super(AgentLoop, self).__init__(env, self.latent_space, self.action_space, max_steps, max_episodes)
-        
-        if load_policy:
-            checkpoint = DataManager.get_network(f'env_pysc2/results/dqn/{map_name}', "policy_network.pt", self.device)
-            self.load_policy_checkpoint(checkpoint)
 
         self.reduce_dim = False
         self.shield = shield
@@ -67,9 +63,22 @@ class AgentLoop(Agent):
         self.reward = 0
         self.episode = 0
         self.step = 0
+        self.total_steps = 0
         self.duration = 0
         self.obs_spec = env.observation_spec()[0]
         self.action_spec = env.action_spec()[0]
+
+        if load_policy:
+            checkpoint = DataManager.get_network(f'env_pysc2/results/dqn/{map_name}', "policy_network.pt", self.device)
+            self.load_policy_checkpoint(checkpoint)
+            eps = self.episode
+            if self.train:
+                print("Running episodes to refill memory buffer.")
+                with torch.no_grad():
+                    self.fill_buffer()
+                self.episode = eps
+                print("Running training episodes.")
+
 
     def get_env_action(self, action, obs):
         #player_relative = obs.observation.feature_screen.player_relative
@@ -142,13 +151,65 @@ class AgentLoop(Agent):
                 print(r)
             self.data_manager.write_results(rewards, epsilons, durations, self.config, variant, self.get_policy_checkpoint())
 
+
+    def fill_buffer(self):
+        episode = 0
+        while episode < 30:
+            obs = self.reset()[0]
+
+            state = obs.observation.feature_screen.player_relative                    
+            if self.reduce_dim:
+                state = torch.tensor(state, dtype=torch.float, device=device)
+                state = self.dim_reduction_component.state_dim_reduction(state)
+                state = state.detach().cpu().numpy()
+                #state = torch.reshape(state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
+            state = np.expand_dims(state, 0)
+            
+            # A step in an episode
+            while self.step < self.max_steps:
+                self.step += 1
+                self.total_steps += 1
+                # Choose action
+                self.train = False
+                action = self.get_action(state)
+                self.train = True
+
+                # Act
+                act = self.get_env_action(action, obs)
+                obs = self.env.step([act])[0]
+
+                # Get state observation
+                new_state = obs.observation.feature_screen.player_relative              
+                if self.reduce_dim:
+                    new_state = torch.tensor(new_state, dtype=torch.float, device=device)
+                    new_state = self.dim_reduction_component.state_dim_reduction(new_state)
+                    new_state = new_state.detach().cpu().numpy()
+                    #new_state = torch.reshape(new_state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
+                new_state = np.expand_dims(new_state, 0)   
+
+                reward = obs.reward
+                #reward = -1 if terminal else reward
+                terminal = reward > 0 # Agent found beacon
+
+                if self.train: 
+                    transition = Transition(state, action, new_state, reward, terminal)
+                    self.memory.push(transition)
+                
+                state = new_state
+
+                # 120s passed, i.e. episode done
+                if obs.last():
+                    episode += 1
+                    break
+
+
+
     def run_loop(self, evaluate_checkpoints = 15):
         reward_history = []
         duration_history = []
         step_history = []
         epsilon_history = []
         avg_reward = []
-        total_steps = 0
 
         try:
             # A new episode
@@ -168,7 +229,7 @@ class AgentLoop(Agent):
                 # A step in an episode
                 while self.step < self.max_steps:
                     self.step += 1
-                    total_steps += 1
+                    self.total_steps += 1
                     start_duration = time.time()
                     # Choose action
                     if self.train:
@@ -201,10 +262,10 @@ class AgentLoop(Agent):
                         transition = Transition(state, action, new_state, reward, terminal)
                         self.memory.push(transition)
 
-                    if total_steps % self.config['train_q_per_step'] == 0 and total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
+                    if self.total_steps % self.config['train_q_per_step'] == 0 and self.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
                         self.train_q()
 
-                    if total_steps % self.config['target_q_update_frequency'] == 0 and total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
+                    if self.total_steps % self.config['target_q_update_frequency'] == 0 and self.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
                         for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
                             target.data.copy_(online.data)
                     
