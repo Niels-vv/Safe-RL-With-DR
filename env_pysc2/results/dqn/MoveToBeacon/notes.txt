@@ -6,6 +6,7 @@ deepmdp_1:
 	-2: 87 - 133
 	-3: 134 - 200
 	-4: 201 - 247
+	-5: 248 - 300
 
 
 Experiment gedaan met pca getraind met scalar en een pca getraind zonder scalar (onopgeslagen): latent space 256, met conv2dtranspose stride 2 padding 1 output padding 1

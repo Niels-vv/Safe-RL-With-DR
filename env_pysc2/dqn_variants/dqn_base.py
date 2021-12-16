@@ -1,5 +1,5 @@
 from matplotlib.pyplot import flag
-import torch, time, copy, random, traceback
+import torch, time, copy, random, traceback, math
 import numpy as np
 from dqn.dqn import Agent
 from pysc2.lib import actions
@@ -75,7 +75,7 @@ class AgentLoop(Agent):
             if self.train:
                 print("Running episodes to refill memory buffer.")
                 with torch.no_grad():
-                    self.fill_buffer()
+                    self.fill_buffer(eps)
                 self.episode = eps
                 print("Running training episodes.")
 
@@ -152,9 +152,9 @@ class AgentLoop(Agent):
             self.data_manager.write_results(rewards, epsilons, durations, self.config, variant, self.get_policy_checkpoint())
 
 
-    def fill_buffer(self):
+    def fill_buffer(self, eps):
         episode = 0
-        while episode < 30:
+        while episode < (min(eps, int(math.ceil(self.memory.capacity / 239)))):
             obs = self.reset()[0]
 
             state = obs.observation.feature_screen.player_relative                    

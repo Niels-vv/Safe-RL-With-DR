@@ -1,0 +1,25 @@
+133 eps: reward 15:
+
+dqn loss: 0.008
+aux loss: 400
+encoder penalty: 20
+mlp penalty: 20
+aux penalty: 3.5 miljoen
+total deepmdp loss: 38000
+
+
+in enkele eps daarna richting reward 0:
+dqn loss: 0.002
+aux loss: 1000
+encoder penalty: 90
+mlp penalty: 90
+aux penalty: 1.5 miljoen
+total deepmdp loss: 16000
+
+Na eps 248: reward 2:
+dqn loss: 0.0008
+aux loss: 22000
+encoder penalty: 3.5
+mlp penalty: 3.5
+aux penalty: 2000
+total deepmdp loss: 22000
