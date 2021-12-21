@@ -1,0 +1,18 @@
+\begin{thebibliography}{1}
+
+\bibitem{blizzard}
+Blizzard.
+\newblock Blizzard/s2client-proto: Starcraft {II} {Client} - protocol
+  definitions used to communicate with {StarCraft II}.
+
+\bibitem{pysc2}
+Oriol Vinyals, Timo Ewalds, Sergey Bartunov, Petko Georgiev, Alexander~Sasha
+  Vezhnevets, Michelle Yeo, Alireza Makhzani, Heinrich K{\"{u}}ttler, John~P.
+  Agapiou, Julian Schrittwieser, John Quan, Stephen Gaffney, Stig Petersen,
+  Karen Simonyan, Tom Schaul, Hado van Hasselt, David Silver, Timothy~P.
+  Lillicrap, Kevin Calderone, Paul Keet, Anthony Brunasso, David Lawrence,
+  Anders Ekermo, Jacob Repp, and Rodney Tsing.
+\newblock {StarCraft II:} {A} new challenge for reinforcement learning.
+\newblock {\em CoRR}, abs/1708.04782, 2017.
+
+\end{thebibliography}

@@ -1,0 +1,17 @@
+\BOOKMARK [0][-]{chapter.1}{Introduction}{}% 1
+\BOOKMARK [0][-]{chapter.2}{Preliminaries}{}% 2
+\BOOKMARK [1][-]{section.2.1}{Reinforcement learning}{chapter.2}% 3
+\BOOKMARK [1][-]{section.2.2}{State-space dimensionality reduction}{chapter.2}% 4
+\BOOKMARK [2][-]{subsection.2.2.1}{Principal Component Analysis}{section.2.2}% 5
+\BOOKMARK [2][-]{subsection.2.2.2}{Autoencoder}{section.2.2}% 6
+\BOOKMARK [2][-]{subsection.2.2.3}{DeepMDP}{section.2.2}% 7
+\BOOKMARK [0][-]{chapter.3}{Research}{}% 8
+\BOOKMARK [1][-]{section.3.1}{Method}{chapter.3}% 9
+\BOOKMARK [2][-]{subsection.3.1.1}{Environment: Starcraft II}{section.3.1}% 10
+\BOOKMARK [2][-]{subsection.3.1.2}{Experiments}{section.3.1}% 11
+\BOOKMARK [1][-]{section.3.2}{Results}{chapter.3}% 12
+\BOOKMARK [2][-]{subsection.3.2.1}{Research results}{section.3.2}% 13
+\BOOKMARK [2][-]{subsection.3.2.2}{Discussion}{section.3.2}% 14
+\BOOKMARK [0][-]{chapter.4}{Related Work}{}% 15
+\BOOKMARK [0][-]{chapter.5}{Conclusions}{}% 16
+\BOOKMARK [0][-]{appendix.A}{Appendix}{}% 17

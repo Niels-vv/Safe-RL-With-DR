@@ -1,0 +1,3 @@
+### TODO
+	* Check double introductions of abbreviations like "reinforcement learning (RL)"
+	* Check double introductions of names etc like "\emph{DeepMind}"

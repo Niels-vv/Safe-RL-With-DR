@@ -262,23 +262,6 @@ class AgentLoop(Agent):
                         transition = Transition(state, action, new_state, reward, terminal)
                         self.memory.push(transition)
 
-                        if self.episode % 15 == 0: # TODO verbeteren in datamanager (kan gewoon results file in colab gebruiken, dus aangepaste write results aanroepen (want 'open "a"') oid)
-                            eps = [x for x in range(len(reward_history))]
-                            rows = zip(eps, reward_history, epsilon_history, duration_history)
-                            try:
-                                with open("/content/../Results.csv", "w") as f:
-                                    pass
-                                with open("/content/../Results.csv", "a") as f:
-                                    writer = csv.writer(f)
-                                    writer.writerow(["Episode", "Reward", "Epsilon", "Duration"])
-                                    for row in rows:
-                                        writer.writerow(row)
-
-                                torch.save(self.get_policy_checkpoint(), "/content/../policy_network.pt")
-                            except Exception as e:
-                                print("writing results failed")
-                                print(e)
-
                     if self.total_steps % self.config['train_q_per_step'] == 0 and self.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
                         self.train_q()
 
@@ -316,6 +299,23 @@ class AgentLoop(Agent):
                         #self.env.reset()
 
                         break
+
+                if self.train and self.episode % 16 == 0: # TODO verbeteren in datamanager (kan gewoon results file in colab gebruiken, dus aangepaste write results aanroepen (want 'open "a"') oid)
+                    eps = [x for x in range(len(reward_history))]
+                    rows = zip(eps, reward_history, epsilon_history, duration_history)
+                    try:
+                        with open("/content/drive/MyDrive/Thesis/Code/PySC2/Results/Results.csv", "w") as f:
+                            pass
+                        with open("/content/drive/MyDrive/Thesis/Code/PySC2/Results/Results.csv", "a") as f:
+                            writer = csv.writer(f)
+                            writer.writerow(["Episode", "Reward", "Epsilon", "Duration"])
+                            for row in rows:
+                                writer.writerow(row)
+
+                        torch.save(self.get_policy_checkpoint(), "/content/drive/MyDrive/Thesis/Code/PySC2/Results/policy_network.pt")
+                    except Exception as e:
+                        print("writing results failed")
+                        print(e)
 
                 if evaluate_checkpoints > 0 and ((self.episode % evaluate_checkpoints) - (evaluate_checkpoints - 1) == 0 or self.episode == 0):
                     print('Evaluating...')
