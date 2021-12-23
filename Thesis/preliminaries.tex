@@ -1,7 +1,12 @@
 \chapter{Preliminaries}\label{preliminaries}
 
 \section{Reinforcement learning}\label{pl-rl}
-RL, neural networks (incl non-linnear function approximation)
+\subsection{General overview}
+RL, 
+\subsection{Neural networks}
+neural networks (incl non-linnear function approximation)
+\subsection{(D)DQN}\label{pl-dqn}
+si 
 
 \section{State-space dimensionality reduction}\label{pl-dimensionality}
 Definition, general info
@@ -29,9 +34,9 @@ Formally, an autoencoder can be defined by the two functions it learns:
 \end{equation}
 \begin{equation}
   \label{encdec}
-  \phi ,\psi ={\underset {\phi ,\psi }{\operatorname {arg\,min} }}\,{\Delta}(\psi \circ \phi (x))
+  \phi ,\psi ={\underset {\phi ,\psi }{\operatorname {arg\,min} }}\,{\Delta}(x, \psi \circ \phi (x))
 \end{equation}
-Equation~\eqref{enc} defines the encoder and equation~\eqref{dec} the decoder, both satisfying~\eqref{encdec} where $\Delta$ is the reconstruction loss function for input x.
+Equation~\eqref{enc} defines the encoder and equation~\eqref{dec} the decoder, both satisfying~\eqref{encdec} where $\Delta$ is the reconstruction loss function for input x. The closer the output of the autoencoder approximates the original input, the lower the loss.
 
 A fundamental difference with using PCA, is the type of functions that can be approximated for lowering the dimensionality. Since an autoencoder uses neural networks, they can approximate nonlinear functions, as mentioned in section \ref{pl-rl}. This is in contrast with PCA, which can only approximate linear functions. Because of this, an autoencoder can learn more powerful generalisations which leads to lower information loss\cite{AE_general}.
 

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2021.12.20)  22 DEC 2021 14:39
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2021.12.20)  23 DEC 2021 16:47
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -885,7 +885,7 @@ LaTeX Info: Redefining \nameref on input line 32.
 \@outlinefile=\write5
 \openout5 = `MasterThesis.out'.
 
-<imgs/logo.png, id=99, 354.3639pt x 421.575pt>
+<imgs/logo.png, id=119, 354.3639pt x 421.575pt>
 File: imgs/logo.png Graphic file (type png)
 <use imgs/logo.png>
 Package pdftex.def Info: imgs/logo.png  used on input line 36.
@@ -897,7 +897,7 @@ act.texpdfTeX warning (ext4): destination with the same identifier (name{page.1
 }) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.5 \end{abstract}
+l.3 \end{abstract}
                    [1]) (./MasterThesis.toc)
 \tf@toc=\write6
 \openout6 = `MasterThesis.toc'.
@@ -911,18 +911,14 @@ l.1 \chapter
 
 ]
 Chapter 1.
-
-LaTeX Warning: Citation `peys04:HowToWriteAGoodResearchPaper' on page 2 undefin
-ed on input line 5.
-
 ) (./preliminaries.tex [2
 
 ]
 Chapter 2.
-<imgs/AE_architecture.png, id=145, 474.77374pt x 160.6pt>
+<imgs/AE_architecture.png, id=170, 474.77374pt x 160.6pt>
 File: imgs/AE_architecture.png Graphic file (type png)
 <use imgs/AE_architecture.png>
-Package pdftex.def Info: imgs/AE_architecture.png  used on input line 16.
+Package pdftex.def Info: imgs/AE_architecture.png  used on input line 21.
 (pdftex.def)             Requested size: 270.0pt x 91.33464pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
@@ -931,7 +927,7 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 ]) (./research.tex [4 <./imgs/AE_architecture.png>]
 Chapter 3.
-<imgs/pysc2_SS.jpg, id=177, 481.8pt x 361.35pt>
+<imgs/pysc2_SS.jpg, id=203, 481.8pt x 361.35pt>
 File: imgs/pysc2_SS.jpg Graphic file (type jpg)
 <use imgs/pysc2_SS.jpg>
 Package pdftex.def Info: imgs/pysc2_SS.jpg  used on input line 16.
@@ -950,7 +946,7 @@ LaTeX Warning: Marginpar on page 6 moved.
 
 LaTeX Warning: Marginpar on page 6 moved.
 
-<imgs/AE_State_original.png, id=188, 462.528pt x 346.896pt>
+<imgs/AE_State_original.png, id=213, 462.528pt x 346.896pt>
 File: imgs/AE_State_original.png Graphic file (type png)
 <use imgs/AE_State_original.png>
 Package pdftex.def Info: imgs/AE_State_original.png  used on input line 25.
@@ -958,20 +954,39 @@ Package pdftex.def Info: imgs/AE_State_original.png  used on input line 25.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[6 <./imgs/pysc2_SS.jpg>]) (./relatedwork.tex [7 <./imgs/AE_State_original.png>
-]
+[6 <./imgs/pysc2_SS.jpg>]
+Underfull \hbox (badness 10000) in paragraph at lines 39--40
+
+ []
+
+[7 <./imgs/AE_State_original.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 45--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--53
+
+ []
+
+[8]
+Underfull \hbox (badness 10000) in paragraph at lines 61--62
+
+ []
+
+[9]) (./relatedwork.tex [10]
 Chapter 4.
-) (./conclusions.tex [8
+) (./conclusions.tex [11
 
 ]
 Chapter 5.
-) (./MasterThesis.bbl [9
+) (./MasterThesis.bbl [12
 
-]) (./appendix.tex [10
+]) (./appendix.tex [13
 
 ]
 Appendix A.
-) [11
+) [14
 
 ]
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 86.
@@ -980,21 +995,17 @@ Package atveryend Info: Empty hook `AfterLastShipout' on input line 86.
 Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 86.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 86.
 Package rerunfilecheck Info: File `MasterThesis.out' has not changed.
-(rerunfilecheck)             Checksum: AC2D41F949A4529BC6D20929491F906E;1017.
-
-
-LaTeX Warning: There were undefined references.
-
+(rerunfilecheck)             Checksum: 71AF26FA60A1027A27CFF7EBDDF28705;1355.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 86.
  ) 
 Here is how much of TeX's memory you used:
- 21620 strings out of 481239
- 385829 string characters out of 5920376
- 686749 words of memory out of 5000000
- 36368 multiletter control sequences out of 15000+600000
+ 21655 strings out of 481239
+ 386477 string characters out of 5920376
+ 688132 words of memory out of 5000000
+ 36393 multiletter control sequences out of 15000+600000
  543271 words of font info for 67 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 68i,9n,83p,3243b,964s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 68i,9n,83p,3243b,993s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/share/texli
 ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/tex
 mf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dis
@@ -1008,10 +1019,10 @@ onts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/
 share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/s
 hare/texmf/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on MasterThesis.pdf (13 pages, 797837 bytes).
+Output written on MasterThesis.pdf (16 pages, 810222 bytes).
 PDF statistics:
- 275 PDF objects out of 1000 (max. 8388607)
- 221 compressed objects within 3 object streams
- 42 named destinations out of 1000 (max. 500000)
- 265 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 320 PDF objects out of 1000 (max. 8388607)
+ 263 compressed objects within 3 object streams
+ 52 named destinations out of 1000 (max. 500000)
+ 305 words of extra memory for PDF output out of 10000 (max. 10000000)
 
