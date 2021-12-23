@@ -5,6 +5,11 @@ Blizzard.
 \newblock Blizzard/s2client-proto: Starcraft {II} {Client} - protocol
   definitions used to communicate with {StarCraft II}.
 
+\bibitem{AE_general}
+G.~E. Hinton and R.~R. Salakhutdinov.
+\newblock Reducing the dimensionality of data with neural networks.
+\newblock {\em Science}, 313(5786):504--507, 2006.
+
 \bibitem{pysc2}
 Oriol Vinyals, Timo Ewalds, Sergey Bartunov, Petko Georgiev, Alexander~Sasha
   Vezhnevets, Michelle Yeo, Alireza Makhzani, Heinrich K{\"{u}}ttler, John~P.
