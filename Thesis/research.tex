@@ -18,7 +18,7 @@ In particular we are using a PySC2 minigame called \emph{MoveToBeacon}. This min
     \label{fig:pysc2_SS}
 \end{figure}
 
-An \emph{observation} received by the agent in this minigame is given by a $32 \times 32$ grid, representing the entire state of the game, \todo{Is this correct? Or are there actually perhaps only 3 features or something?} giving a total of \emph{$1024$ features}. Each cell in the grid represents a tile in the game. It can have one of three values: a 0 denoting an empty tile, a 1 denoting the army unit controlled by the agent, or a 5 denoting the beacon. The beacon comprises more than one tile, namely a total of $21$ tiles; it comprises five adjecent rows, where the first comprises three adjecent columns, followed by three rows of five columns, followed by a row of three columns. Because of this, the beacon has $27 \cdot 27$ places where it could be, with the army unit having $1003$ tiles left to be. This gives \todo{Is this a correct usage of state-space?} a total state-space of $32 \times 32$ with a cardinality of $27 \cdot 27 \cdot 1003 = 731.187$. An example of such a state observation can be seen in figure \ref{fig:state_example}.
+An \textbf{observation} received by the agent in this minigame is given by a $32 \times 32$ grid, representing the entire state of the game, \todo{Is this correct? Or are there actually perhaps only 3 features or something?} giving a total of \textbf{$1024$ features}. Each cell in the grid represents a tile in the game. It can have one of three values: a 0 denoting an empty tile, a 1 denoting the army unit controlled by the agent, or a 5 denoting the beacon. The beacon comprises more than one tile, namely a total of $21$ tiles; it comprises five adjecent rows, where the first comprises three adjecent columns, followed by three rows of five columns, followed by a row of three columns. Because of this, the beacon has $27 \cdot 27$ places where it could be, with the army unit having $1003$ tiles left to be. This gives \todo{Is this a correct usage of state-space?} a total state-space of $32 \times 32$ with a cardinality of $27 \cdot 27 \cdot 1003 = 731.187$. An example of such a state observation can be seen in figure \ref{fig:state_example}.
 
 \begin{figure}[h]
     \centering
@@ -27,9 +27,9 @@ An \emph{observation} received by the agent in this minigame is given by a $32 \
     \label{fig:state_example}
 \end{figure}
 
-An \emph{action} taken by the agent is given by an $(x,y)$ coordinate with $x,y \in \{0 .. 31\}$. This denotes the (indices of the) cell in the grid that the army unit will move to.
+An \textbf{action} taken by the agent is given by an $(x,y)$ coordinate with $x,y \in \{0 .. 31\}$. This denotes the (indices of the) cell in the grid that the army unit will move to.
 
-Lastly, an \emph{episode} takes $120$ seconds. The goal is to move the army unit to the beacon as often as possible in this time limit, each time adding $1$ point to the episode score. At the start of each episode, the beacon and army unit are placed randomly. Whenever the army unit reaches the beacon, only the beacon will be relocated randomly. An agent following a random policy gets a score of about $0-3$ points per episode (again, one point for each time the army unit reaches the beacon), whereas a scripted agent scores about $26-30$ points per episode.
+Lastly, an \textbf{episode} takes $120$ seconds. The goal is to move the army unit to the beacon as often as possible in this time limit, each time adding $1$ point to the episode score. At the start of each episode, the beacon and army unit are placed randomly. Whenever the army unit reaches the beacon, only the beacon will be relocated randomly. An agent following a random policy gets a score of about $0-3$ points per episode (again, one point for each time the army unit reaches the beacon), whereas a scripted agent scores about $25-30$ points per episode.
 
 \subsection{Experiments}\label{research-exp}
 To examine the effect of the different dimensionality reduction methods, we implemented multiple RL agents using different reduction methods and compared their performance. In this section we will discuss the agents that we used. We will give a general overview here, referring to appendix \ref{appendix} section \ref{appendix-agents} for details on the neural network architectures and hyperparameter settings. 
@@ -49,35 +49,78 @@ The neural network consists of three convolutional layers: the first layer being
 
 The output of the network representing the Q-function must remain $32 \times 32$, since we have $32 \cdot 32$ possible actions: one action per coordinate. Therefore, the first layer in the policy network, the aforementioned Conv2DTranspose layer, has a stride of $2$. This changes the dimensions from $16 \times 16$ to $32 \times 32$. 
 
-The PCA component is trained separately before being used by the agent. This is done by training the PCA on $240.000$ previously stored observations. It is important that these observations give a good representation of the environment to get a well trained PCA component. The first $256$ principal components in our PCA (representing a $16 \times 16$ dimensional observation), contain roughly $96\%$ of the information of the original data.\newline
+The PCA component is trained separately before being used by the agent. This is done by training the PCA on $240.000$ previously stored observations, which corresponds to observations from $1000$ episodes. It is important that these observations give a good representation of the environment to get a well trained PCA component. The first $256$ principal components in our PCA (representing a $16 \times 16$ dimensional observation), contain roughly $96\%$ of the information of the original data.\newline
 
 \noindent \textbf{Pre-trained autoencoder agent}\newline
 \noindent This agent is very similar to the PCA agent, except instead of using a PCA component, we are using an autoencoder to reduce dimensionality. Just like the PCA component, the autoencoder is pre-trained on the same $240.000$ observations. After this it is used by the agent to reduce the dimensionality of the observation. 
 
 The encoder and decoder of the autoencoder are convolutional neural networks. The encoder uses two Conv2D layers: the first has a stride of $2$, which reduces the dimension to $16 \times 16$. The decoder, which tries to reconstruct the original data, uses three convolutional layers. The first layer is a Cond2DTranspose layer with a stride of $2$, to bring the dimensions back to $32 \times 32$. The other two layers are Conv2D layers. 
 
-The autoencoder is trained by passing batches of observations to the encoder, which performs the dimensionality reduction. Its output is then passed to the decoder which tries to reconstruct the original data. The loss is then calculated by how similar the decoder output is, compared to the original data.
+The autoencoder is trained by passing batches of observations to the encoder, which performs the dimensionality reduction. Its output is then passed to the decoder which tries to reconstruct the original data. The loss is then calculated by how similar the decoder output is, compared to the original data. Specifcally, the \emph{mean squared error} is used.
 
 When being used by an agent to reduce the dimensionality of an observation, only the encoder part of the autoencoder is used. The autoencoder is not being trained further while in use by an agent. \newline
  
 \noindent \textbf{\todo{I guess "online" is not strictly correct}Online trained autoencoder agent}\newline
 \noindent  This agent has the exact same design as the pre-trained autoencoder agent. The only difference is the moment of training the autoencoder. In the pre-trained autoencoder agent, the autoencoder is trained before being used by an agent, using previously stored observations. In this online trained autoencoder agent, we are using an autoencoder that has not been pre-trained; it is being trained while being used by the agent. 
 
-In this case, the agent itself still only uses the encoder part of the autoencoder. However, we now also store observations and pass these to the training method of the autoencoder. This training method is the same as before: passing the observations to the encoder, whose output is passed to the decoder, whose output is compared to the original observation to calculate the loss and train the network.
+In this case, the agent itself still only uses the encoder part of the autoencoder. However, we now also store observations and pass these to the training method of the autoencoder. This training method is the same as before: passing the observations to the encoder, whose output is passed to the decoder, whose output is compared to the original observation to calculate the loss and train the network.\newline
 
 \noindent \textbf{DeepMDP agent}\newline
 \noindent Just like the online trained autoencoder agent, the DeepMDP agent is completely trained while being used by the agent. It also uses an encoder, which has the design as the encoders of the autoencoders: one Conv2D layer with stride $2$ to reduce dimensions and a second Conv2D layer. Differently from the autoencoder though, this encoder is actually part of the agent's network; whereas the autoencoder is a separate network, the DeepMDP simply extends the network of the agent. The agent's network therefore consists of an encoder part and a policy part. This means that when the agent receives an observation from the environment and passes it to its network, it first goes through the encoder whose output is passed to the policy part. In effect this means that the encoder and policy network are now trained on the same loss, using a single optimizer.
 
 Additionally, the DeepMDP makes use of an auxiliary objective to calculate the loss: the transition loss. This transition loss represents the cost of all possible transitions from a given latent representation. This means that its output has dimensions $(32 \times 32) \times 16 \times 16$. The tuple $(32, 32)$ represents the actions that can be taken in the current state, while the other two dimensions, $16 \times 16$ represent the next (predicted) latent observation. It has only one layer, a Conv2D layer, with $32 \times 32$ output channels to represent the action dimensions. Again this network is a part of the agent's network. Consequently, the agent's network consists of three parts: an encoder part, a policy part, and a transition loss part, all trained on the same loss using a single optimizer.
 
-Lastly, a gradient penalty is calculated on all three parts of the network separately. This is represents a Lipschitz-constrained Wasserstein Generative Adversarial Network (lol). Its penalty is used in calculating the loss while training the network. 
+Lastly, a gradient penalty is calculated on all three parts of the network separately. This represents a Lipschitz-constrained Wasserstein Generative Adversarial Network (lol wat). Its penalty is used in calculating the loss while training the network. 
 
 
 \section{Results}\label{research-results}
-sectie opzet
-\subsection{Research results}
-Resultaten van de verschillende agents
+In this section we will show and discuss the results from the experiments mentioned in section \ref{research-exp}. We start by discussing the general results of the agents in section \ref{research-general-results}, and then discussing and interpreting these results in section \ref{research-discussion}.
 
-\subsection{Discussion}
-Resultaten van AE analyse; voordeel pretained benoemen (nml dat je vershcillende agents kan trainen op lagere dimensionality op basis van dezelfde encoder)
+\subsection{Research results}\label{research-general-results}
+The results from running the different agents in the Starcraft II minigame MoveToBeacon, can be seen in figure \ref{fig:results-agents}. For each agent, the score, i.e. reward, per episode is shown, as wel as an average score per $30$ episodes. Again, a scripted agents scores around $25-30$ per episode, and an agent following a random policy around $0-3$.
+
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}[b]{1\textwidth}
+		\includegraphics[width=1\linewidth]{Base_agent_results}
+		\caption{Results for the vanilla agent.}
+		\label{fig:results-base} 
+	\end{subfigure}
+	\begin{subfigure}[b]{1\textwidth}
+		\includegraphics[width=1\linewidth]{Pretrained_autoencoder_agent_results}
+		\caption{Results for the pre-trained autoencoder agent.}
+		\label{fig:results-ae}
+	\end{subfigure}
+	\caption{Results of the different RL agents.}
+\end{figure}%	
+\begin{figure}[ht]\ContinuedFloat
+	\begin{subfigure}[b]{1\textwidth}
+		\includegraphics[width=1\linewidth]{Online_autoencoder_agent_results}
+		\caption{Results for the online trained autoencoder agent.}
+		\label{fig:results-online-ae}
+	\end{subfigure}
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=1\linewidth]{Deepmdp_agent_results}
+		\caption{Results for the DeepMDP agent.}
+		\label{fig:results-deepmdp}
+	\end{subfigure}
+	\caption{Results of the different RL agents(cont.).}
+	\label{fig:results-agents}
+\end{figure}
+
+Firstly, the results of training the PCA agent on $800$ episodes are not shown in these results. This is because, no matter what neural network architecture used in the agent (having used multiple different ANN's and CNN's), it always remained at a policy at the level of a random policy.
+
+As can be seen in subfigure \ref{fig:results-base}, the vanilla agent converges to a policy scoring around $19$ per episode. This policy is reached after roughly $600$ episodes. Already after episode $300$ does it oscillate around scoring $17-20$ while also sometimes having an episode scoring around $10$. After this it still needs another $300$ episodes to get to a more consistent policy.
+
+The results for the agent using a pre-trained autoencoder, in figure \ref{fig:results-ae}, show that this agent preforms a little better. Not only does it converge to a slightly better policy scoring around $21$ per episode, it also converges quicker; it is already consistent after roughly $400$ episode, instead of $600$. 
+
+\todo{Todo: create figure of this.} We also show the results of training the autoencoder itself. As mentioned, it is trained on $240.000$ observations, corresponding to $1000$ episodes. Unfortunately I can't access the full results of this at the moment since Colab kicked me out due to usage limit. I do have some truncated results. The autoencoder starts with a loss around $200$. After the full $240.000$ episodes, its loss is around $1.0$, which is already achieved after around $215.000$ observations. After $180.000$ episodes, its loss is around $2.0$. 
+
+Compared to the pre-trained autoencoder agent, the agent using an untrained autoencoder that is being trained while the agent is trained, performs a little worse. It converges after roughly $500$ episodes to a policy around $19-21$. Not only does it take longer to converge and converges to a slightly worse policy, it is also less consistent. Even after $400$ it still has episodes scoring around $13$. This shows it is less consistent than its pre-trained counterpart.
+
+Lastly we have the DeepMDP agent. After $130$ episodes, this agent suddenly jumps up from a random policy to scoring around $15$. However, after several episodes it starts going back down, alternating between scoring at a random policy and scoring around $7$, until finally reaching a random policy again.
+
+\subsection{Discussion}\label{research-discussion}
+Ae vs base; Resultaten van AE analyse; voordeel pretained benoemen (nml dat je vershcillende agents kan trainen op lagere dimensionality op basis van dezelfde encoder); verklaring pretrained ae > online ae
 

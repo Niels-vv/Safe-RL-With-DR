@@ -17,7 +17,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class AgentPerformance:
 
     @staticmethod
-    def show_agent_results(results_file, name):
+    def show_agent_results(results_file, name, store_img_filename):
         results = pd.read_csv(results_file)
         rewards = results.loc[:, "Reward"]
         learning_rewards = []
@@ -31,8 +31,8 @@ class AgentPerformance:
         eval_period = 5
         learning_average = AgentPerformance.get_average(learning_rewards, learning_period)
         eval_average = AgentPerformance.get_average(eval_rewards, eval_period)
-        AgentPerformance.show_plot("Episode", "Reward", learning_rewards, learning_average, learning_period, f'Learning results for {name}')
-        AgentPerformance.show_plot("Episode", "Reward", eval_rewards, eval_average, eval_period, f'Evaluation results for {name}')
+        AgentPerformance.show_plot("Episode", "Reward", learning_rewards, learning_average, learning_period, f'Learning results for {name}', store_img_filename)
+        #AgentPerformance.show_plot("Episode", "Reward", eval_rewards, eval_average, eval_period, f'Evaluation results for {name}')
 
     @staticmethod
     def get_average(values, period):
@@ -62,14 +62,30 @@ class AgentPerformance:
     def compare_base_and_ae_agents(dir):
         results_path = f'{PATH}/../{dir}'
         base_results_file = f'{results_path}/results_1.csv'
+        store_filename_base = "Base_agent_results.png"
         base_name = "base agent"
+
         ae_results_file = f'{results_path}/results_vae_1.csv'
-        ae_name = "agent using vae"
-        AgentPerformance.show_agent_results(base_results_file, base_name)
-        AgentPerformance.show_agent_results(ae_results_file, ae_name)
+        ae_name = "Pre-trained autoencoder agent"
+        store_filename_ae = "Pretrained_autoencoder_agent_results.png"
+        AgentPerformance.show_agent_results(base_results_file, base_name, store_filename_base)
+        AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae)
+    
+    @staticmethod
+    def compare_online_ae_and_deepmdp_agents(dir):
+        results_path = f'{PATH}/../{dir}'
+        ae_results_file = f'{results_path}/results_ae_online_1.csv'
+        store_filename_ae = "Online_autoencoder_agent_results.png"
+        ae_name = "Online trained autoencoder agent"
+
+        deepmdp_results_file = f'{results_path}/results_deepmdp_1.csv'
+        deepmdp_name = "DeepMDP agent"
+        store_filename_deepmdp = "Deepmdp_agent_results.png"
+        AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae)
+        AgentPerformance.show_agent_results(deepmdp_results_file, deepmdp_name, store_filename_deepmdp)
 
     @staticmethod
-    def show_plot(x_name, y_name, rewards, average, period, title):
+    def show_plot(x_name, y_name, rewards, average, period, title, filename):
         plt.figure(2)
         plt.clf()        
         plt.title(title)
@@ -78,6 +94,7 @@ class AgentPerformance:
         plt.plot(rewards, '-b', label = "Rewards per episode")
         plt.plot(average, '-g', label = f'Average reward per {period} episodes')
         plt.legend(loc="upper left")
+        plt.savefig(filename)
         plt.show()
 
 # Class methods showing analyses of autoencoder, e.g. visualizing feature maps and showing correlation matrix
@@ -211,10 +228,24 @@ class AEAnalysis:
 
 ### Results analysis methods
 
-# Compare the results (in rewards/episode) of a base agent with an agent using an autoencoder
+# Compare the results (in rewards/episode) of a base agent with an agent using a pre-trained autoencoder
 def show_base_ae_comparison():
     dir = "env_pysc2/results/dqn/MoveToBeacon"
     AgentPerformance.compare_base_and_ae_agents(dir)
+
+# Compare the results (in rewards/episode) of an agent using an online trained autoencoder with a DeepMDP agent
+def show_online_ae_deepmdp_comparison():
+    dir = "env_pysc2/results/dqn/MoveToBeacon"
+    results_dir = f'{PATH}/../{dir}'
+    if not os.path.isfile(f'{results_dir}/results_deepmdp_1.csv'): # DeepMDP results have not yet been combined: combine them to new csv file
+        i = 1
+        filenames = []
+        while os.path.isfile(f'{results_dir}/results_deepmdp_1-{i}.csv'):
+            filenames.append(f'{results_dir}/results_deepmdp_1-{i}.csv')
+            i += 1
+        combined_csv = pd.concat([pd.read_csv(f) for f in filenames ])
+        combined_csv.to_csv(f'{results_dir}/results_deepmdp_1.csv', index=False, encoding='utf-8-sig')
+    AgentPerformance.compare_online_ae_and_deepmdp_agents(dir)
 
 # Show a heatmap of the correlation matrix between original state features and reduced state features (reduced by an autoencoder)
 def show_reduced_features_correlation():
@@ -260,7 +291,6 @@ def test():
     print(indices_min)
 
 if __name__ == "__main__":
-    #show_reduced_features_correlation()
-    show_feature_map_ae()
-    #test()
+    show_base_ae_comparison()
+    show_online_ae_deepmdp_comparison()
     

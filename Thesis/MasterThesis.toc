@@ -14,9 +14,9 @@
 \contentsline {subsection}{\numberline {3.1.2}Experiments}{7}{subsection.3.1.2}%
 \contentsline {section}{\numberline {3.2}Results}{10}{section.3.2}%
 \contentsline {subsection}{\numberline {3.2.1}Research results}{10}{subsection.3.2.1}%
-\contentsline {subsection}{\numberline {3.2.2}Discussion}{10}{subsection.3.2.2}%
-\contentsline {chapter}{\numberline {4}Related Work}{11}{chapter.4}%
-\contentsline {chapter}{\numberline {5}Conclusions}{12}{chapter.5}%
-\contentsline {chapter}{\numberline {A}Appendix}{14}{appendix.A}%
-\contentsline {section}{\numberline {A.1}Rl agent architectures}{14}{section.A.1}%
-\contentsline {subsection}{\numberline {A.1.1}Vanilla agent}{14}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {3.2.2}Discussion}{11}{subsection.3.2.2}%
+\contentsline {chapter}{\numberline {4}Related Work}{14}{chapter.4}%
+\contentsline {chapter}{\numberline {5}Conclusions}{15}{chapter.5}%
+\contentsline {chapter}{\numberline {A}Appendix}{17}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Rl agent architectures}{17}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Vanilla agent}{17}{subsection.A.1.1}%
