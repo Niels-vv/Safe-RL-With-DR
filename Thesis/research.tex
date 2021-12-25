@@ -58,7 +58,7 @@ The encoder and decoder of the autoencoder are convolutional neural networks. Th
 
 The autoencoder is trained by passing batches of observations to the encoder, which performs the dimensionality reduction. Its output is then passed to the decoder which tries to reconstruct the original data. The loss is then calculated by how similar the decoder output is, compared to the original data. Specifcally, the \emph{mean squared error} is used.
 
-When being used by an agent to reduce the dimensionality of an observation, only the encoder part of the autoencoder is used. The autoencoder is not being trained further while in use by an agent. \newline
+When being used by an agent to reduce the dimensionality of an observation, only the encoder part of the autoencoder is used. When we speak of the output of the autoencoder in the context of being used by an agent, we mean the output of the encoder part. The autoencoder is not being trained further while in use by an agent. \newline
  
 \noindent \textbf{\todo{I guess "online" is not strictly correct}Online trained autoencoder agent}\newline
 \noindent  This agent has the exact same design as the pre-trained autoencoder agent. The only difference is the moment of training the autoencoder. In the pre-trained autoencoder agent, the autoencoder is trained before being used by an agent, using previously stored observations. In this online trained autoencoder agent, we are using an autoencoder that has not been pre-trained; it is being trained while being used by the agent. 
@@ -115,12 +115,96 @@ As can be seen in subfigure \ref{fig:results-base}, the vanilla agent converges 
 
 The results for the agent using a pre-trained autoencoder, in figure \ref{fig:results-ae}, show that this agent preforms a little better. Not only does it converge to a slightly better policy scoring around $21$ per episode, it also converges quicker; it is already consistent after roughly $400$ episode, instead of $600$. 
 
-\todo{Todo: create figure of this.} We also show the results of training the autoencoder itself. As mentioned, it is trained on $240.000$ observations, corresponding to $1000$ episodes. Unfortunately I can't access the full results of this at the moment since Colab kicked me out due to usage limit. I do have some truncated results. The autoencoder starts with a loss around $200$. After the full $240.000$ episodes, its loss is around $1.0$, which is already achieved after around $215.000$ observations. After $180.000$ episodes, its loss is around $2.0$. 
+\todo{Todo: create figure of this.} We also show the results of training the autoencoder itself. As mentioned, it is trained on $240.000$ observations, corresponding to $1000$ episodes. Whereas each agent's training (except for the DeepMDP) took roughly $90$ minutes, training the autoencoder on $1000$ episodes worth of observations only took about $2.5$ minutes. The loss history for the autoencoder can be seen in figure \ref{fig:ae-loss}. After roughly $6000 \cdot 25 = 150.000$ observation does it converge to its final loss. %Unfortunately I can't access the full results of this at the moment since Colab kicked me out due to usage limit. I do have some truncated results. The autoencoder starts with a loss around $200$. After the full $240.000$ episodes, its loss is around $1.0$, which is already achieved after around $215.000$ observations. After $180.000$ episodes, its loss is around $2.0$. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.75\textwidth]{ae_loss}
+    \caption{Losses per 25 observations for training the autoencoder on $240.000$ state observations.}
+    \label{fig:ae-loss}
+\end{figure}
 
 Compared to the pre-trained autoencoder agent, the agent using an untrained autoencoder that is being trained while the agent is trained, performs a little worse. It converges after roughly $500$ episodes to a policy around $19-21$. Not only does it take longer to converge and converges to a slightly worse policy, it is also less consistent. Even after $400$ it still has episodes scoring around $13$. This shows it is less consistent than its pre-trained counterpart.
 
-Lastly we have the DeepMDP agent. After $130$ episodes, this agent suddenly jumps up from a random policy to scoring around $15$. However, after several episodes it starts going back down, alternating between scoring at a random policy and scoring around $7$, until finally reaching a random policy again.
+Lastly we have the DeepMDP agent. After $130$ episodes, this agent suddenly jumps up from a random policy to scoring around $15$. However, after several episodes it starts going back down, alternating between scoring at a random policy and scoring around $7$, until finally reaching a random policy again. Furthermore it takes a lot longer to train. For the other agents, each episode took only a few seconds, whereas each episode in the DeepMDP agent takes $2.5$ minutes.
 
 \subsection{Discussion}\label{research-discussion}
-Ae vs base; Resultaten van AE analyse; voordeel pretained benoemen (nml dat je vershcillende agents kan trainen op lagere dimensionality op basis van dezelfde encoder); verklaring pretrained ae > online ae
+The first notable results is the PCA agent giving a policy that remains at a policy at the level of a random policy during its $800$ episode training. \todo{Perhaps try this?} Uncertainty remains whether the agent could find a good policy after enough episodes. In any case it performs way worse than the other agents. A possible explanation might be that the PCA reduction loses (too much) spatial information. \todo{Citing}Although PCA can be used for image compression, where spatial information is retained, it is a lot more lossy than for instance an autoencoder.
 
+Another interesting result is the performance of the pre-trained autoencoder agent. Not only does it match the vanilla agent's performance, it even slightly surpasses it: it finds a slightly better policy (scoring around $21$ per episode on average, versus $19$), and more quickly converges to a consistent policy (after $400$ episodes versus $600$). Its better performance is despite the agent using imperfect information, while the vanilla agent uses complete information.
+
+Its performance is highly dependent on the quality of the output of the autoencoder. To get an understanding of why this agent achieves such good results, we will now examine the autoencoder in detail. Firstly, a correlation matrix is given in figure \ref{fig:ae-corr}. Based on $60.000$ state observations, it shows the correlation between the features of the original state observations (i.e. the input for the autoencoder) and the reduced state observations (i.e. the output of the autoencoder). The original data has dimensions of $32 \times 32$, whereas the reduced data has dimensions of $16 \times 16$, resulting in $1024$ and $246$ features respectively. Dark/black and light/beige colouring mean a high correlation (negative and positive correlation respectively), whereas a red colouring means no correlation and the white space means there was to too little variance to calculate a correlation. The latter case simply follows from the beacon and army unit not visiting these parts of the map enough times during the used episode observations.
+
+What can be seen from this matrix, is that each cell in the reduced data grid, correlates to a block (a few adjacent rows and columns) of cells of the original data grid. This explanation can be abducted from each feature of the reduced data being highly correlated to a few features of the original data, then being uncorrelated for $32$ features, after which highly correlated features are found again. This jump of $32$ features corresponds to a jump of one row in the original data grid. Thus, a reduced feature correlates to a block of the original features.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=1\linewidth]{Base_agent_results}
+	\caption{Correlation matrix for the autoencoder used in the pre-trained autoencoder agent, based on $60.000$ state observations. The x-axis contains the features of the original observations, and the y-axis contains the features of the reduced state observations.}
+	\label{fig:ae-corr}
+\end{figure}
+
+We also show the feature map visualisation for the enoder of the autoencoder in figure \ref{fig:ae-featuremap}. This shows the output of each channel in each convolutional layer of the encoder of the autoencoder. The original $32 \times 32$ input for the encoder is given in figure \ref{fig:ae-featuremap-original}. Like before, the yellow octagon is the beacon, the blue square is the army unit controlled by the agent, and purple parts are the empty tiles. The feature map for the first convolutional layer is given in figure \ref{fig:ae-featuremap-layer1}. It shows the output of its $32$ channels, each having a dimensionality of $16 \times 16$. What can be seen here is that each channel seems to pay attention to a different part of the observation, sometimes putting more emphasis on the empty cells, sometimes more on a certain side of the beacon and/or the army unit. Lastly the feature map of the second layer is given in figure \ref{fig:ae-featuremap-layer2}. Since this has only one channel, this also corresponds to the output of the encoder. 
+
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}[b]{1\textwidth}
+		\includegraphics[width=1\linewidth]{AE_State_original}
+		\caption{The original observation, i.e. the input for the autoencoder.}
+		\label{fig:ae-featuremap-original} 
+	\end{subfigure}
+	\begin{subfigure}[b]{1\textwidth}
+		\includegraphics[width=1\linewidth]{AE_Layer_1_Feature_Map}
+		\caption{The feauture map of the first convoluational layer, showing the output of its $32$ channels.}
+		\label{fig:ae-featuremap-layer1}
+	\end{subfigure}
+	\caption{A feature map visualisation for the autoencoder used by the pre-trained autoencoder agent.}
+\end{figure}%	
+\begin{figure}[ht]\ContinuedFloat
+	\begin{subfigure}[b]{1\textwidth}
+		\includegraphics[width=1\linewidth]{AE_Layer_2_Feature_Map}
+		\caption{The feature map of the second convolutional layer, showing the output of its single channel. Since it has only one channel, this also corresponds to the output of the autoencoder.}
+		\label{fig:ae-featuremap-layer2}
+	\end{subfigure}
+	\caption{A feature map visualisation for the autoencoder used by the pre-trained autoencoder agent (cont.).}
+	\label{fig:ae-featuremap}
+\end{figure}
+
+This autoencoder agent not only outperforms the vanilla agent, it also (less surprisingly) outperforms the online trained autoencoder agent. This latter agent converges to a slightly worse policy and takes more episodes to get there, while remaining not very consistent (sometimes scoring only about $13$ points in an episode). This can of course be explained by the fact that this agent not only trains a policy network, but also, separately, the autoencoder. This means that for many episodes, the policy network is trained on a rather imperfect representation; the pre-trained autoencoder needed roughly $150.000$ observations before getting close to its final loss. Still, it got to a policy similar to the vanilla agent (even scoring slightly better ong average) in a similar number of episodes; the main difference being that the vanilla agent is much more consistent. %TODO 180.000 beter bekijken, gegokt
+
+Besides outperforming the online trained autoencoder agent, the pre-trained agent has another advantage. Since the autoencoder can be trained separately from the agent, we can reuse the autoencoder for different agents acting in the same environment. This allows for the possibility of training an autoencoder once, after which multiple agents can be trained on less features, allowing for less computation cost to train each agent. This is also substantiated by the autoencoder taking little time train.
+
+Lastly, the DeepMDP performance horribly and something seems off with its implementation, since it goes to a decent policy scoring around $15$ per episode, then quickly dropping back to the level of a random policy. I'm not sure what is going wrong here. I did print out the loss during a few different moments in training. Its loss calculation consists of several different losses: firstly the normal DQN loss calculated like in all other agents. Secondly, the loss of the auxiliary objective: the transition loss. Lastly we have the gradient penalty for each part of the network. All these losses are added together, with the sum of the gradient penalties being multiplied by $0.1$ (a hyperparameter).
+
+After $133$ episodes, when the agent gets decent scores of around $15$ points per episode, the losses look as follows:
+\begin{itemize}
+\item DQN Loss: 0.008
+\item Transition Loss: 400
+\item Encoder gradient penalty: 20
+\item Policy gradient penalty: 20
+\item Auxiliary objective gradient penalty: 3.5 million
+\item Total loss: 38.000
+\end{itemize}
+
+A few episodes later, it goes down to a policy scoring about $0$ per episode:
+\begin{itemize}
+\item DQN Loss: 0.002
+\item Transition Loss: 1000
+\item Encoder gradient penalty: 90
+\item Policy gradient penalty: 90
+\item Auxiliary objective gradient penalty: 1.5 million
+\item Total loss: 16.000
+\end{itemize}
+
+After $248$ episodes, it is still at the level of a random policy:
+\begin{itemize}
+\item DQN Loss: 0.0008 
+\item Transition Loss: 22.000
+\item Encoder gradient penalty: 3.5
+\item Policy gradient penalty: 3.5
+\item Auxiliary objective gradient penalty: 2000
+\item Total loss: 22.000
+\end{itemize}
+
+We can see here that there is probably something off with the loss calculation, since they are extremely disproportional.

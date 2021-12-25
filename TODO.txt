@@ -18,3 +18,6 @@
 ### Algoritme
 	- Is t DQN, double DQN, en/of dueling dqn?
 	
+### results
+in verkrijgen van plots in resultsmanager de evaluation weghalen aangezien die niet opgeslagen worden
+	
