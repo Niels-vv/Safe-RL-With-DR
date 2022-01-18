@@ -10,6 +10,11 @@ G.~E. Hinton and R.~R. Salakhutdinov.
 \newblock Reducing the dimensionality of data with neural networks.
 \newblock {\em Science}, 313(5786):504--507, 2006.
 
+\bibitem{grokking}
+Miguel Morales.
+\newblock Grokking deep reinforcement learning.
+\newblock 2020.
+
 \bibitem{pysc2}
 Oriol Vinyals, Timo Ewalds, Sergey Bartunov, Petko Georgiev, Alexander~Sasha
   Vezhnevets, Michelle Yeo, Alireza Makhzani, Heinrich K{\"{u}}ttler, John~P.
