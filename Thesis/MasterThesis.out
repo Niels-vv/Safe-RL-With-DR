@@ -2,8 +2,8 @@
 \BOOKMARK [0][-]{chapter.2}{Preliminaries}{}% 2
 \BOOKMARK [1][-]{section.2.1}{Reinforcement learning}{chapter.2}% 3
 \BOOKMARK [2][-]{subsection.2.1.1}{General overview}{section.2.1}% 4
-\BOOKMARK [2][-]{subsection.2.1.2}{Neural networks}{section.2.1}% 5
-\BOOKMARK [2][-]{subsection.2.1.3}{\(D\)DQN}{section.2.1}% 6
+\BOOKMARK [2][-]{subsection.2.1.2}{Artificial neural networks}{section.2.1}% 5
+\BOOKMARK [2][-]{subsection.2.1.3}{Double deep-q-network \(DDQN\)}{section.2.1}% 6
 \BOOKMARK [1][-]{section.2.2}{State-space dimensionality reduction}{chapter.2}% 7
 \BOOKMARK [2][-]{subsection.2.2.1}{Principal Component Analysis}{section.2.2}% 8
 \BOOKMARK [2][-]{subsection.2.2.2}{Autoencoder}{section.2.2}% 9

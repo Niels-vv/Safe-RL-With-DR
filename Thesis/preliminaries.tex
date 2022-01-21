@@ -4,7 +4,7 @@ To get a better understanding of our research, we provide some preliminary infor
 \section{Reinforcement learning}\label{pl-rl}
 The main theoretical framework we are working in, is called \emph{reinforcement learning} (RL). This is a form of \emph{machine learning}, the area of artificial intelligence that is concerned with creating computer programs that can solve problems by learning from data. The two other main forms of machine learning are \emph{supervised learning} and \emph{unsupervised  learning}. The distinct feature of RL is that it learns from feedback through trial and error \cite[p. 2-5]{grokking}.
 
-We will now examine RL more closely and formally, as well as discuss \emph{neural networks} and a specific RL algorithm used in our research called \emph{DQN}.
+We will now examine RL more closely and formally, as well as discuss \emph{neural networks} and a specific RL algorithm used in our research called \emph{DDQN}.
 
  
 \subsection{General overview}
@@ -14,26 +14,116 @@ The environment is encoded in a set of variables, where all possible values of t
 
 To be able to make any informed decision, the agent will need some information with regards to the current state. The information about a state received by the agent, i.e. the variables making up the state-space, is called an \emph{observation}. This observation might be partial; the agent might not receive all information about a state. In our example, the agent might not have any information about an obstacle on the road that it hasn't sensed yet.
 
-Using this information, the agent makes a decision  about which action to take. A lot of different algorithms exist with regards to decision making and learning how to make better decision. In section \ref{pl-dqn} we will discuss the learning algorithm we will use, called \emph{deep-Q-network}. Depending on the current state and the action taken by the agent, the environment might go to a new, different state. This change is encoded by a \emph{transition function}; given a state and action pair it returns the next state. 
+Using this information, the agent makes a decision  about which action to take. The total set of possible actions for all states is the \emph{action-space}. A lot of different algorithms exist with regards to decision making and learning how to make better decision. In section \ref{pl-dqn} we will discuss the learning algorithm we will use, called \emph{double deep-Q-network}. Depending on the current state and the action taken by the agent, the environment might go to a new, different state. This change is encoded by a \emph{transition function}; given a state and action pair it returns the next state. 
 
-The current mapping in the agent between a given state and a chosen action is called its \emph{policy}. The better its policy, the better it is able to solve the problem. To be able to improve its policy, the agent needs information about how well it has been performing. This feedback is given in the form of \emph{rewards}: the environment sends positive or negative rewards to the agent, informing it about how well it has performed. In our package delivery example, the robot might get a $+1$ reward whenever it delivers a package.
+The current mapping in the agent between a given state and a distribution over possible actions is called its \emph{policy}. The better its policy, the better it is able to solve the problem. To be able to improve its policy, the agent needs information about how well it has been performing. This feedback is given in the form of \emph{rewards}: the environment sends positive or negative rewards to the agent, informing it about how well it has performed. In our package delivery example, the robot might get a $+1$ reward whenever it delivers a package.
 
 This results in an interaction cycle between the agent and the environment, depicted in figure \ref{fig:rl_cycle}. It begins with the agent receiving an observation. Then, it chooses an action. This results in the environment transitioning into a new state (possibly the same state as before having taken the action). After this, the environment send a new observation along with a reward to the agent, and the the agent chooses a new action. This interaction stops once the problem has been solved, or when some other constraint has been violated (like a time limit, or the robot getting into an unwanted state like the robot crashing into an object). When the cycle stops, we have finished an \emph{episode}. After this, the environment can be reset to start a new episode. To get to a well performing policy, the agent often needs hundreds or thousands of episodes \cite[p. 6-10]{grokking}. 
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.75\textwidth]{rl-cycle}
+    \includegraphics[width=0.5\textwidth]{rl-cycle}
     \caption{The cycle of interaction between the environment and an agent in reinforcement learning.}
     \label{fig:rl_cycle}
 \end{figure}
 
-Let us now formally define the reinforcement learning paradigm. 
+Let us now formally define the reinforcement learning paradigm. RL problems are commonly modeled as \emph{Markov decision processes} (MDPs). 
 
-\subsection{Neural networks}
-deep rl (grokking p 5)
-neural networks (incl non-linnear function approximation)
-\subsection{(D)DQN}\label{pl-dqn}
-si 
+\begin{definition} A Markov decision process (MDP) is a tuple $(S, A, T, R, S_{\theta})$, with state-space $S$, the action-space $A$, transition  probability function $T$: $S \rightarrow 2^{A \times Distr(S)}$ (thus modeling stochasticity), reward function $R$: $S \times A \times S \rightarrow \mathbb{R}$ and initial states distribution $S_{\theta}$. $T$ also describes the probability distribution for transitions, $p(s'|s,a)$: the probability of a transitioning to state $s'$ given state-action pair $(s, a)$ \cite[p. 45-62]{grokking}.
+\end{definition}
+
+A graphical example of an MDP can be seen in figure \ref{fig:mdp}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{MDP}
+    \caption{Example of a Markov decision process (MDP).}
+    \label{fig:mdp}
+\end{figure}
+
+The reward function models the expected reward for a transition; given a transition consisting of a state, action and next state, it returns the expected reward.
+
+The reward function is defined as function $r$:
+\begin{equation}
+	\label{reward}
+	r(s, a, s') = \mathds{E}[R_{t} | S_{t-1} = s, A_{t-1} = a, S_{t} = s']
+\end{equation}
+where $t$ is the timestep and $R_{t} \in R \subset \mathbb{R}$ \cite[p. 54]{grokking}.
+
+To get to its best possible policy, an agent tries to maximize its total sum of expected reward. This is also known as the \emph{return} $G$: 
+\begin{equation}
+G_t = R_{t+1} + \gamma G_{t+1}
+\end{equation}
+with timestep $t$ and a discount factor $\gamma \in [0,1]$ to set the weight of future rewards \cite[p. 67]{grokking}. 
+
+Often, an agent does not know the underlying MDP to a problem. Therefore, we must use a way without using the underlying MDP to find the best possible policy (i.e. the policy giving the highest expected return). To evaluate any policy ${\pi}$ and be able to compare its performance to other policies, we can use the \emph{Bellman equation}. This tells us what the expected return is when starting at any state $s$, following policy $\pi$. This is known as the \emph{state-value function} (V-function, or $V^{\pi}(s)$).
+\begin{equation}
+v_\pi (s) = \sum_{a} \pi (a|s) \sum_{s', r} p(s', r|s,a)[r + \gamma v_\pi (s')], \forall s \in S
+\end{equation} 
+
+For any state, we look at all possible actions. For each resulting state-action pair, we look at all possible transitions and sum the corresponding reward with the value of the next state weighted by the discount factor $\gamma$. This sum is then weighted by the probability of this transition. The resulting value is summed for all possible transitions of this state-action pair, and we then sum these results for all actions of the given state. This results in the value for this state \cite[p. 73]{grokking}.
+
+Having a method of finding the value of a state, is the first step towards an agent being able to figure out the best possible policy. When an agent tries to improve its policy, it can make use of the \emph{action-value function} (Q-function, or $Q^\pi (s, a)$. This tells us the expectation of returns following policy $\pi$ after having taken action $a$ in state $s$. It is defined as follows:
+
+\begin{equation}
+q_\pi (s,a) = \sum_{s', r} p(s', r|s,a)[r + \gamma v_\pi (s')], \forall s \in S, \forall a \in A(s)
+\end{equation}
+For all possible state-action pairs $(s,a)$, we calculate their value by looking at all their possible transitions, taking the corresponding reward, sum this by the state-value of the next state weighted by the discount factor $\gamma$, and weigh this sum with the probability of this transition happening \cite[p. 74]{grokking}.
+
+An agent is in search of an optimal policy: a policy that has an expected return greater or equal to all other possible policies. Such a policy has the optimal action-value function, known as the $q*$ function: this is the action-value function with the highest value over all possible policies. Therefore, if the agent is able to figure out the $q*$ function, it knows the optimal action for each state and thus the optimal policy. Approximating this $q*$ is the approach for most current state-of-the-art learning algorithms, including the one used in this research: double deep-Q-network (DDQN). 
+
+We will explain how DDQN is able to approximate the $q*$ function in section \ref{pl-dqn}. However, to understand DDQN, we will first need to introduce \emph{neural networks}. This is because in order to approximate the $q*$ function, an agent will need to keep track of the action-value for all state-action pairs. Storing these values in a table is not scalable: for problems with large (or continuous) state-spaces and large action-spaces, the table would be became way too large to be able to work with. Therefore, we need a way to approximate this table, which is what neural networks are used for. We will now first explore neural networks, before explaining DDQN.
+
+\subsection{Artificial neural networks}
+The use of artificial neural networks (ANN) in reinforcement learning, is known as \emph{deep RL} \cite[p. 5]{grokking}. ANNs are a way of being able to use RL in problems with large state-space and large action-spaces. This is because ANNs are able to approximate both linear and non-linear functions in an efficient way\cite[p. 165-166]{nn}. Therefore, they can be used to approximate the $q*$, instead of using an action-value table to know the $q*$ function. We will now shortly examine ANNs, using \cite[p. 164-366]{nn}.
+
+ANNs consist of artificial neurons: a mathematical function that sums its input which is used to produce an output. These neurons are grouped into different layers, consisting of any number of neurons. Firstly, there is the input layer. In the case of RL, its input is most often the variables making up an observation. Secondly, there is the output layer, creating the output of the network. In between these two layers there usually are other layers. These are known as the hidden layers. 
+
+To produce an output, a neuron sums its input. Each input of a neuron has its own weight: a variable settings its importance. The network learns to produce better output by changing these weights. After summing the weighted inputs, the result is passed through an (often nonlinear) activation function. This produces the output of the neuron. 
+
+Different types of neural networks exist. One important difference here is the connections between neurons. The simplest form is a \emph{feedforward} neural network. Here, each neuron is only connected to neurons of the next layer, meaning there are no cycles. They are often fully connected: a neuron passes its output to each neuron of the next layer. An example of fully connected feedforward neural network can be seen in figure \ref{fig:nn}.
+
+Another important type of neural network is a \emph{convolutional neural network} (CNN). This is a network that is useful for grid-like data, like image data. It is well suited for applications like image recognition. Such a network makes use of at least one convolutional layer. A convolutional layer consists of multiple kernels (or: filters): a set of learnable parameters. Each kernel convolves across the input to produce a feature map (or: activation map). Since each kernel has different parameters, each feature map will highlight different features of the input. These feature maps are then stacked to produce the output of the convolutional layer.
+
+To improve the given output, a network can update its weights. For this it needs a loss function that computes how incorrect given output was. To calculate how much each weight needs to be changed, backpropagation is used. This computes the gradient for each weight with respect to the loss function. This way, loss can be minimized out therefore the output optimized.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{nn}
+    \caption{Example of a fully connected feedforward artificial neural network. For one node, example weights and activation function are shown.}
+    \label{fig:nn}
+\end{figure}
+
+For more details on artificial neural networks, we refer to \cite{nn}. ANNs are a central part of the learning algorithm used in this paper: double deep-Q-network, which we will now examine.
+
+\subsection{Double deep-q-network (DDQN)}\label{pl-dqn}
+Before going into the learning algorithm DDQN, it is useful to start by looking at other algorithms preceding DDQN. Firstly we will look at \emph{Q-learning} and \emph{deep-Q-learning} (DQN). 
+
+The RL approach taken in Q-learning is arguably the most used approach in RL \cite{qlearning}. It uses a table, the Q-table, to keep track of the Q-function determining the agent's policy. This Q-table is updated with new information gathered by the agent, to ultimately find an optimal policy by approximating $Q*$.
+
+This is done through a cycle of interactions of the agent with the environment. The agent starts by getting an observation and choosing an action. The environment moves to a new state and the agent receives a new observation and a reward for the current transition. Then the Q-table is updated and the cycle starts over until we reach the end of our episode. Depending on the problem, the agent will need hundreds or thousands of episodes to get the Q-table to approximate the $Q*$ function.
+
+When choosing an action, exploitation needs to be balanced with exploration. The agent needs to explore different actions in the same state to find out what happens and explore as many states as possible. Simultaneously, the agent will only start performing well once it starts exploiting the updated Q-table. To do this, an \emph{$\epsilon$-greedy strategy} is used. Each time an action must be taken, the agent gets a random number between $0$ and $1$. Whenever this is lower than or equal to the hyperparameter $\epsilon$, a random action is taken, otherwise it takes chooses an action greedily based on the Q-table. In this strategy, $\epsilon$ is usually decayed over time, to slowly put more emphasis on exploitation.
+
+To update the Q-table after a transition, the old Q-value is added to the new information gotten from this transition, known as the \emph{temporal difference}. The temporal difference is first weighted by a hyperparameter called the \emph{learning rate}. This temporal difference is the difference between the current estimate in the Q-table and the \emph{TD-target}, which is the Q-value we are now moving towards. Thus, it represents the error between the current Q-value and the new estimate and is therefore known as the \emph{TD-error}.
+
+\begin{equation}
+Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha \cdot (r_t + \gamma \cdot \max _{a} Q(s_{t+1},a) - Q(s_t,a_t))
+\end{equation}
+
+In this equation, $r_t$ is the reward for this transition, $\alpha$ the learning rate and $\gamma$ the discount factor. The TD-target is calculated by adding the reward to the maximum Q-value of the next state weighted by the discount factor. Subtracting the old Q-value from the TD-target gives the TD-error. 
+
+As mentioned in section \ref{pl-rl}, the use of a Q-table is not scalable. Therefore, new algorithms were introduced that use neural networks. One such algorithm is DQN. DQN was first introduced in 2015 by V. Mnih, K. Kavukcuoglu and D. Silver, and was the first algorithm to apply RL to high dimensional data while getting human-level scores for Atari-games \cite{dqn}.
+
+Instead of computing Q-values directly using a Q-table, DQN \emph{approximates} the Q-function using neural networks. Such a network takes as input a state observation, and produces as output the Q-value for all possible actions in this state. To act greedily, the agent must simply pick the action with the highest value in the output of the network.
+
+To get the Q-values for a state, we pass the state to its policy network. This is the network representing the policy of the agent. To be able to compute the TD-error, we also pass the next state to a network, to get the max Q-value of the next state. However, we use a second network for this. If we were to use the same network, the target would change every time the policy network is updated, thereby having it chase its own tail. Having a second network, the target network, allows us to freeze targets for a certain number of steps (a hyperparameter), before updating the target network to equal the policy network.
+
+Additionally, we don't train the policy network with every step, but use a hyperparameter to set how often we train the network. Thus, we must store \emph{experiences}: tuples containing information about a transition, including the initial state, next state, reward and whether we ended in a terminal state. When training the network, we train it on batches of these experiences, known as \emph{replay memory}. 
+
+Thus, when training the policy network we pass batches of next states to the policy network to get their maximum Q-values. The corresponding rewards are added to calculate the TD-target. Then the initial states are passed to the policy network to get their Q-values. These values are then used to calculate the TD-error which used to calculate the loss using the loss-function. Then the policy network is updated by backpropagating the loss.
+
+Now we can look at the algorithm used in this paper: double-DQN (DDQN). DDQN is every similar to DQN. The difference is in how the policy network is trained \cite{ddqn}. In DQN we are implicitly using the target network for two things: to get the action with the highest value, and what its value is. Since these values are estimates that differ from their true value, we overestimate the Q-value. Doing this often will lead to divergence. To solve this, DDQN separates these two concerns: we use the policy network to get the action with the highest Q-value and then use the target network to get this action's Q-value. 
 
 \section{State-space dimensionality reduction}\label{pl-dimensionality}
 Definition, general info

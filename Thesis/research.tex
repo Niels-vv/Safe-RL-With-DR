@@ -176,11 +176,11 @@ This autoencoder agent not only outperforms the vanilla agent, it also (less sur
 
 Besides outperforming the online trained autoencoder agent, the pre-trained agent has another advantage. Since the autoencoder can be trained separately from the agent, we can reuse the autoencoder for different agents acting in the same environment. This allows for the possibility of training an autoencoder once, after which multiple agents can be trained on less features, allowing for less computation cost to train each agent. This is also substantiated by the autoencoder taking little time train.
 
-Lastly, the DeepMDP performance horribly and something seems off with its implementation, since it goes to a decent policy scoring around $15$ per episode, then quickly dropping back to the level of a random policy. I'm not sure what is going wrong here. I did print out the loss during a few different moments in training. Its loss calculation consists of several different losses: firstly the normal DQN loss calculated like in all other agents. Secondly, the loss of the auxiliary objective: the transition loss. Lastly we have the gradient penalty for each part of the network. All these losses are added together, with the sum of the gradient penalties being multiplied by $0.1$ (a hyperparameter).
+Lastly, the DeepMDP performance horribly and something seems off with its implementation, since it goes to a decent policy scoring around $15$ per episode, then quickly dropping back to the level of a random policy. I'm not sure what is going wrong here. I did print out the loss during a few different moments in training. Its loss calculation consists of several different losses: firstly the usual DDQN loss calculated like in all other agents. Secondly, the loss of the auxiliary objective: the transition loss. Lastly we have the gradient penalty for each part of the network. All these losses are added together, with the sum of the gradient penalties being multiplied by $0.1$ (a hyperparameter).
 
 After $133$ episodes, when the agent gets decent scores of around $15$ points per episode, the losses look as follows:
 \begin{itemize}
-\item DQN Loss: 0.008
+\item DDQN Loss: 0.008
 \item Transition Loss: 400
 \item Encoder gradient penalty: 20
 \item Policy gradient penalty: 20
@@ -190,7 +190,7 @@ After $133$ episodes, when the agent gets decent scores of around $15$ points pe
 
 A few episodes later, it goes down to a policy scoring about $0$ per episode:
 \begin{itemize}
-\item DQN Loss: 0.002
+\item DDQN Loss: 0.002
 \item Transition Loss: 1000
 \item Encoder gradient penalty: 90
 \item Policy gradient penalty: 90
@@ -200,7 +200,7 @@ A few episodes later, it goes down to a policy scoring about $0$ per episode:
 
 After $248$ episodes, it is still at the level of a random policy:
 \begin{itemize}
-\item DQN Loss: 0.0008 
+\item DDQN Loss: 0.0008 
 \item Transition Loss: 22.000
 \item Encoder gradient penalty: 3.5
 \item Policy gradient penalty: 3.5
