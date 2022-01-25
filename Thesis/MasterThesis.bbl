@@ -1,9 +1,14 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{10}
 
 \bibitem{blizzard}
 Blizzard.
 \newblock Blizzard/s2client-proto: Starcraft {II} {Client} - protocol
   definitions used to communicate with {StarCraft II}.
+
+\bibitem{mario}
+William Curran, Tim Brys, Matthew Taylor, and William Smart.
+\newblock Using pca to efficiently represent state spaces.
+\newblock 05 2015.
 
 \bibitem{nn}
 Ian Goodfellow, Yoshua Bengio, and Aaron Courville.
@@ -21,6 +26,11 @@ Beakcheol Jang, Myeonghwi Kim, Gaspard Harerimana, and Jong Kim.
 \newblock Q-learning algorithms: A comprehensive classification and
   applications.
 \newblock {\em IEEE Access}, PP:1--1, 09 2019.
+
+\bibitem{pca}
+Ian {Jolliffe}.
+\newblock {\em Principal component analysis}.
+\newblock Springer Verlag, New York, 2002.
 
 \bibitem{dqn}
 Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei~A. Rusu, Joel Veness,

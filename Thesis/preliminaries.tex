@@ -74,7 +74,7 @@ An agent is in search of an optimal policy: a policy that has an expected return
 
 We will explain how DDQN is able to approximate the $q*$ function in section \ref{pl-dqn}. However, to understand DDQN, we will first need to introduce \emph{neural networks}. This is because in order to approximate the $q*$ function, an agent will need to keep track of the action-value for all state-action pairs. Storing these values in a table is not scalable: for problems with large (or continuous) state-spaces and large action-spaces, the table would be became way too large to be able to work with. Therefore, we need a way to approximate this table, which is what neural networks are used for. We will now first explore neural networks, before explaining DDQN.
 
-\subsection{Artificial neural networks}
+\subsection{Artificial neural networks}\label{pl-nn}
 The use of artificial neural networks (ANN) in reinforcement learning, is known as \emph{deep RL} \cite[p. 5]{grokking}. ANNs are a way of being able to use RL in problems with large state-space and large action-spaces. This is because ANNs are able to approximate both linear and non-linear functions in an efficient way\cite[p. 165-166]{nn}. Therefore, they can be used to approximate the $q*$, instead of using an action-value table to know the $q*$ function. We will now shortly examine ANNs, using \cite[p. 164-366]{nn}.
 
 ANNs consist of artificial neurons: a mathematical function that sums its input which is used to produce an output. These neurons are grouped into different layers, consisting of any number of neurons. Firstly, there is the input layer. In the case of RL, its input is most often the variables making up an observation. Secondly, there is the output layer, creating the output of the network. In between these two layers there usually are other layers. These are known as the hidden layers. 
@@ -96,7 +96,7 @@ To improve the given output, a network can update its weights. For this it needs
 
 For more details on artificial neural networks, we refer to \cite{nn}. ANNs are a central part of the learning algorithm used in this paper: double deep-Q-network, which we will now examine.
 
-\subsection{Double deep-q-network (DDQN)}\label{pl-dqn}
+\subsection{Double deep-q-network}\label{pl-dqn}
 Before going into the learning algorithm DDQN, it is useful to start by looking at other algorithms preceding DDQN. Firstly we will look at \emph{Q-learning} and \emph{deep-Q-learning} (DQN). 
 
 The RL approach taken in Q-learning is arguably the most used approach in RL \cite{qlearning}. It uses a table, the Q-table, to keep track of the Q-function determining the agent's policy. This Q-table is updated with new information gathered by the agent, to ultimately find an optimal policy by approximating $Q*$.
@@ -123,13 +123,51 @@ Additionally, we don't train the policy network with every step, but use a hyper
 
 Thus, when training the policy network we pass batches of next states to the policy network to get their maximum Q-values. The corresponding rewards are added to calculate the TD-target. Then the initial states are passed to the policy network to get their Q-values. These values are then used to calculate the TD-error which used to calculate the loss using the loss-function. Then the policy network is updated by backpropagating the loss.
 
-Now we can look at the algorithm used in this paper: double-DQN (DDQN). DDQN is every similar to DQN. The difference is in how the policy network is trained \cite{ddqn}. In DQN we are implicitly using the target network for two things: to get the action with the highest value, and what its value is. Since these values are estimates that differ from their true value, we overestimate the Q-value. Doing this often will lead to divergence. To solve this, DDQN separates these two concerns: we use the policy network to get the action with the highest Q-value and then use the target network to get this action's Q-value. 
+Now we can look at the algorithm used in this paper: double-DQN (DDQN). DDQN is every similar to DQN. The difference is in how the policy network is trained \cite{ddqn}. In DQN we are taking the maximum of all Q-values. Since these values are estimates that differ from their true value, DQN tends to overestimate the highest Q-value. Doing this often will lead to divergence \cite[p. 293-297]{grokking}. Implicitly we are using the target network for two things: to get the action with the highest value, and what its value is. To solve the problem of overestimating Q-values, DDQN separates these two concerns: we use the policy network to get the action with the highest Q-value and then use the target network to get this action's Q-value. This way, the target network cross-validates the estimates of the policy network.
+
+The pseudocode for DDQN is given in figure \ref{alg:ddqn}. This shows its training step for optimizing the policy network. This method is called within the interaction between agent and environment as explained in section \ref{pl-rl}. In short, the agent will receive an observation from the environment and the agent will, in our case, use a {$\epsilon$}-greedy strategy to choose an action, where the policy network is used. Then, the environment transitions and gives a new observation to the agent. Hyperparameters are used to set the number of such steps in between training the policy network, and to set the number of steps between updating the target network.
+
+\begin{algorithm}
+\caption{DDQN training step \cite[p.299]{grokking}.}
+\label{alg:ddqn}
+\begin{algorithmic}
+\State Sample $experiences$ from replay buffer
+\State $states$, $actions$, $rewards$, $next\_states$, $terminals$ $\gets$ $experiences$
+\State $indices\_a\_q\_sp$ $\gets$ $\argmax_a policy\_ network(next\_states)$
+\State $q\_sp$ $\gets$ $target\_network(next\_states)$
+\State $max\_a\_q\_sp$ $\gets$ $q\_sp[indices\_a\_q\_sp]$
+\State $max\_a\_q\_sp$ $\gets$ $max\_a\_q\_sp$ $\cdot$ $(1-terminals)$ \Comment{where in $terminals$ True equals $1$, False equals $0$.}
+\State $target\_q\_sa$ $\gets$ $rewards + \gamma \cdot max\_a\_q\_sp$
+\State $q\_sa \gets policy\_network(states, actions)$
+\State $td\_error \gets q\_sa - target\_q\_sa$
+\State $loss \gets mean(td\_error^2 \cdot 0.5)$
+\State Optimize $policy\_network$ with backpropagation using $loss$
+\end{algorithmic}
+\end{algorithm}
 
 \section{State-space dimensionality reduction}\label{pl-dimensionality}
 Definition, general info
 Methods:
 \subsection{Principal Component Analysis}\label{pl-pca}
-algemene info pca
+The first method for state-space dimensionality reduction we will discuss, is \emph{principal component analysis} (PCA) \cite{pca}. 
+
+The general idea of using PCA to reduce dimensionality of the latent space, is to apply PCA on a state observation of the agent immediately after receiving it from the environment. Applying PCA will project the observation data to a lower dimensional space. This lower dimensional observation will then be the observation the agent will use. Thus, the dimension PCA projects to determines the new state-space dimensionality \cite{mario}.
+
+The first important mathematical concept behind PCA, is the \emph{covariance matrix}. This computes the covariance between each variable-pair, thereby computing their correlation. To compute the covariance matrix, we first subtract the mean of each column in the original data matrix from every value in that column. Then, depending whether variance between features corresponds to the importance of that feature, we may standardize the data by dividing each value with the standard deviation of its column. This results in matrix $X$. To compute its covariance matrix, we simply transpose $X$ and multiply it with $X$ giving matrix $X^TX$.
+
+The other two important mathematical concepts behind PCA are \emph{eigenvectors} and \emph{eigenvalues}. An eigenvector $v$ of a matrix $X$ is a vector such that multiplying it with $X$ results in a variable number of vector $v$:
+
+\begin{equation}
+\label{eigenvectors}
+A \cdot v = \lambda \cdot v
+\end{equation}
+
+The number of vectors $v$ that we end up with, i.e. $\lambda$ in equation \ref{eigenvectors}, denotes how much we are scaling the eigenvector and is called the \emph{eigenvalue} of that eigenvector. The number of eigenvectors that a matrix has, is at most $min(\#rows, \#columns)$. 
+
+For PCA, we calculate the eigenvectors and eigenvalues of the covariance matrix $X^TX$. These eigenvectors, called \emph{principal components}, represent the axis of the original matrix $X$ with the highest variance, i.e. capturing the most information. Together, all principal components capture the entire original data. However, the higher the eigenvalue of a principal component is, the higher its variance is and thus the more information it captures. Therefore, we sort the eigenvectors based on their eigenvalue; thus the first principal component captures the most information of all principal components. We can then take the first $x$ number of principal components to project the original data onto. Taking for instance $10$ principal components of the original data that contained $15$ features, means we project the original data onto a $10$ dimensional space.
+
+To use PCA for state-dimensionality reduction, we simply apply PCA to state observations that the agent receives from the environment. After applying PCA, the observation is projected to a lower dimensional space (depending on the number of principal components we take). This lower dimensional observation is then further used by the agent, thus training the agent on a lower dimensional state-space.
+
 \subsection{Autoencoder}\label{pl-ae}
 Another way of projecting data onto a lower dimensional space, is using an \emph{autoencoder}\cite{AE_general}. An autoencoder is a neural network consisting of two parts: an encoder network and a decoder network. The encoder projects the given input data onto a lower dimensional space, also called the \emph{latent space}. The output of the encoder, called the \emph{latent representation}, is used as input for the decoder. This decoder tries to reconstruct the original input from the latent representation as closely as possible. The autoencoder architecture is shown in figure \ref{fig:AE_architecture}.
 
@@ -155,7 +193,9 @@ Formally, an autoencoder can be defined by the two functions it learns:
 \end{equation}
 Equation~\eqref{enc} defines the encoder and equation~\eqref{dec} the decoder, both satisfying~\eqref{encdec} where $\Delta$ is the reconstruction loss function for input x. The closer the output of the autoencoder approximates the original input, the lower the loss.
 
-A fundamental difference with using PCA, is the type of functions that can be approximated for lowering the dimensionality. Since an autoencoder uses neural networks, they can approximate nonlinear functions, as mentioned in section \ref{pl-rl}. This is in contrast with PCA, which can only approximate linear functions. Because of this, an autoencoder can learn more powerful generalisations which leads to lower information loss\cite{AE_general}.
+A fundamental difference with using PCA, is the type of functions that can be approximated for lowering the dimensionality. Since an autoencoder uses neural networks, they can approximate nonlinear functions, as mentioned in section \ref{pl-nn}. This is in contrast with PCA, which can only approximate linear functions. Because of this, an autoencoder can learn more powerful generalisations which leads to lower information loss\cite{AE_general}.
+
+To use an autoencoder for state-space dimensionality reduction, we again (like with PCA) use as input an observation the agent got from the environment. We can train the autoencoder using both the encoder and the decoder to calculate the loss. When used in RL, only the encoder is used. The encoder will project the observation input to the dimensionality of the latent space. 
 
 \subsection{DeepMDP}\label{pl-deepmdp}
 Info over deepmdp

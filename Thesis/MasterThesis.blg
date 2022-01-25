@@ -3,47 +3,48 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: MasterThesis.aux
 The style file: plain.bst
 Database file #1: bibliography.bib
+Warning--empty journal in mario
 Warning--empty journal in grokking
 Warning--empty journal in ddqn
-You've used 8 entries,
+You've used 10 entries,
             2118 wiz_defined-function locations,
-            548 strings with 5920 characters,
-and the built_in function-call counts, 3474 in all, are:
-= -- 290
-> -- 312
+            558 strings with 6115 characters,
+and the built_in function-call counts, 3998 in all, are:
+= -- 336
+> -- 342
 < -- 0
-+ -- 124
-- -- 116
-* -- 306
-:= -- 639
-add.period$ -- 25
-call.type$ -- 8
-change.case$ -- 81
++ -- 136
+- -- 126
+* -- 338
+:= -- 736
+add.period$ -- 31
+call.type$ -- 10
+change.case$ -- 91
 chr.to.int$ -- 0
-cite$ -- 10
-duplicate$ -- 82
-empty$ -- 172
-format.name$ -- 116
-if$ -- 651
+cite$ -- 13
+duplicate$ -- 104
+empty$ -- 211
+format.name$ -- 126
+if$ -- 755
 int.to.chr$ -- 0
-int.to.str$ -- 8
-missing$ -- 8
-newline$ -- 44
-num.names$ -- 16
-pop$ -- 84
+int.to.str$ -- 10
+missing$ -- 11
+newline$ -- 54
+num.names$ -- 20
+pop$ -- 100
 preamble$ -- 1
-purify$ -- 74
+purify$ -- 83
 quote$ -- 0
-skip$ -- 60
+skip$ -- 72
 stack$ -- 0
-substring$ -- 95
-swap$ -- 6
+substring$ -- 105
+swap$ -- 7
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 30
-warning$ -- 2
-while$ -- 20
-width$ -- 9
-write$ -- 85
-(There were 2 warnings)
+type$ -- 36
+warning$ -- 3
+while$ -- 24
+width$ -- 12
+write$ -- 105
+(There were 3 warnings)
