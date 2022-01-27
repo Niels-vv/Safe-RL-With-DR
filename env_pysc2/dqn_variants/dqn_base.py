@@ -161,8 +161,8 @@ class AgentLoop(Agent):
             if self.reduce_dim:
                 state = torch.tensor(state, dtype=torch.float, device=device)
                 state = self.dim_reduction_component.state_dim_reduction(state)
-                state = state.detach().cpu().numpy()
-                #state = torch.reshape(state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
+                state = state.detach().cpu().numpy() #Voor AE
+                #state = torch.reshape(state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy() # Voor PCA
             state = np.expand_dims(state, 0)
             
             # A step in an episode
@@ -183,8 +183,8 @@ class AgentLoop(Agent):
                 if self.reduce_dim:
                     new_state = torch.tensor(new_state, dtype=torch.float, device=device)
                     new_state = self.dim_reduction_component.state_dim_reduction(new_state)
-                    new_state = new_state.detach().cpu().numpy()
-                    #new_state = torch.reshape(new_state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
+                    new_state = new_state.detach().cpu().numpy() #Voor AE
+                    #new_state = torch.reshape(new_state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy() #Voor PCA
                 new_state = np.expand_dims(new_state, 0)   
 
                 reward = obs.reward
@@ -222,8 +222,8 @@ class AgentLoop(Agent):
                     if self.train_ae_online: ae_batch.append(np.array(np.expand_dims(state, 0)))
                     state = torch.tensor(state, dtype=torch.float, device=device)
                     state = self.dim_reduction_component.state_dim_reduction(state)
-                    state = state.detach().cpu().numpy()
-                    #state = torch.reshape(state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
+                    state = state.detach().cpu().numpy() #Voor AE
+                    #state = torch.reshape(state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy() #Voor Pca
                 state = np.expand_dims(state, 0)
                 
                 # A step in an episode
@@ -249,8 +249,8 @@ class AgentLoop(Agent):
                         if self.train_ae_online: ae_batch.append(np.array(np.expand_dims(new_state, 0)))
                         new_state = torch.tensor(new_state, dtype=torch.float, device=device)
                         new_state = self.dim_reduction_component.state_dim_reduction(new_state)
-                        new_state = new_state.detach().cpu().numpy()
-                        #new_state = torch.reshape(new_state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy()
+                        new_state = new_state.detach().cpu().numpy() # Voor AE
+                        #new_state = torch.reshape(new_state, (int(sqrt(self.latent_space)), int(sqrt(self.latent_space)))).detach().cpu().numpy() #Voor PCA
                     new_state = np.expand_dims(new_state, 0)   
 
                     reward = obs.reward

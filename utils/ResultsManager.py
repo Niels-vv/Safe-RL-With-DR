@@ -8,6 +8,7 @@ import numpy as np
 from utils.DataManager import DataManager
 from vae.VAE import VAE, VaeManager
 import seaborn as sns
+from math import sqrt
 
 PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -85,6 +86,14 @@ class AgentPerformance:
         AgentPerformance.show_agent_results(deepmdp_results_file, deepmdp_name, store_filename_deepmdp)
 
     @staticmethod
+    def show_pca_agent_results(dir):
+        results_path = f'{PATH}/../{dir}'
+        pca_results_file = f'{results_path}/results_pca_scalar.csv'
+        store_filename_pca = "PCA_with_scalar_agent_results.png"
+        pca_name = "PCA agent"
+        AgentPerformance.show_agent_results(pca_results_file, pca_name, store_filename_pca)
+
+    @staticmethod
     def show_plot(x_name, y_name, rewards, average, period, title, filename):
         plt.figure(2)
         plt.clf()        
@@ -96,6 +105,33 @@ class AgentPerformance:
         plt.legend(loc="upper left")
         plt.savefig(filename)
         plt.show()
+
+# Class methods showing analyses of PCA
+class PCAAnalysis:
+    def show_state_representation(pca, obs):
+        pass
+
+    @staticmethod
+    def show_state_representation_pca(obs_dir, pca):
+        data_manager = DataManager(observation_sub_dir = obs_dir)
+        obs = data_manager.get_observations()
+
+        jump = 10996 
+        for index, row in obs.iterrows():
+            if index % jump != 0: continue
+            row = row.to_numpy()
+            state = row.reshape(32,32)
+
+            state = torch.tensor(state, dtype=torch.float, device=device)
+            state = pca.state_dim_reduction(state)
+            new_state = torch.reshape(state, (int(sqrt(pca.latent_space)), int(sqrt(pca.latent_space)))).detach().cpu().numpy() #Voor PCA
+                    
+
+            # Store original state as image
+            norm = plt.Normalize(vmin=state.min(), vmax=state.max())
+            fig, axarr = plt.subplots(1)
+            axarr.imshow(norm(state))
+            plt.savefig(f'State_{index+1}_original.png')
 
 # Class methods showing analyses of autoencoder, e.g. visualizing feature maps and showing correlation matrix
 class AEAnalysis:
@@ -233,6 +269,10 @@ def show_base_ae_comparison():
     dir = "env_pysc2/results/dqn/MoveToBeacon"
     AgentPerformance.compare_base_and_ae_agents(dir)
 
+def show_pca_agent_results():
+    dir = "env_pysc2/results/dqn/MoveToBeacon"
+    AgentPerformance.show_pca_agent_results(dir)
+
 # Compare the results (in rewards/episode) of an agent using an online trained autoencoder with a DeepMDP agent
 def show_online_ae_deepmdp_comparison():
     dir = "env_pysc2/results/dqn/MoveToBeacon"
@@ -258,37 +298,6 @@ def show_feature_map_ae():
     ae = AEAnalysis.get_ae().vae_model
     obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
     AEAnalysis.visualize_feature_maps(ae, obs_dir)
-
-def test():
-    obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
-    data_manager = DataManager(observation_sub_dir = obs_dir)
-    obs = data_manager.get_observations()
-    max_index = (0,-1,0) # row, column, value
-    min_index = (0,1024,0)
-    indices_min = []
-    indices_max = []
-    print("Calculating...")
-    for index, row in obs.iterrows():
-        row = row.to_numpy()
-        min_column = (0,1024,0)
-        max_column = (0,-1,0)
-
-        for c in range(len(row)):
-            if row[c] > 0:
-                if c <= min_column[1]:
-                    min_column = (index,c,row[c])
-                if c >= max_column[1]:
-                    max_column = (index, c, row[c])
-        if min_column[1] <= min_index[1]: min_index = min_column
-        if max_column[1] >= max_index[1]: max_index = max_column
-        indices_min.append(min_column)
-        indices_max.append(max_column)
-    print(f'max_index: {max_index}')
-    print(f'min_index: {min_index}')
-    print("Max indices")
-    print(indices_max)
-    print("Min indices")
-    print(indices_min)
 
 if __name__ == "__main__":
     show_base_ae_comparison()
