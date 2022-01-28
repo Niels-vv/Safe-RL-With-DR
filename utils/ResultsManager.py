@@ -120,23 +120,20 @@ class PCAAnalysis:
             plt.savefig(dim_name)
 
             # Get reconstructed state and save image
-            reconstructed_state = pca.pca_main.inverse_transform(latent_repr)
-            norm = plt.Normalize(vmin=state.min(), vmax=state.max())
+            reconstructed_state = pca.pca_main.inverse_transform(latent_repr.cpu().numpy())
+            reconstructed_state = torch.reshape(latent_repr, (16, 16)).detach().cpu().numpy() # TODO 32 magic num
+            torch.tensor(reconstructed_state[0], dtype=torch.float, device=device)
+            norm = plt.Normalize(vmin=reconstructed_state.min(), vmax=reconstructed_state.max())
             fig, axarr = plt.subplots(1)
-            axarr.imshow(norm(state))
+            axarr.imshow(norm(reconstructed_state))
             plt.savefig(recon_name)
-
-            # TODO remove test
-            reconstructed_state = pca.pca_main.inverse_transform(latent_repr)
-            plt.imshow(reconstructed_state)
-            plt.savefig("recon_version2.png")
 
         data_manager = DataManager(observation_sub_dir = obs_dir)
         obs = data_manager.get_observations()
 
         jump = 10996 
         for index, row in obs.iterrows():
-            if index % jump != 0: continue
+            if index % jump != 0 or index == 0: continue
             row = row.to_numpy()
             state = row.reshape(32,32)
 
@@ -148,11 +145,11 @@ class PCAAnalysis:
         # Store original state as image
         norm = plt.Normalize(vmin=state.min(), vmax=state.max())
         fig, axarr = plt.subplots(1)
-        axarr.imshow(norm(state))
+        axarr.imshow(norm(state.cpu().numpy()))
         plt.savefig(f'State_check_original.png')
 
         # TODO remove test
-        plt.imshow(state)
+        plt.imshow(state.cpu().numpy())
         plt.savefig("state_check_version2.png")
 
 # Class methods showing analyses of autoencoder, e.g. visualizing feature maps and showing correlation matrix
@@ -326,16 +323,15 @@ def pca_analyses():
     # Analysis of PCA with scalar
     dim_name = "pca_with_scalar_latent_state.png"
     recon_name = "pca_with_scalar_reconstructed_state.png"
-    pca = DataManager.get_component(f'env_pysc2/results_pca/{map}',"pca1_with_scalar.pt") # TODO check of naamgeving nog klopt
+    pca = DataManager.get_component(f'env_pysc2/results_pca/MoveToBeacon',"pca1_with_scalar.pt") # TODO check of naamgeving nog klopt
     PCAAnalysis.show_state_representation_pca(obs_dir, pca, dim_name, recon_name)
 
     # Analysis of PCA without scalar
     dim_name = "pca_without_scalar_latent_state.png"
     recon_name = "pca_without_scalar_reconstructed_state.png"
-    pca = DataManager.get_component(f'env_pysc2/results_pca/{map}',"pca2_no_scalar.pt") # TODO check of naamgeving nog klopt
+    pca = DataManager.get_component(f'env_pysc2/results_pca/MoveToBeacon',"pca2_no_scalar.pt") # TODO check of naamgeving nog klopt
     PCAAnalysis.show_state_representation_pca(obs_dir, pca, dim_name, recon_name)
 
 if __name__ == "__main__":
-    show_pca_agent_results()
     pca_analyses()
     

@@ -23,3 +23,11 @@ encoder penalty: 3.5
 mlp penalty: 3.5
 aux penalty: 2000
 total deepmdp loss: 22000
+
+na ep 550: reard 0:
+dqn loss: 0.009789297357201576
+aux loss: 183254.15625
+encoder penalty: 50.52745819091797
+mlp penalty: 50.59699249267578
+aux penalty: 13741.248046875
+total deepmdp loss: 183391.578125
