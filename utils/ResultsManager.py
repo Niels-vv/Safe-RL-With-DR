@@ -107,12 +107,20 @@ class AgentPerformance:
         plt.show()
 
 # Class methods showing analyses of PCA
-class PCAAnalysis:
-    def show_state_representation(pca, obs):
-        pass
-
+class PCAAnalysis:    
     @staticmethod
-    def show_state_representation_pca(obs_dir, pca):
+    def show_state_representation_pca(obs_dir, pca, dim_name, recon_name):
+        def show_state_representation(obs):
+            state = pca.state_dim_reduction(obs)
+            state = torch.reshape(state, (int(sqrt(pca.latent_space)), int(sqrt(pca.latent_space)))).detach().cpu().numpy()
+            
+            norm = plt.Normalize(vmin=state.min(), vmax=state.max())
+            fig, axarr = plt.subplots(1)
+            axarr.imshow(norm(state))
+            plt.savefig(dim_name)
+
+            #TODO state reconstruction
+
         data_manager = DataManager(observation_sub_dir = obs_dir)
         obs = data_manager.get_observations()
 
@@ -123,15 +131,15 @@ class PCAAnalysis:
             state = row.reshape(32,32)
 
             state = torch.tensor(state, dtype=torch.float, device=device)
-            state = pca.state_dim_reduction(state)
-            new_state = torch.reshape(state, (int(sqrt(pca.latent_space)), int(sqrt(pca.latent_space)))).detach().cpu().numpy() #Voor PCA
-                    
+            break
+        
+        show_state_representation(state)
 
-            # Store original state as image
-            norm = plt.Normalize(vmin=state.min(), vmax=state.max())
-            fig, axarr = plt.subplots(1)
-            axarr.imshow(norm(state))
-            plt.savefig(f'State_{index+1}_original.png')
+        # Store original state as image
+        norm = plt.Normalize(vmin=state.min(), vmax=state.max())
+        fig, axarr = plt.subplots(1)
+        axarr.imshow(norm(state))
+        plt.savefig(f'State_check_original.png')
 
 # Class methods showing analyses of autoencoder, e.g. visualizing feature maps and showing correlation matrix
 class AEAnalysis:
