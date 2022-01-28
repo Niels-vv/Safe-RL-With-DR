@@ -111,15 +111,25 @@ class PCAAnalysis:
     @staticmethod
     def show_state_representation_pca(obs_dir, pca, dim_name, recon_name):
         def show_state_representation(obs):
-            state = pca.state_dim_reduction(obs)
-            state = torch.reshape(state, (int(sqrt(pca.latent_space)), int(sqrt(pca.latent_space)))).detach().cpu().numpy()
-            
+            # Get state in latent space and save image
+            latent_repr = pca.state_dim_reduction(obs)
+            state = torch.reshape(latent_repr, (int(sqrt(pca.latent_space)), int(sqrt(pca.latent_space)))).detach().cpu().numpy()
             norm = plt.Normalize(vmin=state.min(), vmax=state.max())
             fig, axarr = plt.subplots(1)
             axarr.imshow(norm(state))
             plt.savefig(dim_name)
 
-            #TODO state reconstruction
+            # Get reconstructed state and save image
+            reconstructed_state = pca.pca_main.inverse_transform(latent_repr)
+            norm = plt.Normalize(vmin=state.min(), vmax=state.max())
+            fig, axarr = plt.subplots(1)
+            axarr.imshow(norm(state))
+            plt.savefig(recon_name)
+
+            # TODO remove test
+            reconstructed_state = pca.pca_main.inverse_transform(latent_repr)
+            plt.imshow(reconstructed_state)
+            plt.savefig("recon_version2.png")
 
         data_manager = DataManager(observation_sub_dir = obs_dir)
         obs = data_manager.get_observations()
@@ -140,6 +150,10 @@ class PCAAnalysis:
         fig, axarr = plt.subplots(1)
         axarr.imshow(norm(state))
         plt.savefig(f'State_check_original.png')
+
+        # TODO remove test
+        plt.imshow(state)
+        plt.savefig("state_check_version2.png")
 
 # Class methods showing analyses of autoencoder, e.g. visualizing feature maps and showing correlation matrix
 class AEAnalysis:
@@ -277,10 +291,6 @@ def show_base_ae_comparison():
     dir = "env_pysc2/results/dqn/MoveToBeacon"
     AgentPerformance.compare_base_and_ae_agents(dir)
 
-def show_pca_agent_results():
-    dir = "env_pysc2/results/dqn/MoveToBeacon"
-    AgentPerformance.show_pca_agent_results(dir)
-
 # Compare the results (in rewards/episode) of an agent using an online trained autoencoder with a DeepMDP agent
 def show_online_ae_deepmdp_comparison():
     dir = "env_pysc2/results/dqn/MoveToBeacon"
@@ -306,8 +316,26 @@ def show_feature_map_ae():
     ae = AEAnalysis.get_ae().vae_model
     obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
     AEAnalysis.visualize_feature_maps(ae, obs_dir)
+    
+def show_pca_agent_results():
+    dir = "env_pysc2/results/dqn/MoveToBeacon"
+    AgentPerformance.show_pca_agent_results(dir)
+
+def pca_analyses():
+    obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
+    # Analysis of PCA with scalar
+    dim_name = "pca_with_scalar_latent_state.png"
+    recon_name = "pca_with_scalar_reconstructed_state.png"
+    pca = DataManager.get_component(f'env_pysc2/results_pca/{map}',"pca1_with_scalar.pt") # TODO check of naamgeving nog klopt
+    PCAAnalysis.show_state_representation_pca(obs_dir, pca, dim_name, recon_name)
+
+    # Analysis of PCA without scalar
+    dim_name = "pca_without_scalar_latent_state.png"
+    recon_name = "pca_without_scalar_reconstructed_state.png"
+    pca = DataManager.get_component(f'env_pysc2/results_pca/{map}',"pca2_no_scalar.pt") # TODO check of naamgeving nog klopt
+    PCAAnalysis.show_state_representation_pca(obs_dir, pca, dim_name, recon_name)
 
 if __name__ == "__main__":
-    show_base_ae_comparison()
-    show_online_ae_deepmdp_comparison()
+    show_pca_agent_results()
+    pca_analyses()
     
