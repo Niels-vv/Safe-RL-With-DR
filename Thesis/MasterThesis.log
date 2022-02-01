@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2021.12.20)  25 JAN 2022 17:28
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2021.12.20)  1 FEB 2022 13:48
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1014,16 +1014,19 @@ Package pdftex.def Info: imgs/nn.png  used on input line 92.
  [8 <./imgs/nn.png>] [9]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 131.
- [10] [11]
-<imgs/AE_architecture.png, id=273, 474.77374pt x 160.6pt>
+
+
+LaTeX Warning: Citation `AE-2019' on page 10 undefined on input line 149.
+
+[10] [11] [12]
+<imgs/AE_architecture.png, id=285, 474.77374pt x 160.6pt>
 File: imgs/AE_architecture.png Graphic file (type png)
 <use imgs/AE_architecture.png>
-Package pdftex.def Info: imgs/AE_architecture.png  used on input line 176.
+Package pdftex.def Info: imgs/AE_architecture.png  used on input line 179.
 (pdftex.def)             Requested size: 270.0pt x 91.33464pt.
-
-[12 <./imgs/AE_architecture.png>]) (./research.tex [13]
+) (./research.tex [13 <./imgs/AE_architecture.png>]
 Chapter 3.
-<imgs/pysc2_SS.jpg, id=300, 481.8pt x 361.35pt>
+<imgs/pysc2_SS.jpg, id=307, 481.8pt x 361.35pt>
 File: imgs/pysc2_SS.jpg Graphic file (type jpg)
 <use imgs/pysc2_SS.jpg>
 Package pdftex.def Info: imgs/pysc2_SS.jpg  used on input line 16.
@@ -1042,7 +1045,7 @@ LaTeX Warning: Marginpar on page 15 moved.
 
 LaTeX Warning: Marginpar on page 15 moved.
 
-<imgs/AE_State_original.png, id=309, 462.528pt x 346.896pt>
+<imgs/AE_State_original.png, id=316, 462.528pt x 346.896pt>
 File: imgs/AE_State_original.png Graphic file (type png)
 <use imgs/AE_State_original.png>
 Package pdftex.def Info: imgs/AE_State_original.png  used on input line 25.
@@ -1076,96 +1079,117 @@ Underfull \hbox (badness 10000) in paragraph at lines 66--67
  []
 
 [18]
-<imgs/Base_agent_results.png, id=341, 462.528pt x 346.896pt>
+<imgs/Base_agent_results.png, id=349, 462.528pt x 346.896pt>
 File: imgs/Base_agent_results.png Graphic file (type png)
 <use imgs/Base_agent_results.png>
 Package pdftex.def Info: imgs/Base_agent_results.png  used on input line 86.
-(pdftex.def)             Requested size: 360.0pt x 270.01141pt.
-<imgs/Pretrained_autoencoder_agent_results.png, id=342, 462.528pt x 346.896pt>
+(pdftex.def)             Requested size: 202.5pt x 151.87778pt.
+<imgs/PCA_with_scalar_agent_results.png, id=350, 462.528pt x 346.896pt>
+File: imgs/PCA_with_scalar_agent_results.png Graphic file (type png)
+<use imgs/PCA_with_scalar_agent_results.png>
+Package pdftex.def Info: imgs/PCA_with_scalar_agent_results.png  used on input 
+line 91.
+(pdftex.def)             Requested size: 202.5pt x 151.87778pt.
+<imgs/Pretrained_autoencoder_agent_results.png, id=351, 462.528pt x 346.896pt>
 File: imgs/Pretrained_autoencoder_agent_results.png Graphic file (type png)
 <use imgs/Pretrained_autoencoder_agent_results.png>
 Package pdftex.def Info: imgs/Pretrained_autoencoder_agent_results.png  used on
- input line 91.
-(pdftex.def)             Requested size: 360.0pt x 270.01141pt.
-
-
-LaTeX Warning: Float too large for page by 4.82256pt on input line 96.
+ input line 96.
+(pdftex.def)             Requested size: 202.5pt x 151.87778pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<imgs/Online_autoencoder_agent_results.png, id=343, 462.528pt x 346.896pt>
+<imgs/Online_autoencoder_agent_results.png, id=352, 462.528pt x 346.896pt>
 File: imgs/Online_autoencoder_agent_results.png Graphic file (type png)
 <use imgs/Online_autoencoder_agent_results.png>
 Package pdftex.def Info: imgs/Online_autoencoder_agent_results.png  used on inp
-ut line 99.
-(pdftex.def)             Requested size: 360.0pt x 270.01141pt.
-<imgs/Deepmdp_agent_results.png, id=344, 462.528pt x 346.896pt>
+ut line 104.
+(pdftex.def)             Requested size: 202.5pt x 151.87778pt.
+<imgs/Deepmdp_agent_results.png, id=353, 462.528pt x 346.896pt>
 File: imgs/Deepmdp_agent_results.png Graphic file (type png)
 <use imgs/Deepmdp_agent_results.png>
-Package pdftex.def Info: imgs/Deepmdp_agent_results.png  used on input line 104
+Package pdftex.def Info: imgs/Deepmdp_agent_results.png  used on input line 109
 .
-(pdftex.def)             Requested size: 360.0pt x 270.01141pt.
+(pdftex.def)             Requested size: 202.5pt x 151.87778pt.
 
-LaTeX Warning: Float too large for page by 4.82256pt on input line 110.
+Underfull \hbox (badness 10000) in paragraph at lines 103--113
+[][]
+ []
 
 [19]
-<imgs/ae_loss.png, id=354, 462.528pt x 346.896pt>
+<imgs/ae_loss.png, id=364, 462.528pt x 346.896pt>
 File: imgs/ae_loss.png Graphic file (type png)
 <use imgs/ae_loss.png>
-Package pdftex.def Info: imgs/ae_loss.png  used on input line 122.
+Package pdftex.def Info: imgs/ae_loss.png  used on input line 127.
 (pdftex.def)             Requested size: 360.0pt x 270.01141pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 [20]
-<imgs/AE_corr_matrix_cropped.png, id=364, 1601.2322pt x 544.28343pt>
-File: imgs/AE_corr_matrix_cropped.png Graphic file (type png)
-<use imgs/AE_corr_matrix_cropped.png>
-Package pdftex.def Info: imgs/AE_corr_matrix_cropped.png  used on input line 14
-3.
-(pdftex.def)             Requested size: 597.50787pt x 203.10086pt.
 File: imgs/AE_State_original.png Graphic file (type png)
 <use imgs/AE_State_original.png>
-Package pdftex.def Info: imgs/AE_State_original.png  used on input line 154.
-(pdftex.def)             Requested size: 360.0pt x 270.01141pt.
-<imgs/AE_Layer_1_Feature_Map.png, id=369, 462.528pt x 346.896pt>
-File: imgs/AE_Layer_1_Feature_Map.png Graphic file (type png)
-<use imgs/AE_Layer_1_Feature_Map.png>
-Package pdftex.def Info: imgs/AE_Layer_1_Feature_Map.png  used on input line 15
-9.
-(pdftex.def)             Requested size: 360.0pt x 270.01141pt.
-
-
-LaTeX Warning: Float too large for page by 30.42256pt on input line 164.
+Package pdftex.def Info: imgs/AE_State_original.png  used on input line 146.
+(pdftex.def)             Requested size: 202.5pt x 151.87778pt.
+<imgs/pca_with_scalar_latent_state.png, id=376, 462.528pt x 346.896pt>
+File: imgs/pca_with_scalar_latent_state.png Graphic file (type png)
+<use imgs/pca_with_scalar_latent_state.png>
+Package pdftex.def Info: imgs/pca_with_scalar_latent_state.png  used on input l
+ine 151.
+(pdftex.def)             Requested size: 202.5pt x 151.87778pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<imgs/AE_Layer_2_Feature_Map.png, id=370, 462.528pt x 346.896pt>
+<imgs/AE_corr_matrix_cropped.png, id=378, 1601.2322pt x 544.28343pt>
+File: imgs/AE_corr_matrix_cropped.png Graphic file (type png)
+<use imgs/AE_corr_matrix_cropped.png>
+Package pdftex.def Info: imgs/AE_corr_matrix_cropped.png  used on input line 16
+8.
+(pdftex.def)             Requested size: 597.50787pt x 203.10086pt.
+[21]
+File: imgs/AE_State_original.png Graphic file (type png)
+<use imgs/AE_State_original.png>
+Package pdftex.def Info: imgs/AE_State_original.png  used on input line 179.
+(pdftex.def)             Requested size: 360.0pt x 270.01141pt.
+<imgs/AE_Layer_1_Feature_Map.png, id=388, 462.528pt x 346.896pt>
+File: imgs/AE_Layer_1_Feature_Map.png Graphic file (type png)
+<use imgs/AE_Layer_1_Feature_Map.png>
+Package pdftex.def Info: imgs/AE_Layer_1_Feature_Map.png  used on input line 18
+4.
+(pdftex.def)             Requested size: 360.0pt x 270.01141pt.
+
+
+LaTeX Warning: Float too large for page by 30.42256pt on input line 189.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+<imgs/AE_Layer_2_Feature_Map.png, id=389, 462.528pt x 346.896pt>
 File: imgs/AE_Layer_2_Feature_Map.png Graphic file (type png)
 <use imgs/AE_Layer_2_Feature_Map.png>
-Package pdftex.def Info: imgs/AE_Layer_2_Feature_Map.png  used on input line 16
-7.
+Package pdftex.def Info: imgs/AE_Layer_2_Feature_Map.png  used on input line 19
+2.
 (pdftex.def)             Requested size: 360.0pt x 270.01141pt.
-[21] [22]) (./relatedwork.tex [23] [24 <./imgs/Base_agent_results.png> <./imgs/
-Pretrained_autoencoder_agent_results.png>] [25 <./imgs/Online_autoencoder_agent
-_results.png> <./imgs/Deepmdp_agent_results.png>] [26 <./imgs/ae_loss.png> <./i
-mgs/AE_corr_matrix_cropped.png>] [27 <./imgs/AE_Layer_1_Feature_Map.png>]
-[28 <./imgs/AE_Layer_2_Feature_Map.png>]
+[22]) (./relatedwork.tex [23] [24 <./imgs/Base_agent_results.png> <./imgs/PCA_w
+ith_scalar_agent_results.png> <./imgs/Pretrained_autoencoder_agent_results.png>
+] [25 <./imgs/Online_autoencoder_agent_results.png> <./imgs/Deepmdp_agent_resul
+ts.png>] [26 <./imgs/ae_loss.png>] [27 <./imgs/pca_with_scalar_latent_state.png
+>] [28 <./imgs/AE_corr_matrix_cropped.png>] [29 <./imgs/AE_Layer_1_Feature_Map.
+png>] [30 <./imgs/AE_Layer_2_Feature_Map.png>]
 Chapter 4.
-) (./conclusions.tex [29
+[31
 
-]
+]) (./conclusions.tex [32]
 Chapter 5.
-) (./MasterThesis.bbl [30
+) (./MasterThesis.bbl [33
 
-] [31
+] [34
 
-]) (./appendix.tex [32]
+]) (./appendix.tex [35]
 Appendix A.
-) [33
+) [36
 
 ]
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 93.
@@ -1175,13 +1199,17 @@ Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 93.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 93.
 Package rerunfilecheck Info: File `MasterThesis.out' has not changed.
 (rerunfilecheck)             Checksum: A5B919AB08B7622F3B656972E130E0C9;1379.
+
+
+LaTeX Warning: There were undefined references.
+
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 93.
  ) 
 Here is how much of TeX's memory you used:
- 23604 strings out of 481239
- 420201 string characters out of 5920376
- 728480 words of memory out of 5000000
- 38259 multiletter control sequences out of 15000+600000
+ 23619 strings out of 481239
+ 420578 string characters out of 5920376
+ 727998 words of memory out of 5000000
+ 38267 multiletter control sequences out of 15000+600000
  545714 words of font info for 82 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  68i,9n,100p,3243b,991s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1204,10 +1232,10 @@ ts/type1/public/amsfonts/cm/cmtt12.pfb></usr/share/texlive/texmf-dist/fonts/typ
 e1/public/doublestroke/dsrom10.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
 ublic/amsfonts/symbols/msbm10.pfb></usr/share/texmf/fonts/type1/public/cm-super
 /sfrm1095.pfb>
-Output written on MasterThesis.pdf (35 pages, 1369610 bytes).
+Output written on MasterThesis.pdf (38 pages, 1436646 bytes).
 PDF statistics:
- 526 PDF objects out of 1000 (max. 8388607)
- 419 compressed objects within 5 object streams
- 98 named destinations out of 1000 (max. 500000)
- 360 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 566 PDF objects out of 1000 (max. 8388607)
+ 452 compressed objects within 5 object streams
+ 105 named destinations out of 1000 (max. 500000)
+ 370 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -15,8 +15,8 @@
 \contentsline {section}{\numberline {3.2}Results}{19}{section.3.2}%
 \contentsline {subsection}{\numberline {3.2.1}Research results}{19}{subsection.3.2.1}%
 \contentsline {subsection}{\numberline {3.2.2}Discussion}{20}{subsection.3.2.2}%
-\contentsline {chapter}{\numberline {4}Related Work}{29}{chapter.4}%
-\contentsline {chapter}{\numberline {5}Conclusions}{30}{chapter.5}%
-\contentsline {chapter}{\numberline {A}Appendix}{33}{appendix.A}%
-\contentsline {section}{\numberline {A.1}RL agent architectures}{33}{section.A.1}%
-\contentsline {subsection}{\numberline {A.1.1}Vanilla agent}{33}{subsection.A.1.1}%
+\contentsline {chapter}{\numberline {4}Related Work}{31}{chapter.4}%
+\contentsline {chapter}{\numberline {5}Conclusions}{33}{chapter.5}%
+\contentsline {chapter}{\numberline {A}Appendix}{36}{appendix.A}%
+\contentsline {section}{\numberline {A.1}RL agent architectures}{36}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Vanilla agent}{36}{subsection.A.1.1}%

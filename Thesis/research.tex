@@ -34,22 +34,22 @@ Lastly, an \textbf{episode} takes $120$ seconds. The goal is to move the army un
 \subsection{Experiments}\label{research-exp}
 To examine the effect of the different dimensionality reduction methods, we implemented multiple RL agents using different reduction methods and compared their performance. In this section we will discuss the agents that we used. We will give a general overview here, referring to appendix \ref{appendix} section \ref{appendix-agents} for details on the neural network architectures and hyperparameter settings. 
 
-The first agent mentioned is the vanilla agent, which does not use a dimensionality reduction method, therefore using the full $32 \times 32$ dimensions of the observation. All other agents reduce the dimensionality to $16 \times 16$. This means that the number of features in an observation are reduced from \todo{Again, is this correct?}$1024$ to $256$.
+The first agent mentioned is the baseline agent, which does not use a dimensionality reduction method, therefore using the full $32 \times 32$ dimensions of the observation. All other agents reduce the dimensionality to $16 \times 16$. This means that the number of features in an observation are reduced from \todo{Again, is this correct?}$1024$ to $256$.
 
-Furthermore, to allow for a fair comparison of their performance, all agents must share as many architectural design choices and hyperparameter settings as possible. This is done by extending the vanilla agent in all other agents. However, one important change must be made. The vanilla agent's neural network receives a $32 \times 32$ input, whereas the other agents receive a $16 \times 16$ input. In all cases, the output dimensions must be $32 \times 32$. This is because the network approximates the Q-function: a valuation of all actions for a given state. Since an action in our environment is defined by the coordinates the army unit must walk to, there are $32 \times 32$ possible actions. To deal with this difference in input dimensions, the first layer of the networks of the non-vanilla agents are modified to increase the dimensionality.\newline
+Furthermore, to allow for a fair comparison of their performance, all agents must share as many architectural design choices and hyperparameter settings as possible. This is done by extending the baseline agent in all other agents. However, one important change must be made. The baseline agent's neural network receives a $32 \times 32$ input, whereas the other agents receive a $16 \times 16$ input. In all cases, the output dimensions must be $32 \times 32$. This is because the network approximates the Q-function: a valuation of all actions for a given state. Since an action in our environment is defined by the coordinates the army unit must walk to, there are $32 \times 32$ possible actions. To deal with this difference in input dimensions, the first layer of the networks of the non-baseline agents are modified to increase the dimensionality.\newline
 
-\noindent \textbf{Vanilla agent}\newline
-\noindent The vanilla agent is a standard RL agent that does not use any dimensionality reduction. This is the agent that is extended by all other agents. It uses a DDQN strategy, as explained in section \ref{pl-dqn}. %TODO DQN of DDQN?
+\noindent \textbf{Baseline agent}\newline
+\noindent The baseline agent is a standard RL agent that does not use any dimensionality reduction. This is the agent that is extended by all other agents. It uses a DDQN strategy, as explained in section \ref{pl-dqn}. %TODO DQN of DDQN?
 First, the agent receives an observation from the environment. This observation is passed to its neural network approximating the Q-function. This returns a valuation for each action taken in this state. Then, the agent either chooses the action with the best valuation (i.e. acting greedily) or chooses a random action. An action corresponds to choosing coordinates for the army unit to walk to. Then, the chosen action is performed and we repeat this cycle until the end of the episode, whilst often training the neural network on stored transitions.
 
-The neural network consists of three convolutional layers: the first layer being a Conv2DTranspose, the other two being Conv2D layers. The use of the Conv2DTranpose layer allows for the possibility of changing the dimensionality of the given input. For our vanilla agent, the input dimensions, $32 \times 32$, must remain the same, which is achieved by setting the stride of the first layer to $1$. This way, both the dimensions of the input and the output of the network are $32 \times 32$ (where its input represents the current state observation and its output the action valuation).\newline
+The neural network consists of three convolutional layers: the first layer being a Conv2DTranspose, the other two being Conv2D layers. The use of the Conv2DTranpose layer allows for the possibility of changing the dimensionality of the given input. For our baseline agent, the input dimensions, $32 \times 32$, must remain the same, which is achieved by setting the stride of the first layer to $1$. This way, both the dimensions of the input and the output of the network are $32 \times 32$ (where its input represents the current state observation and its output the action valuation).\newline
 
 \noindent \textbf{PCA agent}\newline
-\noindent The PCA agent uses PCA to reduce the dimensionality of the state observations. As mentioned, this is done by extending the vanilla agent: after receiving an observation from the environment, the observation is processed by a PCA component lowering the observation dimensionality from $32 \times 32$ to $16 \times 16$. This latent representation is then used by the agent as if it is the actual observations. This means that it is passed to the network to give an action valuation, as well as being stored in transitions used to train the network.
+\noindent The PCA agent uses PCA to reduce the dimensionality of the state observations. As mentioned, this is done by extending the baseline agent: after receiving an observation from the environment, the observation is processed by a PCA component lowering the observation dimensionality from $32 \times 32$ to $16 \times 16$. This latent representation is then used by the agent as if it is the actual observations. This means that it is passed to the network to give an action valuation, as well as being stored in transitions used to train the network.
 
 The output of the network representing the Q-function must remain $32 \times 32$, since we have $32 \cdot 32$ possible actions: one action per coordinate. Therefore, the first layer in the policy network, the aforementioned Conv2DTranspose layer, has a stride of $2$. This changes the dimensions from $16 \times 16$ to $32 \times 32$. 
 
-The PCA component is trained separately before being used by the agent. This is done by training the PCA on $240.000$ previously stored observations, which corresponds to observations from $1000$ episodes. It is important that these observations give a good representation of the environment to get a well trained PCA component. The first $256$ principal components in our PCA (representing a $16 \times 16$ dimensional observation), contain roughly $96\%$ of the information of the original data.\newline
+The PCA component is trained separately before being used by the agent. This is done by training the PCA on $240.000$ previously stored observations, which corresponds to observations from $1000$ episodes. It is important that these observations give a good representation of the environment to get a well trained PCA component. The first $256$ principal components in our PCA (representing a $16 \times 16$ dimensional observation), contain roughly $96\%$ of the information of the original data. Two PCA versions have been examined: one using a scalar to standardize the observation data as explained in section \ref{pl-pca}, and one without such a scalar.\newline
 
 \noindent \textbf{Pre-trained autoencoder agent}\newline
 \noindent This agent is very similar to the PCA agent, except instead of using a PCA component, we are using an autoencoder to reduce dimensionality. Just like the PCA component, the autoencoder is pre-trained on the same $240.000$ observations. After this it is used by the agent to reduce the dimensionality of the observation. 
@@ -82,26 +82,31 @@ The results from running the different agents in the Starcraft II minigame MoveT
 
 \begin{figure}[h]
 	\centering
-	\begin{subfigure}[b]{1\textwidth}
-		\includegraphics[width=1\linewidth]{Base_agent_results}
-		\caption{Results for the vanilla agent.}
+	\begin{subfigure}[b]{0.75\textwidth}
+		\includegraphics[width=0.75\linewidth]{Base_agent_results}
+		\caption{Results for the baseline agent.}
 		\label{fig:results-base} 
 	\end{subfigure}
-	\begin{subfigure}[b]{1\textwidth}
-		\includegraphics[width=1\linewidth]{Pretrained_autoencoder_agent_results}
+	\begin{subfigure}[b]{0.75\textwidth}
+		\includegraphics[width=0.75\linewidth]{PCA_with_scalar_agent_results}
+		\caption{Results for the PCA agent using a scalar.}
+		\label{fig:results-pca}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.75\textwidth}
+		\includegraphics[width=0.75\linewidth]{Pretrained_autoencoder_agent_results}
 		\caption{Results for the pre-trained autoencoder agent.}
 		\label{fig:results-ae}
 	\end{subfigure}
 	\caption{Results of the different RL agents.}
 \end{figure}%	
 \begin{figure}[ht]\ContinuedFloat
-	\begin{subfigure}[b]{1\textwidth}
-		\includegraphics[width=1\linewidth]{Online_autoencoder_agent_results}
+	\begin{subfigure}[b]{0.75\textwidth}
+		\includegraphics[width=0.75\linewidth]{Online_autoencoder_agent_results}
 		\caption{Results for the online trained autoencoder agent.}
 		\label{fig:results-online-ae}
 	\end{subfigure}
-	\begin{subfigure}[b]{\textwidth}
-		\includegraphics[width=1\linewidth]{Deepmdp_agent_results}
+	\begin{subfigure}[b]{0.75\textwidth}
+		\includegraphics[width=0.75\linewidth]{Deepmdp_agent_results}
 		\caption{Results for the DeepMDP agent.}
 		\label{fig:results-deepmdp}
 	\end{subfigure}
@@ -109,13 +114,13 @@ The results from running the different agents in the Starcraft II minigame MoveT
 	\label{fig:results-agents}
 \end{figure}
 
-Firstly, the results of training the PCA agent on $800$ episodes are not shown in these results. This is because, no matter what neural network architecture used in the agent (having used multiple different ANN's and CNN's), it always remained at a policy at the level of a random policy.
+As can be seen in subfigure \ref{fig:results-base}, the baseline agent converges to a policy scoring around $19$ per episode. This policy is reached after roughly $600$ episodes. Already after episode $300$ does it oscillate around scoring $17-20$ while also sometimes having an episode score of around $10$. After this it still needs another $300$ episodes to get to a more consistent policy.
 
-As can be seen in subfigure \ref{fig:results-base}, the vanilla agent converges to a policy scoring around $19$ per episode. This policy is reached after roughly $600$ episodes. Already after episode $300$ does it oscillate around scoring $17-20$ while also sometimes having an episode scoring around $10$. After this it still needs another $300$ episodes to get to a more consistent policy.
+The results for the PCA agent can be seen in figure \ref{fig:results-pca}. Though this shows the results for the agent using a PCA with a scalar, similar results were achieved without using a scalar. Furthermore, no matter what neural network architecture used in the agent (having used multiple different linear network architectures and different CNN architectures), it always remained at a policy performing at the level of a random policy, i.e. scoring around $0-3$ per episode.
 
 The results for the agent using a pre-trained autoencoder, in figure \ref{fig:results-ae}, show that this agent preforms a little better. Not only does it converge to a slightly better policy scoring around $21$ per episode, it also converges quicker; it is already consistent after roughly $400$ episode, instead of $600$. 
 
-\todo{Todo: create figure of this.} We also show the results of training the autoencoder itself. As mentioned, it is trained on $240.000$ observations, corresponding to $1000$ episodes. Whereas each agent's training (except for the DeepMDP) took roughly $90$ minutes, training the autoencoder on $1000$ episodes worth of observations only took about $2.5$ minutes. The loss history for the autoencoder can be seen in figure \ref{fig:ae-loss}. After roughly $6000 \cdot 25 = 150.000$ observation does it converge to its final loss. %Unfortunately I can't access the full results of this at the moment since Colab kicked me out due to usage limit. I do have some truncated results. The autoencoder starts with a loss around $200$. After the full $240.000$ episodes, its loss is around $1.0$, which is already achieved after around $215.000$ observations. After $180.000$ episodes, its loss is around $2.0$. 
+We also show the results of training the autoencoder itself. As mentioned, it is trained on $240.000$ observations, corresponding to $1000$ episodes. Whereas each agent's training (except for the DeepMDP) took roughly $90$ minutes, training the autoencoder itself on $1000$ episodes worth of observations only took about $2.5$ minutes. The loss history for the autoencoder can be seen in figure \ref{fig:ae-loss}. After roughly $6000 \cdot 25 = 150.000$ observation it converges to its final loss.
 
 \begin{figure}[h]
     \centering
@@ -129,9 +134,29 @@ Compared to the pre-trained autoencoder agent, the agent using an untrained auto
 Lastly we have the DeepMDP agent. After $130$ episodes, this agent suddenly jumps up from a random policy to scoring around $15$. However, after several episodes it starts going back down, alternating between scoring at a random policy and scoring around $7$, until finally reaching a random policy again. Furthermore it takes a lot longer to train. For the other agents, each episode took only a few seconds, whereas each episode in the DeepMDP agent takes $2.5$ minutes.
 
 \subsection{Discussion}\label{research-discussion}
-The first notable results is the PCA agent giving a policy that remains at a policy at the level of a random policy during its $800$ episode training. \todo{Perhaps try this?} Uncertain remains whether the agent could find a good policy after enough episodes. In any case it performs way worse than the other agents. A possible explanation might be that the PCA reduction loses (too much) spatial information. \todo{Citing}Although PCA can be used for image compression, where spatial information is retained, it is a lot more lossy than for instance an autoencoder.
+The first notable results is the PCA agent giving a policy that remains at a policy at the level of a random policy during its $800$ episode training, therewith performing way worse than the other agents. A possible explanation might be that the PCA reduction loses (too much) spatial information. \todo{Citing}Although PCA can be used for image compression, where spatial information is retained, it is a lot more lossy than for instance an autoencoder.
 
-Another interesting result is the performance of the pre-trained autoencoder agent. Not only does it match the vanilla agent's performance, it even slightly surpasses it: it finds a slightly better policy (scoring around $21$ per episode on average, versus $19$), and more quickly converges to a consistent policy (after $400$ episodes versus $600$). Its better performance is despite the agent using imperfect information, while the vanilla agent uses complete information.
+Figure \ref{fig:pca-state} shows an example of the PCA transformation on an observation. figure \ref{fig:pca-original} shows the original observation that the agent would get from the environment. Figure \ref{fig:pca-latent} shows the latent representation after using PCA for dimensionality reduction. as mentioned before, this uses $256$ principal components, capturing roughly $96\%$ of the original data. Here we can see that no spatial information is retained, making it impossible for the agent to train a meaningful policy on. 
+
+Furthermore, we also tested a different PCA setup where we used all $1024$ principal components. Here, we again fitted the PCA on the same observations but keeping all principal components, giving a new $32 \times 32$ observation (and therefore not doing any dimensionality reduction). Transformation of an observation gave similar results: spatial information was lost. The problem therefore lies in the fitting process. A possible explanation for the bad transformation performance, might be that a single observation is very sparse. Even though the PCA is fitted on $240.000$ observations, each single observation is very sparse and at the same time, there are a lot of different possible observations due to the large state-space (see section \ref{research-env}). This combination might lead to the PCA not being able to generalize well enough. 
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}[b]{0.75\textwidth}
+		\includegraphics[width=0.75\linewidth]{AE_State_original}
+		\caption{The original observation, i.e. the input for the PCA transformation.}
+		\label{fig:pca-original} 
+	\end{subfigure}
+	\begin{subfigure}[b]{0.75\textwidth}
+		\includegraphics[width=0.75\linewidth]{pca_with_scalar_latent_state}
+		\caption{The latent representation given by the PCA transformation}
+		\label{fig:pca-latent}
+	\end{subfigure}
+	\caption{Latent representation and reconstruction of a state observation using PCA.}
+	\label{fig:pca-state}
+\end{figure}
+
+Another interesting result is the performance of the pre-trained autoencoder agent. Not only does it match the baseline agent's performance, it even slightly surpasses it: it finds a slightly better policy (scoring around $21$ per episode on average, versus $19$), and more quickly converges to a consistent policy (after $400$ episodes versus $600$). Its better performance is despite the agent using imperfect information, while the baseline agent uses complete information.
 
 Its performance is highly dependent on the quality of the output of the autoencoder. To get an understanding of why this agent achieves such good results, we will now examine the autoencoder in detail. Firstly, a correlation matrix is given in figure \ref{fig:ae-corr}. Based on $60.000$ state observations, it shows the correlation between the features of the original state observations (i.e. the input for the autoencoder) and the reduced state observations (i.e. the output of the autoencoder). The original data has dimensions of $32 \times 32$, whereas the reduced data has dimensions of $16 \times 16$, resulting in $1024$ and $246$ features respectively. Dark/black and light/beige colouring mean a high correlation (negative and positive correlation respectively), whereas a red colouring means no correlation and the white space means there was to too little variance to calculate a correlation. The latter case simply follows from the beacon and army unit not visiting these parts of the map enough times during the used episode observations.
 
@@ -172,7 +197,7 @@ We also show the feature map visualisation for the enoder of the autoencoder in 
 	\label{fig:ae-featuremap}
 \end{figure}
 
-This autoencoder agent not only outperforms the vanilla agent, it also (less surprisingly) outperforms the online trained autoencoder agent. This latter agent converges to a slightly worse policy and takes more episodes to get there, while remaining not very consistent (sometimes scoring only about $13$ points in an episode). This can of course be explained by the fact that this agent not only trains a policy network, but also, separately, the autoencoder. This means that for many episodes, the policy network is trained on a rather imperfect representation; the pre-trained autoencoder needed roughly $150.000$ observations before getting close to its final loss. Still, it got to a policy similar to the vanilla agent (even scoring slightly better ong average) in a similar number of episodes; the main difference being that the vanilla agent is much more consistent. %TODO 180.000 beter bekijken, gegokt
+This autoencoder agent not only outperforms the baseline agent, it also (less surprisingly) outperforms the online trained autoencoder agent. This latter agent converges to a slightly worse policy and takes more episodes to get there, while remaining not very consistent (sometimes scoring only about $13$ points in an episode). This can of course be explained by the fact that this agent not only trains a policy network, but also, separately, the autoencoder. This means that for many episodes, the policy network is trained on a rather imperfect representation; the pre-trained autoencoder needed roughly $150.000$ observations before getting close to its final loss. Still, it got to a policy similar to the baseline agent (even scoring slightly better ong average) in a similar number of episodes; the main difference being that the baseline agent is much more consistent. %TODO 180.000 beter bekijken, gegokt
 
 Besides outperforming the online trained autoencoder agent, the pre-trained agent has another advantage. Since the autoencoder can be trained separately from the agent, we can reuse the autoencoder for different agents acting in the same environment. This allows for the possibility of training an autoencoder once, after which multiple agents can be trained on less features, allowing for less computation cost to train each agent. This is also substantiated by the autoencoder taking little time train.
 
@@ -209,3 +234,4 @@ After $248$ episodes, it is still at the level of a random policy:
 \end{itemize}
 
 We can see here that there is probably something off with the loss calculation, since they are extremely disproportional.
+OR PERHAPS the problem lies in that there is no good prediction of transition (i.e. next state) possible due to the continuous random replacement of the beacon when following a good policy and therefore the only way to lower the transition loss (does this also entail the aux penalty?) would be to follow a policy that does not reach the beacon.

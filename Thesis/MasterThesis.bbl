@@ -10,6 +10,13 @@ William Curran, Tim Brys, Matthew Taylor, and William Smart.
 \newblock Using pca to efficiently represent state spaces.
 \newblock 05 2015.
 
+\bibitem{deepmdp}
+Carles Gelada, Saurabh Kumar, Jacob Buckman, Ofir Nachum, and Marc~G.
+  Bellemare.
+\newblock Deepmdp: Learning continuous latent space models for representation
+  learning.
+\newblock {\em CoRR}, abs/1906.02736, 2019.
+
 \bibitem{nn}
 Ian Goodfellow, Yoshua Bengio, and Aaron Courville.
 \newblock {\em Deep Learning}.
@@ -21,6 +28,14 @@ G.~E. Hinton and R.~R. Salakhutdinov.
 \newblock Reducing the dimensionality of data with neural networks.
 \newblock {\em Science}, 313(5786):504--507, 2006.
 
+\bibitem{CNN_computation}
+Ali Jafari, Ashwinkumar Ganesan, Chetan Sai~Kumar Thalisetty, Varun
+  Sivasubramanian, Tim Oates, and Tinoosh Mohsenin.
+\newblock Sensornet: A scalable and low-power deep convolutional neural network
+  for multimodal data classification.
+\newblock {\em IEEE Transactions on Circuits and Systems I: Regular Papers},
+  66(1):274--287, 2019.
+
 \bibitem{qlearning}
 Beakcheol Jang, Myeonghwi Kim, Gaspard Harerimana, and Jong Kim.
 \newblock Q-learning algorithms: A comprehensive classification and
@@ -31,6 +46,12 @@ Beakcheol Jang, Myeonghwi Kim, Gaspard Harerimana, and Jong Kim.
 Ian {Jolliffe}.
 \newblock {\em Principal component analysis}.
 \newblock Springer Verlag, New York, 2002.
+
+\bibitem{AE_2010}
+Sascha Lange and Martin Riedmiller.
+\newblock Deep auto-encoder neural networks in reinforcement learning.
+\newblock In {\em The 2010 International Joint Conference on Neural Networks
+  (IJCNN)}, pages 1--8, 2010.
 
 \bibitem{dqn}
 Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei~A. Rusu, Joel Veness,
@@ -46,11 +67,26 @@ Miguel Morales.
 \newblock Grokking deep reinforcement learning.
 \newblock 2020.
 
+\bibitem{AE_2019}
+Bharat Prakash, Mark Horton, Nicholas~R. Waytowich, William~David Hairston, Tim
+  Oates, and Tinoosh Mohsenin.
+\newblock On the use of deep autoencoders for efficient embedded reinforcement
+  learning.
+\newblock {\em CoRR}, abs/1903.10404, 2019.
+
 \bibitem{ddqn}
 Hado van Hasselt, Arthur Guez, and David Silver.
 \newblock Deep reinforcement learning with double q-learning.
 \newblock 2015.
 \newblock cite arxiv:1509.06461Comment: AAAI 2016.
+
+\bibitem{AE_2016}
+Herke van Hoof, Nutan Chen, Maximilian Karl, Patrick van~der Smagt, and Jan
+  Peters.
+\newblock Stable reinforcement learning with autoencoders for tactile and
+  visual data.
+\newblock In {\em 2016 IEEE/RSJ International Conference on Intelligent Robots
+  and Systems (IROS)}, pages 3928--3934, 2016.
 
 \bibitem{pysc2}
 Oriol Vinyals, Timo Ewalds, Sergey Bartunov, Petko Georgiev, Alexander~Sasha
