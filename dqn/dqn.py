@@ -131,13 +131,13 @@ class Agent(AgentConfig):
             self.auxiliary_objective.network.load_state_dict(checkpoint['deepmdp_state_dict'])
 
             self.params = [self.policy_network.parameters()] + [self.auxiliary_objective.network.parameters()]
-            self.optimizer = optim.RMSprop(chain(*self.params), lr = self.config['lr'])
+            self.optimizer = optim.Adam(chain(*self.params), lr = self.config['lr'])
             if self.train: self.auxiliary_objective.network.train()
             print("Loaded DeepMDP DQN model")
         else:
             self.policy_network.load_state_dict(checkpoint['policy_model_state_dict'])
             self.target_network.load_state_dict(checkpoint['target_model_state_dict'])
-            self.optimizer = optim.RMSprop(self.policy_network.parameters(), lr=checkpoint['lr'])
+            self.optimizer = optim.Adam(self.policy_network.parameters(), lr=checkpoint['lr'])
             print("Loaded DQN model")
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.epsilon._value = checkpoint['epsilon']

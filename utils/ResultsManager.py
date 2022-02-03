@@ -119,15 +119,6 @@ class PCAAnalysis:
             axarr.imshow(norm(state))
             plt.savefig(dim_name)
 
-            # Get reconstructed state and save image
-            reconstructed_state = pca.pca_main.inverse_transform(latent_repr.cpu().numpy())
-            reconstructed_state = torch.reshape(latent_repr, (16, 16)).detach().cpu().numpy() # TODO 32 magic num
-            torch.tensor(reconstructed_state[0], dtype=torch.float, device=device)
-            norm = plt.Normalize(vmin=reconstructed_state.min(), vmax=reconstructed_state.max())
-            fig, axarr = plt.subplots(1)
-            axarr.imshow(norm(reconstructed_state))
-            plt.savefig(recon_name)
-
         data_manager = DataManager(observation_sub_dir = obs_dir)
         obs = data_manager.get_observations()
 

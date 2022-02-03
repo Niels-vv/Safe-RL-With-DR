@@ -1,10 +1,9 @@
 \chapter{Appendix}\label{appendix}
 \section{RL agent architectures}\label{appendix-agents}
-Here we will lay out the details of the architecture and hyperparameter settings that were used in each agent mentioned in section \ref{research-method}. We will start by showing the baseline agent, which uses an architecture and hyperparameters that are shared by all agents. For all other agents, each extending this baseline agent, we will only give the additional architecture and parameters.
+Here we will lay out the details of the architecture and hyperparameter settings that were used in each agent mentioned in section \ref{research-method}. We will start by showing the baseline agent, which uses an architecture and hyperparameters that are shared by all agents. For all other agents, each extending this baseline agent, we will only give the additional architecture and parameters. For an overview of how each agent works, we refer to section \ref{research-exp}.
 
-- ook adam function en relu oid, referentie naar bijbehorende papers
 
-\subsection{Baseline agent}
+\subsection{Baseline agent}\label{appendix-baseline}
 \textbf{Neural network architecture}\newline
 \noindent The DDQN policy and target network for the baseline agent consists of a CNN with three convolutional layers. The first layer is a transposed convolutional layer \cite{transpose} and the other two are regular convolutional layers. The transposed convolutional layer has the possibility to upscale the dimensionality, which is needed in agents using dimensionality reduction. These agents have their observation reduced from $32 \times 32$ to $16 \times 16$. This $16 \times 16$ observation is the input for their policy and target network. The output of these networks however need to be $32 \times 32$, capturing the action space. Although this upscaling is not needed for the baseline agent since it uses the full $32 \times 32$ observation as input, we still use it as the first layer in order to keep all agents' architectures as similar as possible.
 
@@ -25,7 +24,37 @@ Lastly, an $\epsilon$-greedy strategy is used for balancing exploration and expl
 \item Number of stored batches before training: $20$.
 \end{itemize}
 
+Lastly, epsilon decays from $1.0$ to $0.1$ in $100.000$ steps spaced on a logarithmic scale. Each step taken by the agent corresponds to one epsilon decay step. The resulting decay of the epsilon value can be seen in figure \ref{fig:epsilon}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.75\textwidth]{Epsilon_decay}
+    \caption{The decay of the epsilon value per episode.}
+    \label{fig:epsilon}
+\end{figure}
+
 \subsection{PCA agent}
+The neural network architecture and hyperparameter settings of the PCA agent are almost exactly the same as the baseline agent (see appendix \ref{appendix-baseline}). The only difference is that in the policy and target network, the first layer (the transposed convolutional layer) now has a stride of $2$ and output padding of $1$. This is to upscale dimensionality from the $16 \time 16$ observation (gotten after dimensionality reduction using PCA) to $32 \times 32$ representing the action space.
+
+
 \subsection{Pre-trained and online trained autoencoder agent} %TODO "online"
+Like with the PCA agent, the difference with the baseline agent with regards to the DDQN architecture is merely the first layer of the policy and target network of the agent: it now has a stride of $2$ and output padding of $1$ to upscale the dimensionality from its $16 \times 16$ input to $32 \times 32$ output. In both autoencoder agents, the autoencoder has the same architecture and hyperparameters. \newline
+
+\noindent \textbf{Autoencoder neural network architecture and hyperparameters}
+\noindent The encoder of the autoencoder consists of two convolutional layers. The first layer has a stride of $1$ to introduce dimensionality reduction from $32 \times 32$ to $16 \times 16$. The second layer has a stride of $1$ to keep this $16 \times 16$ dimensionality. Both layers have a kernel size of $3$ and an input padding of $1$. the first layer has $1$ input channel (since the observation input only has one channel) and $32$ output channels. Hence, the second layer has $32$ input channels and $1$ output channel. After both layers, there is a \emph{GELU} activation function, which is a nonlinear variant of ReLU \cite{gelu}.
+
+The decoder consists of three layers. Because the decoder has to reconstruct the original input from the output of the encoder, the first is a transposed convolutional layer to upscale its $16 \times 16$ input back to $32 \times 32$. This is done using a stride of $2$ and output padding of $1$. It has $1$ input channel (corresponding to the $1$ output channel of the last encoder layer) and $32$ output channels. The other two layers are regular convolutional layers, with stride $1$ and no output padding. For the second layer, there are $32$ input and output channels, and for the third and last layer there are $32$ input channels and $1$ output channel (corresponding to the $1$ input channel of the first layer of the policy and target network). Each layer has a kernel size of $3$ and input padding of $1$. After the first and second layer there is a GELU activation function.
+
+For training the autoencoder, the loss is calculated by the mean-scared-error between the original input and the reconstructed input. Furthermore, the Adam optimization algorithm is used, with a learning rate of $0.0001$. 
+
+
 \subsection{DeepMDP agent}
-Uses GELU, a nonlinear variant of the ReLU \cite{gelu}.
+Compared to the baseline agent, the policy and target network of the DeepMDP agent have a prepended encoder. Furthermore it has an additional neural network for the transition loss (i.e. the auxiliary objective). Apart from these changes (including a different loss calculation) the only difference with the baseline agent is again the first layer of the target and policy network that now has a stride of $2$ and output padding of $1$ to upscale the dimensionality from $16 \times 16$ to $32 \times 32$. \newline
+
+\noindent \textbf{DeepMDP encoder and transition loss architectures and hyperparameter settings} \newline
+\noindent The encoder has the same architecture as the encoder in the autoencoder agents. It has two convolutional layers, with the first layer having a stride of $2$ for dimensionality reduction. The first layer has $1$ input channel and $32$ output channels and vice versa for the second layer. Both have a kernel size of $3$ and input padding of $1$. After both layers the activation function GELU is used.
+
+The transition loss neural network has only $1$ layer, a convolutional layers. Most importantly, it has $1024$ output channels, corresponding to the $32 \times 32$ action space. It has a stride of $1$ and kernel size $2$.
+
+Besides the usual DDQN loss calculation as with the baseline agent, the DeepMDP has an additional loss added to this; this total loss is used to train all neural networks of the DeepMDP. The transition loss is calculated by comparing the prediction of the next observation after dimensionality reduction given by the transition loss network, with the actual next observation after dimensionality reduction (i.e. the output of the encoder). The loss is calculated using the L1 loss function \cite{l1}. Added to this loss, is the gradient penalty which is discounted by a hyperparameter set to $0.01$. The gradient penalty is a combination of the gradient penalty of the encoder, the policy network and the transition loss network. For each of these three networks, the penalty is calculated using the Wasserstein Generative Adversarial Network penalty \cite{wgan}.
+
