@@ -332,6 +332,21 @@ def pca_analyses():
     pca = DataManager.get_component(f'env_pysc2/results_pca/MoveToBeacon',"pca2_no_scalar.pt") # TODO check of naamgeving nog klopt
     PCAAnalysis.show_state_representation_pca(obs_dir, pca, dim_name, recon_name)
 
+def show_epsilon_decay():
+    epsilons = 0.01 / np.logspace(-2, 0, 100000, endpoint=False) - 0.01
+    epsilons = epsilons * (1.0 - 0.1) + 0.1
+    epsilons = [x for i,x in enumerate(epsilons) if i % 239 == 0 ]
+    plt.figure(2)
+    plt.clf()        
+    plt.title("Epsilon decay")
+    plt.xlabel("Episode")
+    plt.ylabel("Epsilon")
+    plt.plot(epsilons, '-b', label = "Epsilon value per episode")
+    plt.legend(loc="upper right")
+    plt.savefig("Epsilon_decay.png")
+    plt.show()
+
+
 if __name__ == "__main__":
     pca_analyses()
     

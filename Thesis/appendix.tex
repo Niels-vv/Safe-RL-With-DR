@@ -1,8 +1,31 @@
 \chapter{Appendix}\label{appendix}
 \section{RL agent architectures}\label{appendix-agents}
-Here we will lay out the details of the architecture and hyperparameter settings that were used in each agent mentioned in section \ref{research-method}. We will start by showing the vanilla agent, which uses an architecture and hyperparameters that are shared by all agents. For all other agents, each extending this vanilla agent, we will only give the additional architecture and parameters.
+Here we will lay out the details of the architecture and hyperparameter settings that were used in each agent mentioned in section \ref{research-method}. We will start by showing the baseline agent, which uses an architecture and hyperparameters that are shared by all agents. For all other agents, each extending this baseline agent, we will only give the additional architecture and parameters.
 
 - ook adam function en relu oid, referentie naar bijbehorende papers
 
-\subsection{Vanilla agent}
-Jaaa JAAAAA
+\subsection{Baseline agent}
+\textbf{Neural network architecture}\newline
+\noindent The DDQN policy and target network for the baseline agent consists of a CNN with three convolutional layers. The first layer is a transposed convolutional layer \cite{transpose} and the other two are regular convolutional layers. The transposed convolutional layer has the possibility to upscale the dimensionality, which is needed in agents using dimensionality reduction. These agents have their observation reduced from $32 \times 32$ to $16 \times 16$. This $16 \times 16$ observation is the input for their policy and target network. The output of these networks however need to be $32 \times 32$, capturing the action space. Although this upscaling is not needed for the baseline agent since it uses the full $32 \times 32$ observation as input, we still use it as the first layer in order to keep all agents' architectures as similar as possible.
+
+Each layer uses a stride of $1$, input padding of $1$ and no output padding, keeping the dimensionality of the input the same. Furthermore, they also each have a kernel size of $3$. The first layer has $32$ output channels. The second layer has $32$ input channels (following the output channels of its previous layer) and $32$ output channels. The third and last layer has $32$ input channels (again following the output channels of its previous layer) and $1$ output channel. Both after the second and the first layer, we use the activation function known as \emph{ReLU} \cite{relu} whose output for each neuron is defined as the maximum of $0$ and the input neuron. \newline
+
+When training the policy network, the optimization algorithm \emph{Adam} is used, which is an extension on \emph{stochastic gradient descent} \cite{adam}. For loss calculation we refer to section \ref{pl-dqn}, more specifically algorithm \ref{alg:ddqn}.
+
+Lastly, an $\epsilon$-greedy strategy is used for balancing exploration and exploitation. This means that a random number in $[0,1]$ is chosen; whenever this is is equal to or lower than the current epsilon value, a random action is chosen, and a greedy action otherwise. The epsilon decay can be seen in figure %TODO epsilon grafiek.
+
+\noindent\textbf{Hyperparameters}\newline
+\noindent The following hyperparameters are used in the baseline agent:
+\begin{itemize}
+\item Steps in between training the policy network: $4$.
+\item Steps between updating the target network: $250$.
+\item Optimizer learning rate: $0.0001$.
+\item Discount factor: $0.99$.
+\item Batch size for training the policy network: $256$.
+\item Number of stored batches before training: $20$.
+\end{itemize}
+
+\subsection{PCA agent}
+\subsection{Pre-trained and online trained autoencoder agent} %TODO "online"
+\subsection{DeepMDP agent}
+Uses GELU, a nonlinear variant of the ReLU \cite{gelu}.

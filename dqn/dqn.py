@@ -87,7 +87,7 @@ class Agent(AgentConfig):
         self.max_episodes = max_episodes
         self.policy_network = MlpPolicy(self.latent_space, self.observation_space).to(self.device)
         self.target_network = copy.deepcopy(self.policy_network)
-        self.optimizer = optim.RMSprop(self.policy_network.parameters(), lr = self.config['lr'])
+        self.optimizer = optim.Adam(self.policy_network.parameters(), lr = self.config['lr'])
         self.epsilon = Epsilon(start=1.0, end=0.1, decay_steps=self.config['decay_steps'])
         self.loss = deque(maxlen=int(1e5))
         self.max_q = deque(maxlen=int(1e5))
@@ -120,7 +120,7 @@ class Agent(AgentConfig):
         self.target_network = copy.deepcopy(self.policy_network)
         self.auxiliary_objective = TransitionAux(self.device)
         self.params = [self.policy_network.parameters()] + [self.auxiliary_objective.network.parameters()]
-        self.optimizer = optim.RMSprop(chain(*self.params), lr = self.config['lr'])
+        self.optimizer = optim.Adam(chain(*self.params), lr = self.config['lr'])
 
     def load_policy_checkpoint(self, checkpoint):
         if checkpoint['deepmdp_state_dict'] is not None:
