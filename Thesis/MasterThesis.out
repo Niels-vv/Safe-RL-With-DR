@@ -19,4 +19,7 @@
 \BOOKMARK [0][-]{chapter.5}{Conclusions}{}% 19
 \BOOKMARK [0][-]{appendix.A}{Appendix}{}% 20
 \BOOKMARK [1][-]{section.A.1}{RL agent architectures}{appendix.A}% 21
-\BOOKMARK [2][-]{subsection.A.1.1}{Vanilla agent}{section.A.1}% 22
+\BOOKMARK [2][-]{subsection.A.1.1}{Baseline agent}{section.A.1}% 22
+\BOOKMARK [2][-]{subsection.A.1.2}{PCA agent}{section.A.1}% 23
+\BOOKMARK [2][-]{subsection.A.1.3}{Pre-trained and online trained autoencoder agent}{section.A.1}% 24
+\BOOKMARK [2][-]{subsection.A.1.4}{DeepMDP agent}{section.A.1}% 25

@@ -1,5 +1,6 @@
 import os, torch, math, random
 import torch.nn as nn
+import torch.optim as optim
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
@@ -188,11 +189,7 @@ class AEAnalysis:
 
     @staticmethod
     def visualize_feature_maps(model, obs_dir):
-        def get_rectangle(area):
-            for width in range(int(math.ceil(math.sqrt(area))), 1, -1):
-                if (area % width == 0): break
-            return width, int(area/width)
-
+        model.eval()
         activation = {}
         # Get feature map data
         def get_activation(name):
@@ -258,6 +255,129 @@ class AEAnalysis:
             state_num +=1
 
     @staticmethod
+    def visualize_filters(model):
+        # for i, layer in enumerate(model.encoder[0], start = 1):
+        for i, layer in enumerate(model.encoder, start = 1):
+            if type(layer) == nn.Conv2d:
+                image_name = f'Filters_Layer_{i+1}_Feature_Map.png'
+                filters = layer.weight.numpy()
+                plt.imshow(filters[0, ...])
+                plt.savefig(image_name)
+
+                # f_min, f_max = filters.min(), filters.max()
+                # filters = (filters - f_min) / (f_max - f_min)
+
+                # # Conv layer only has 1 channel/feature map
+                # if (len(filters) == 1):
+                #     fig, axarr = plt.subplots(1)
+                #     axarr.imshow(filters[0])
+                #     plt.savefig(image_name)
+                #     continue
+
+                # # Conv layer only has > 1 channels/feature maps: show them in a rectangle grid
+                # width, length = get_rectangle(filters.size(0))
+                # fig, axarr = plt.subplots(width, length)
+                # r = axarr.shape[0]
+                # c = axarr.shape[1]
+                # for idxi in range(r):
+                #     for idxj in range(c):
+                #         if idxi*c+idxj >= len(filters): break
+                #         axarr[idxi, idxj].imshow(filters[idxi*c+idxj])
+                # plt.savefig(image_name)
+
+    # Find pixel values for which ae feature maps are activated the most
+    # https://towardsdatascience.com/how-to-visualize-convolutional-features-in-40-lines-of-code-70b7d87b0030
+    @staticmethod
+    def activation_image(model):
+        model.eval()
+        activation = {}
+        # Get feature map data
+        def get_activation(name):
+            def hook(model, input, output):
+                activation[name] = torch.tensor(output,requires_grad=True, device = device)
+            return hook
+
+        # Get conv layers from encoder
+        conv_layers = []
+        for layer in model.encoder:
+            if type(layer) == nn.Conv2d:
+                conv_layers.append(layer)
+
+        for i in range(len(conv_layers)):
+            conv_layers[i].register_forward_hook(get_activation(f'conv{i}'))
+            for filter in conv_layers[i].weight.shape(0):
+                img = get_image(i, filter)
+                plt.imsave(f'activation_image_layer_{i}_filter_{filter}.jpg', np.clip(img, 0, 1))
+        
+        # Get image that activates given filter of given layer the most
+        def get_image(layer, filter):
+            width = 32
+            height = 32
+            colour_channels = 1
+            img = np.uint8(np.random.uniform(150, 180, (width, height, colour_channels)))/255
+            img = torch.from_numpy(img).to(device)
+            img.requires_grad_()
+
+            opt_steps = 20
+            optimizer = torch.optim.Adam([img], lr=0.1, weight_decay=1e-6)
+            for _ in range(opt_steps):
+                optimizer.zero_grad()
+                model(img)
+                loss = -activation[f'conv{layer}'][filter].mean()
+                loss.backward()
+                optimizer.step()
+            return img.detach().cpu().numpy()
+
+
+    # GRAD-LAM
+    @staticmethod
+    def get_heatmap(model, obs_dir):
+        model.eval()
+        activation = []
+        gradients = None
+        # Get feature map data
+        def get_activation():
+            def hook(model, input, output):
+                activation.append(output.detach().cpu())
+                output.register_hook(activations_hook)
+            return hook
+        #Get gradients
+        def activations_hook(self,grad):
+            gradients = grad
+
+        print("Retrieving observations...")
+        data_manager = DataManager(observation_sub_dir = obs_dir)
+        obs = data_manager.get_observations()
+
+        # Get conv layers from encoder
+        conv_layers = []
+        for layer in model.encoder:
+            if type(layer) == nn.Conv2d:
+                conv_layers.append(layer)
+        last_conv = conv_layers[-1]
+                
+        # Forward pass with state index 10996
+        print("Getting heatmap and storing images...")
+        state = None
+        for index, row in obs.iterrows():
+            if index == 10996:
+                row = row.to_numpy()
+                state = row.reshape(32,32)
+                break
+        state = torch.from_numpy(state).to(device).float()
+        last_conv.register_forward_hook(get_activation())
+        pred = model.state_dim_reduction(state).argmax(dim=1)
+        pred[:, 386].backward()
+
+        # Use gradients and activations to create heatmap
+        acts = activation[0].squeeze()
+        gradients = gradients.detach().cpu()
+
+
+
+
+
+    @staticmethod
     def get_component(vae_dir, vae_name):
         checkpoint = DataManager.get_network(vae_dir, vae_name, device)
         vae_model = VAE(in_channels = 0, latent_dim = checkpoint['latent_space']).to(device) #todo in_channels weghalen
@@ -271,6 +391,11 @@ class AEAnalysis:
         ae_dir = "env_pysc2/results_vae/MoveToBeacon"
         ae_name = "vae.pt"
         return AEAnalysis.get_component(ae_dir, ae_name)
+
+def get_rectangle(area):
+    for width in range(int(math.ceil(math.sqrt(area))), 1, -1):
+        if (area % width == 0): break
+    return width, int(area/width)
 
 ### Results analysis methods
 
@@ -305,6 +430,15 @@ def show_feature_map_ae():
     obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
     AEAnalysis.visualize_feature_maps(ae, obs_dir)
     
+# Visualize the filters of the encoder of an autoencoder
+def show_filters_ae():
+    ae = AEAnalysis.get_ae().vae_model
+    AEAnalysis.visualize_filters(ae)
+
+def most_activation_image_ae():
+    ae = AEAnalysis.get_ae().vae_model
+    AEAnalysis.activation_image(ae)
+
 def show_pca_agent_results():
     dir = "env_pysc2/results/dqn/MoveToBeacon"
     AgentPerformance.show_pca_agent_results(dir)

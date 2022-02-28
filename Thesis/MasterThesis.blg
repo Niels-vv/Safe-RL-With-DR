@@ -6,46 +6,47 @@ Database file #1: bibliography.bib
 Warning--I didn't find a database entry for "AE-2019"
 Warning--empty journal in mario
 Warning--empty journal in grokking
+Warning--empty booktitle in relu
 Warning--empty journal in ddqn
-You've used 15 entries,
+You've used 21 entries,
             2118 wiz_defined-function locations,
-            589 strings with 7325 characters,
-and the built_in function-call counts, 6087 in all, are:
-= -- 527
-> -- 477
-< -- 2
-+ -- 189
-- -- 174
-* -- 493
-:= -- 1083
-add.period$ -- 46
-call.type$ -- 15
-change.case$ -- 130
+            619 strings with 8093 characters,
+and the built_in function-call counts, 7884 in all, are:
+= -- 695
+> -- 564
+< -- 5
++ -- 224
+- -- 202
+* -- 591
+:= -- 1370
+add.period$ -- 62
+call.type$ -- 21
+change.case$ -- 162
 chr.to.int$ -- 0
-cite$ -- 18
-duplicate$ -- 179
-empty$ -- 351
-format.name$ -- 174
-if$ -- 1193
+cite$ -- 25
+duplicate$ -- 251
+empty$ -- 502
+format.name$ -- 202
+if$ -- 1587
 int.to.chr$ -- 0
-int.to.str$ -- 15
-missing$ -- 16
-newline$ -- 79
-num.names$ -- 30
-pop$ -- 139
+int.to.str$ -- 21
+missing$ -- 19
+newline$ -- 106
+num.names$ -- 42
+pop$ -- 188
 preamble$ -- 1
-purify$ -- 117
+purify$ -- 143
 quote$ -- 0
-skip$ -- 133
+skip$ -- 202
 stack$ -- 0
-substring$ -- 199
-swap$ -- 30
-text.length$ -- 2
+substring$ -- 262
+swap$ -- 51
+text.length$ -- 5
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 56
-warning$ -- 3
-while$ -- 39
-width$ -- 17
-write$ -- 160
-(There were 4 warnings)
+type$ -- 80
+warning$ -- 4
+while$ -- 54
+width$ -- 23
+write$ -- 220
+(There were 5 warnings)
