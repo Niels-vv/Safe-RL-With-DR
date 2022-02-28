@@ -1,6 +1,7 @@
 import os, torch, math, random
 import torch.nn as nn
 import torch.optim as optim
+from torch.autograd import Variable
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
@@ -260,30 +261,29 @@ class AEAnalysis:
         for i, layer in enumerate(model.encoder, start = 1):
             if type(layer) == nn.Conv2d:
                 image_name = f'Filters_Layer_{i+1}_Feature_Map.png'
-                filters = layer.weight.numpy()
-                plt.imshow(filters[0, ...])
-                plt.savefig(image_name)
+                filters = layer.weight.detach().cpu().numpy()
+                #plt.imshow(filters[0, ...])
+                #plt.savefig(image_name)
 
-                # f_min, f_max = filters.min(), filters.max()
-                # filters = (filters - f_min) / (f_max - f_min)
+                f_min, f_max = filters.min(), filters.max()
+                filters = (filters - f_min) / (f_max - f_min)
 
-                # # Conv layer only has 1 channel/feature map
-                # if (len(filters) == 1):
-                #     fig, axarr = plt.subplots(1)
-                #     axarr.imshow(filters[0])
-                #     plt.savefig(image_name)
-                #     continue
+                # Conv layer only has 1 channel/feature map
+                if (len(filters) == 1):
+                      fig, axarr = plt.subplots(1)
+                      axarr.imshow(filters[0,0,:,:], cmap='gray')
+                      plt.savefig(image_name)
+                      plt.show()
+                      continue
 
                 # # Conv layer only has > 1 channels/feature maps: show them in a rectangle grid
-                # width, length = get_rectangle(filters.size(0))
-                # fig, axarr = plt.subplots(width, length)
-                # r = axarr.shape[0]
-                # c = axarr.shape[1]
-                # for idxi in range(r):
-                #     for idxj in range(c):
-                #         if idxi*c+idxj >= len(filters): break
-                #         axarr[idxi, idxj].imshow(filters[idxi*c+idxj])
-                # plt.savefig(image_name)
+                width, length = get_rectangle(filters.shape[0])
+                plt.figure(figsize=(20, 17))
+                for i, filter in enumerate(filters):
+                    plt.subplot(width, length, i+1) # (8, 8) because in conv0 we have 7x7 filters and total of 64 (see printed shapes)
+                    plt.imshow(filter[0,:,:], cmap='gray')
+                    plt.savefig(image_name)
+                plt.show()
 
     # Find pixel values for which ae feature maps are activated the most
     # https://towardsdatascience.com/how-to-visualize-convolutional-features-in-40-lines-of-code-70b7d87b0030
@@ -294,8 +294,39 @@ class AEAnalysis:
         # Get feature map data
         def get_activation(name):
             def hook(model, input, output):
-                activation[name] = torch.tensor(output,requires_grad=True, device = device)
+                activation[name] = output.clone().detach().requires_grad_(True)
             return hook
+
+        # Get image that activates given filter of given layer the most
+        def get_image(layer, filter):
+            width = 32
+            height = 32
+            colour_channels = 1
+            img = np.uint8(np.random.uniform(150, 180, (width, height)))/255
+            plt.imshow(img)
+            plt.savefig("before.png")
+            img = torch.from_numpy(img).to(device).float()
+            img.requires_grad_(True)
+            img = nn.Parameter(img,requires_grad=True)
+            #print(list(model.parameters())[0])
+            #print(type(list(model.parameters())[0]))
+
+            opt_steps = 20
+            optimizer = torch.optim.Adam([img], lr=0.1, weight_decay=1e-6)
+            print(img.grad)
+            for _ in range(opt_steps):
+                optimizer.zero_grad()
+                model.state_dim_reduction(img)
+                loss = -activation[f'conv{layer}'][filter].mean().mul(20)
+                #print(loss.item())
+                a = img.clone()
+                loss.backward()
+                optimizer.step()
+                b = img.clone()
+                print(torch.equal(a.data, b.data))
+            plt.imshow(img.detach().cpu().numpy())
+            plt.savefig("after.png")
+            return img.detach().cpu().numpy()
 
         # Get conv layers from encoder
         conv_layers = []
@@ -305,29 +336,12 @@ class AEAnalysis:
 
         for i in range(len(conv_layers)):
             conv_layers[i].register_forward_hook(get_activation(f'conv{i}'))
-            for filter in conv_layers[i].weight.shape(0):
+            for filter in range(conv_layers[i].weight.shape[0]):
+                print(f'Getting image for filter {filter+1} of conv layer {i+1}.')
                 img = get_image(i, filter)
                 plt.imsave(f'activation_image_layer_{i}_filter_{filter}.jpg', np.clip(img, 0, 1))
-        
-        # Get image that activates given filter of given layer the most
-        def get_image(layer, filter):
-            width = 32
-            height = 32
-            colour_channels = 1
-            img = np.uint8(np.random.uniform(150, 180, (width, height, colour_channels)))/255
-            img = torch.from_numpy(img).to(device)
-            img.requires_grad_()
-
-            opt_steps = 20
-            optimizer = torch.optim.Adam([img], lr=0.1, weight_decay=1e-6)
-            for _ in range(opt_steps):
-                optimizer.zero_grad()
-                model(img)
-                loss = -activation[f'conv{layer}'][filter].mean()
-                loss.backward()
-                optimizer.step()
-            return img.detach().cpu().numpy()
-
+                break
+            break
 
     # GRAD-LAM
     @staticmethod
@@ -473,5 +487,5 @@ def show_epsilon_decay():
 
 
 if __name__ == "__main__":
-    pca_analyses()
+    most_activation_image_ae()
     
