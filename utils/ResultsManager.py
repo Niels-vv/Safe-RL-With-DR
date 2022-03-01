@@ -13,6 +13,8 @@ from vae.VAE import VAE, VaeManager
 import seaborn as sns
 from math import sqrt
 
+from flashtorch.activmax import GradientAscent
+
 PATH = os.path.dirname(os.path.realpath(__file__))
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -306,41 +308,53 @@ class AEAnalysis:
     # https://towardsdatascience.com/how-to-visualize-convolutional-features-in-40-lines-of-code-70b7d87b0030
     @staticmethod
     def activation_image(model):
-        model.eval()
+        #model.eval()
         activation = {}
+        gradients = None
         # Get feature map data
         def get_activation(name):
             def hook(model, input, output):
-                activation[name] = output.clone().detach().requires_grad_(True)
+                activation[name] = output.clone().detach().requires_grad_(True).to(device)
             return hook
+
+        def get_gradients(module, grad_in, grad_out):
+            gradients = grad_in[0]
 
         # Get image that activates given filter of given layer the most
         def get_image(layer, filter):
             width = 32
             height = 32
             colour_channels = 1
-            img = np.uint8(np.random.uniform(150, 180, (width, height)))/255
-            plt.imshow(img)
-            plt.savefig("before.png")
-            img = torch.from_numpy(img).to(device).float()
-            img.requires_grad_(True)
-            img = nn.Parameter(img,requires_grad=True)
+            #img = np.uint8(np.random.uniform(150, 180, (width, height)))/255
+            #plt.imshow(img)
+            #plt.savefig("before.png")
+            #img = torch.from_numpy(img).to(device).float()
+            #img.requires_grad_(True)
+
+            img = torch.randn(32, 32, requires_grad=True,device=device)   
+
+            #img = nn.Parameter(img,requires_grad=True)
             #print(list(model.parameters())[0])
             #print(type(list(model.parameters())[0]))
 
             opt_steps = 20
             optimizer = torch.optim.Adam([img], lr=0.1, weight_decay=1e-6)
-            print(img.grad)
             for _ in range(opt_steps):
+                model.zero_grad()
                 optimizer.zero_grad()
-                model.state_dim_reduction(img)
+                img.retain_grad()
+                #model.state_dim_reduction(img)
+                model(img.unsqueeze(0).unsqueeze(0))
                 loss = -activation[f'conv{layer}'][filter].mean().mul(20)
                 #print(loss.item())
                 a = img.clone()
                 loss.backward()
                 optimizer.step()
                 b = img.clone()
+                print(img.grad)
+                print(img.grad_fn)
                 print(torch.equal(a.data, b.data))
+                #print(img.grad)
             plt.imshow(img.detach().cpu().numpy())
             plt.savefig("after.png")
             return img.detach().cpu().numpy()
@@ -350,15 +364,17 @@ class AEAnalysis:
         for layer in model.encoder:
             if type(layer) == nn.Conv2d:
                 conv_layers.append(layer)
+        model = model.encoder
+        model.register_full_backward_hook(get_gradients)
 
         for i in range(len(conv_layers)):
             conv_layers[i].register_forward_hook(get_activation(f'conv{i}'))
             for filter in range(conv_layers[i].weight.shape[0]):
                 print(f'Getting image for filter {filter+1} of conv layer {i+1}.')
-                initial_img = torch.randn(1, 32, 32)
-                initial_img = input.unsqueeze(0)
-                initial_img.requires_grad_(True)
-                img = act_max(model, initial_img, activation, f'conv{i}', filter)
+                initial_img = torch.randn(1, 32, 32, requires_grad=True).to(device)
+                initial_img = initial_img.unsqueeze(0)
+                #get_image(i,filter)
+                img = act_max(model, initial_img, activation, gradients, f'conv{i}', filter)
                 plt.imsave(f'initial_image.jpg', np.clip(img.detach().cpu().numpy(), 0, 1))
                 plt.imsave(f'activation_image_layer_{i}_filter_{filter}.jpg', np.clip(img, 0, 1))
                 break
@@ -418,7 +434,7 @@ class AEAnalysis:
         vae_model = VAE(in_channels = 0, latent_dim = checkpoint['latent_space']).to(device) #todo in_channels weghalen
         vae_model.load_state_dict(checkpoint['model_state_dict'])
         vae_optimizer = None
-        vae_model.eval()
+        #vae_model.eval()
         return VaeManager(vae_model, vae_optimizer, checkpoint['obs_file'],checkpoint['batch_size'], checkpoint['latent_space'], checkpoint['vae_lr'])
 
     @staticmethod
@@ -471,7 +487,7 @@ def show_filters_ae():
     AEAnalysis.visualize_filters(ae)
 
 def most_activation_image_ae():
-    ae = AEAnalysis.get_ae().vae_model
+    ae = AEAnalysis.get_ae().vae_model.to(device)
     AEAnalysis.activation_image(ae)
 
 def show_pca_agent_results():
@@ -509,4 +525,10 @@ def show_epsilon_decay():
 
 if __name__ == "__main__":
     most_activation_image_ae()
+    # a = torch.randn(5,requires_grad=True).to(device)
+    # print(a.grad_fn)
+    # a.retain_grad()
+    # a.backward(torch.ones(5).to(device))
+    # print(a.grad)
+    # print(a.grad_fn)
     

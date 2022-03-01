@@ -8,6 +8,7 @@ from numpy import asarray, percentile, tile
 from scipy.ndimage import gaussian_filter
 
 # https://github.com/Nguyen-Hoa/Activation-Maximization
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 """
@@ -51,8 +52,9 @@ Optimizing Loop
     Dev: maximize layer vs neuron
 """
 def act_max(network, 
-    input, 
+    img, 
     layer_activation, 
+    gradients,
     layer_name, 
     unit, 
     steps=50, 
@@ -67,66 +69,74 @@ def act_max(network,
     Contrib_Crop=True,
     theta_c_crop=30,
     ):
+    gradients = None
+    def get_gradient(grad):
+        gradients = grad
 
     best_activation = -float('inf')
-    best_img = input
+    best_img = img
 
     for k in range(steps):
 
-        input.retain_grad() # non-leaf tensor
+        img.retain_grad() # non-leaf tensor
         # network.zero_grad()
         
         # Propogate image through network,
         # then access activation of target layer
-        network(input)
+        network(img)
         layer_out = layer_activation[layer_name]
 
         # compute gradients w.r.t. target unit,
-        # then access the gradient of input (image) w.r.t. target unit (neuron) 
-        layer_out[0][unit].backward(retain_graph=True)
-        img_grad = input.grad
-
+        # then access the gradient of img (image) w.r.t. target unit (neuron) 
+        #layer_out[0][unit].backward(retain_graph=True)
+        loss = -layer_out[unit].mean()
+        loss.register_hook(get_gradient) 
+        loss.backward(retain_graph=True)
+        #img_grad = img.grad
+        gradients /= (torch.sqrt(torch.mean(
+                torch.mul(gradients, gradients))) + 1e-5)
         # Gradient Step
-        # input = input + alpha * dimage_dneuron
-        input = torch.add(input, torch.mul(img_grad, alpha))
+        # img = img + alpha * dimage_dneuron
+        print(gradients)
+        img = torch.add(img, torch.mul(gradients, alpha))
 
         # regularization does not contribute towards gradient
         """
         DEV:
-            Detach input here
+            Detach img here
         """
         with torch.no_grad():
 
             # Regularization: L2
             if L2_Decay:
-                input = torch.mul(input, (1.0 - theta_decay))
+                img = torch.mul(img, (1.0 - theta_decay))
 
             # Regularization: Gaussian Blur
             if Gaussian_Blur and k % theta_every is 0:
-                temp = input.squeeze(0)
+                temp = img.squeeze(0)
                 temp = temp.detach().numpy()
                 for channel in range(3):
                     cimg = gaussian_filter(temp[channel], theta_width)
                     temp[channel] = cimg
                 temp = torch.from_numpy(temp)
-                input = temp.unsqueeze(0)
+                img = temp.unsqueeze(0)
 
             # Regularization: Clip Norm
             if Norm_Crop:
-                input = norm_crop(input.detach().squeeze(0), threshold=theta_n_crop)
-                input = input.unsqueeze(0)
+                img = norm_crop(img.detach().squeeze(0), threshold=theta_n_crop)
+                img = img.unsqueeze(0)
 
             # Regularization: Clip Contribution
             if Contrib_Crop:
-                input = abs_contrib_crop(input.detach().squeeze(0), threshold=theta_c_crop)
-                input = input.unsqueeze(0)
+                img = abs_contrib_crop(img.detach().squeeze(0), threshold=theta_c_crop)
+                img = img.unsqueeze(0)
 
-        input.requires_grad_(True)
+        img.requires_grad_(True)
 
         # Keep highest activation
         if best_activation < layer_out[0][unit]:
             best_activation = layer_out[0][unit]
-            best_img = input
+            best_img = img
 
     return best_img
 
