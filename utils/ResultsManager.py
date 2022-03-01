@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import numpy as np
 from utils.DataManager import DataManager
+from utils.MaxActivation import act_max
 from vae.VAE import VAE, VaeManager
 import seaborn as sns
 from math import sqrt
@@ -148,6 +149,26 @@ class PCAAnalysis:
 # Class methods showing analyses of autoencoder, e.g. visualizing feature maps and showing correlation matrix
 class AEAnalysis:
     def reduced_features_correlation_matrix(ae, obs_dir):
+        def create_plot(filename, data):
+            fig, ax = plt.subplots(figsize=(30,8))
+            sns.heatmap(data, annot=False, ax=ax)
+            plt.savefig(filename)
+            plt.show()
+        states = [np.array([0,0,0,1,5,1]), np.array([5,5,1,1,0,1]), np.array([1,1,5,5,1,1]),np.array([0,0,1,0,0,0])]
+        reduced_states = [np.array([1,1,5,1,5,5]), np.array([0,0,0,5,5,5]), np.array([0,1,1,1,5,5]), np.array([1,1,5,5,1,0])]
+        states = pd.DataFrame(states, columns=list(range(states[0].shape[0])))
+        reduced_states = pd.DataFrame(reduced_states, columns=list(range(reduced_states[0].shape[0])))
+
+        print(f'Calculating correlation matrix...')
+        df_cor = pd.concat([states, reduced_states], axis=1, keys=['df1', 'df2']).corr().loc['df2', 'df1']
+        create_plot(f'corr_matrix_reduced.png', df_cor)
+
+        # Show correlation for single latent feature
+        print(df_cor)
+        cor_latent_feature = df_cor.iloc[0].to_numpy().reshape(2,3)
+        create_plot(f'corr_matrix_latent_feature.png', cor_latent_feature)
+        raise NotImplementedError
+
         data_manager = DataManager(observation_sub_dir = obs_dir)
         print("Retrieving observations...")
         obs = data_manager.get_observations()
@@ -156,7 +177,6 @@ class AEAnalysis:
         states = []
 
         i = 1
-        matrix_num = 1
         max_num_states = 60000
         print("Retrieving states and reduced states...")
         
@@ -173,19 +193,16 @@ class AEAnalysis:
                 states = pd.DataFrame(states, columns=list(range(states[0].shape[0])))
                 reduced_states = pd.DataFrame(reduced_states, columns=list(range(reduced_states[0].shape[0])))
 
-                print(f'Calculating correlation matrix {matrix_num}...')
+                print(f'Calculating correlation matrix...')
                 df_cor = pd.concat([states, reduced_states], axis=1, keys=['df1', 'df2']).corr().loc['df2', 'df1']
-                fig, ax = plt.subplots(figsize=(30,8))
-                sns.heatmap(df_cor, annot=False, ax=ax)
-                plt.savefig(f'corr_matrix_reduced_{matrix_num}.png')
-                plt.show()
+                create_plot(f'corr_matrix_reduced.png', df_cor)
 
-                # Reset for calculating new matrix for next batch of observations (due to memory limits)
-                matrix_num += 1
-                i = 1
-                reduced_states = []
-                states = []
-                print("Retrieving states and reduced states...")
+                # Show correlation for single latent feature
+                cor_latent_feature = df_cor.iloc[0].to_numpy().reshape(32,32)
+                create_plot(f'corr_matrix_latent_feature.png', cor_latent_feature)
+
+                break
+
         print("Done calculating and storing correlation matrices")
 
     @staticmethod
@@ -338,7 +355,11 @@ class AEAnalysis:
             conv_layers[i].register_forward_hook(get_activation(f'conv{i}'))
             for filter in range(conv_layers[i].weight.shape[0]):
                 print(f'Getting image for filter {filter+1} of conv layer {i+1}.')
-                img = get_image(i, filter)
+                initial_img = torch.randn(1, 32, 32)
+                initial_img = input.unsqueeze(0)
+                initial_img.requires_grad_(True)
+                img = act_max(model, initial_img, activation, f'conv{i}', filter)
+                plt.imsave(f'initial_image.jpg', np.clip(img.detach().cpu().numpy(), 0, 1))
                 plt.imsave(f'activation_image_layer_{i}_filter_{filter}.jpg', np.clip(img, 0, 1))
                 break
             break
