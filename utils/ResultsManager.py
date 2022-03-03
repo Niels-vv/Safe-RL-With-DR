@@ -15,6 +15,8 @@ from math import sqrt
 
 from torch.functional import F #TODO weghalen
 
+from utils.DeepDream import deep_dream_static_image
+
 PATH = os.path.dirname(os.path.realpath(__file__))
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -313,43 +315,30 @@ class AEAnalysis:
     def activation_image(model):
         #model.eval()
         activation = {}
-        gradients = None
+
         # Get feature map data
         def get_activation(name):
             def hook(model, input, output):
-                activation[name] = output.clone().detach().requires_grad_(True).to(device)
+                activation[name] = output.requires_grad_(True)
             return hook
-
-        def get_gradients(module, grad_in, grad_out):
-            gradients = grad_in[0]
 
         # Get image that activates given filter of given layer the most
         def get_image(layer, filter):
             width = 32
             height = 32
             colour_channels = 1
-            #img = np.uint8(np.random.uniform(150, 180, (width, height)))/255
-            #plt.imshow(img)
-            #plt.savefig("before.png")
-            #img = torch.from_numpy(img).to(device).float()
-            #img.requires_grad_(True)
+            img = torch.randn(1,colour_channels,height, width, requires_grad=True,device=device)   
 
-            img = torch.randn(1,1,32, 32, requires_grad=True,device=device)   
-
-            #img = nn.Parameter(img,requires_grad=True)
-            #print(list(model.parameters())[0])
-            #print(type(list(model.parameters())[0]))
-
-            opt_steps = 20
+            opt_steps = 50
             optimizer = torch.optim.Adam([img], lr=0.1, weight_decay=1e-6)
             for _ in range(opt_steps):
                 model.zero_grad()
                 optimizer.zero_grad()
                 img.retain_grad()
-                #model.state_dim_reduction(img)
+                
                 model(img)
-                loss = -activation[f'conv{layer}'][filter].mean().mul(20)
-                #print(loss.item())
+                loss = -activation[f'conv{layer}'][:,filter,:,:].mean()
+                # loss = torch.nn.MSELoss(reduction='mean')(activation[f'conv{layer}'], torch.zeros_like(activation[f'conv{layer}']))
                 a = img.clone()
                 loss.backward()
                 optimizer.step()
@@ -357,29 +346,29 @@ class AEAnalysis:
                 print(img.grad)
                 print(img.grad_fn)
                 print(torch.equal(a.data, b.data))
-                #print(img.grad)
-            plt.imshow(img.detach().cpu().numpy())
-            plt.savefig("after.png")
-            return img.detach().cpu().numpy()
-
+            
+            return img.detach().cpu().squeeze().numpy()
+        
+        model = model.encoder
         # Get conv layers from encoder
         conv_layers = []
-        for layer in model.encoder:
+        for layer in model:
             if type(layer) == nn.Conv2d:
                 conv_layers.append(layer)
-        model = model.encoder
-        model.register_full_backward_hook(get_gradients)
+        
 
         for i in range(len(conv_layers)):
             conv_layers[i].register_forward_hook(get_activation(f'conv{i}'))
+            #deep_dream_static_image(model, 0, activation)
+            #deep_dream_static_image(model, 1, activation)
             for filter in range(conv_layers[i].weight.shape[0]):
                 print(f'Getting image for filter {filter+1} of conv layer {i+1}.')
                 initial_img = torch.randn(1, 32, 32, requires_grad=True).to(device)
                 initial_img = initial_img.unsqueeze(0)
-                #get_image(i,filter)
-                img = act_max(model, initial_img, activation, gradients, f'conv{i}', filter)
-                plt.imsave(f'initial_image.jpg', np.clip(img.detach().cpu().numpy(), 0, 1))
-                plt.imsave(f'activation_image_layer_{i}_filter_{filter}.jpg', np.clip(img, 0, 1))
+                img = get_image(i,filter)
+                #img = act_max(model, activation, f'conv{i}', filter)
+                plt.imshow(img)
+                plt.savefig(f'activation_image_layer_{i}_filter_{filter}.jpg')
                 break
             break
 
@@ -493,6 +482,7 @@ def most_activation_image_ae():
     ae = AEAnalysis.get_ae().vae_model.to(device)
     AEAnalysis.activation_image(ae)
 
+
 def show_pca_agent_results():
     dir = "env_pysc2/results/dqn/MoveToBeacon"
     AgentPerformance.show_pca_agent_results(dir)
@@ -543,28 +533,61 @@ class Model(nn.Module):
         return X(self.weights)
 
 def img_train():
-    ae = AEAnalysis.get_ae().vae_model.to(device)
+    activation = {}
+    def get_activation(name):
+        def hook(model, input, output):
+            activation[name] = output.requires_grad_(True)
+        return hook
+    ae = AEAnalysis.get_ae().vae_model.encoder.to(device)
     img_model = Model()
     optimizer = torch.optim.Adam(img_model.parameters(), lr=0.1, weight_decay=1e-6)
     a = img_model.weights.clone()
     y = torch.randn(1,1,32, 32, requires_grad=True,device=device)
 
+    conv_layers = []
+    for layer in ae:
+        if type(layer) == nn.Conv2d:
+            conv_layers.append(layer)
+    conv_layers[0].register_forward_hook(get_activation(f'conv{0}'))
+
+    img_model.weights.retain_grad()
     preds = img_model(ae)
-    loss = F.mse_loss(preds, y).sqrt()
+
+    loss = -activation[f'conv{0}'][0][0].mean()
+    print(loss)
+    print(activation[f'conv{0}'][0].shape)
+    print(activation[f'conv{0}'].shape)
+    
+    #loss = F.mse_loss(preds, y).sqrt()
     loss.backward()
+    print(img_model.weights.grad)
+    print(img_model.weights.grad[0][0][0][0])
+    print(img_model.weights.grad[0][0][10][8])
+    print(img_model.weights.grad[0][0][6][9])
+    print(img_model.weights.grad[0][0][2][1])
     optimizer.step()
+    print(img_model.weights.grad)
+    print(img_model.weights.grad[0][0][0][0])
+    print(img_model.weights.grad[0][0][10][8])
+    print(img_model.weights.grad[0][0][6][9])
+    print(img_model.weights.grad[0][0][2][1])
     optimizer.zero_grad()
 
     print(img_model.weights.grad)
-    print(img_model.weights.grad_fn)
+    print(img_model.weights.grad[0][0][0][0])
+    print(img_model.weights.grad[0][0][10][8])
+    print(img_model.weights.grad[0][0][6][9])
+    print(img_model.weights.grad[0][0][2][1])
+    
 
     b = img_model.weights.clone()
     print(torch.equal(a.data,b.data))
 
 
 if __name__ == "__main__":
-    show_reduced_features_correlation()
-    #most_activation_image_ae()
+    #img_train()
+    most_activation_image_ae()
+    
     # a = torch.randn(5,requires_grad=True).to(device)
     # print(a.grad_fn)
     # a.retain_grad()

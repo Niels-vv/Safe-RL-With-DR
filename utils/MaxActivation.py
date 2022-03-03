@@ -10,17 +10,6 @@ from scipy.ndimage import gaussian_filter
 # https://github.com/Nguyen-Hoa/Activation-Maximization
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-"""
-Create a hook into target layer
-    Example to hook into classifier 6 of Alexnet:
-        alexnet.classifier[6].register_forward_hook(layer_hook('classifier_6'))
-"""
-def layer_hook(act_dict, layer_name):
-    def hook(module, input, output):
-        act_dict[layer_name] = output
-    return hook
-
 """
 Reguarlizer, crop by absolute value of pixel contribution
 """
@@ -69,9 +58,6 @@ def act_max(network,
     Contrib_Crop=True,
     theta_c_crop=30,
     ):
-    gradients = None
-    def get_gradient(grad):
-        gradients = grad
 
     best_activation = -float('inf')
     best_img = img
@@ -89,16 +75,16 @@ def act_max(network,
         # compute gradients w.r.t. target unit,
         # then access the gradient of img (image) w.r.t. target unit (neuron) 
         #layer_out[0][unit].backward(retain_graph=True)
-        loss = -layer_out[unit].mean()
-        loss.register_hook(get_gradient) 
+
+        loss = -layer_out[:,unit,:,:].mean()
+        #loss = torch.nn.MSELoss(reduction='mean')(layer_out, torch.zeros_like(layer_out))
         loss.backward(retain_graph=True)
-        #img_grad = img.grad
-        gradients /= (torch.sqrt(torch.mean(
-                torch.mul(gradients, gradients))) + 1e-5)
+        img_grad = img.grad
+        print(img_grad)
+        
         # Gradient Step
         # img = img + alpha * dimage_dneuron
-        print(gradients)
-        img = torch.add(img, torch.mul(gradients, alpha))
+        img = torch.add(img, torch.mul(img_grad, alpha))
 
         # regularization does not contribute towards gradient
         """
@@ -138,5 +124,5 @@ def act_max(network,
             best_activation = layer_out[0][unit]
             best_img = img
 
-    return best_img
+    return best_img.detach().cpu().squeeze().numpy()
 
