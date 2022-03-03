@@ -30,7 +30,7 @@ def norm_crop(img, threshold=0):
 
     # Create a binary matrix, with 1's wherever the pixel falls below threshold
     smalls = norm < percentile(norm, threshold)
-    smalls = tile(smalls, (3,1,1))
+    smalls = tile(smalls, (1,1,1))
 
     # Crop pixels from image
     crop = img - img*smalls
@@ -43,7 +43,6 @@ Optimizing Loop
 def act_max(network, 
     img, 
     layer_activation, 
-    gradients,
     layer_name, 
     unit, 
     steps=50, 
@@ -61,6 +60,7 @@ def act_max(network,
 
     best_activation = -float('inf')
     best_img = img
+    print(img)
 
     for k in range(steps):
 
@@ -76,53 +76,52 @@ def act_max(network,
         # then access the gradient of img (image) w.r.t. target unit (neuron) 
         #layer_out[0][unit].backward(retain_graph=True)
 
-        loss = -layer_out[:,unit,:,:].mean()
-        #loss = torch.nn.MSELoss(reduction='mean')(layer_out, torch.zeros_like(layer_out))
+        #loss = -layer_out[:,unit,:,:].mean()
+        loss = torch.nn.MSELoss(reduction='mean')(layer_out, torch.zeros_like(layer_out))
         loss.backward(retain_graph=True)
         img_grad = img.grad
-        print(img_grad)
         
         # Gradient Step
-        # img = img + alpha * dimage_dneuron
         img = torch.add(img, torch.mul(img_grad, alpha))
-
         # regularization does not contribute towards gradient
         """
         DEV:
             Detach img here
         """
+        img = img.detach().cpu()
         with torch.no_grad():
-
+          
             # Regularization: L2
             if L2_Decay:
                 img = torch.mul(img, (1.0 - theta_decay))
-
+                
             # Regularization: Gaussian Blur
             if Gaussian_Blur and k % theta_every is 0:
                 temp = img.squeeze(0)
-                temp = temp.detach().numpy()
-                for channel in range(3):
-                    cimg = gaussian_filter(temp[channel], theta_width)
-                    temp[channel] = cimg
+                temp = temp.detach().cpu().numpy()
+                channel = 0
+                cimg = gaussian_filter(temp[channel], theta_width)
+                temp[channel] = cimg
                 temp = torch.from_numpy(temp)
                 img = temp.unsqueeze(0)
-
+                
             # Regularization: Clip Norm
             if Norm_Crop:
                 img = norm_crop(img.detach().squeeze(0), threshold=theta_n_crop)
                 img = img.unsqueeze(0)
-
+                
             # Regularization: Clip Contribution
             if Contrib_Crop:
                 img = abs_contrib_crop(img.detach().squeeze(0), threshold=theta_c_crop)
                 img = img.unsqueeze(0)
-
-        img.requires_grad_(True)
-
+                
+        img = img.to(device).requires_grad_(True)
+        
         # Keep highest activation
-        if best_activation < layer_out[0][unit]:
-            best_activation = layer_out[0][unit]
+        if best_activation < loss.item():
+            best_activation = loss.item()
             best_img = img
+            print(img)
 
     return best_img.detach().cpu().squeeze().numpy()
 

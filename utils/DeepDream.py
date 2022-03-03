@@ -13,8 +13,8 @@ from torchvision import transforms
 import torch.nn.functional as F
 
 
-IMAGENET_MEAN_1 = np.array([0.485, 0.456, 0.406], dtype=np.float32)
-IMAGENET_STD_1 = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+IMAGENET_MEAN_1 = np.array([0.485], dtype=np.float32)
+IMAGENET_STD_1 = np.array([0.229], dtype=np.float32)
 
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # checking whether you have a GPU
@@ -31,7 +31,6 @@ class TRANSFORMS(enum.Enum):
 
 def pre_process_numpy_img(img):
     assert isinstance(img, np.ndarray), f'Expected numpy image got {type(img)}'
-
     img = (img - IMAGENET_MEAN_1) / IMAGENET_STD_1  # normalize image
     return img
 
@@ -83,7 +82,7 @@ class CascadeGaussianSmoothing(nn.Module):
             kernel = kernel / torch.sum(kernel)
             # Reshape to depthwise convolutional weight
             kernel = kernel.view(1, 1, *kernel.shape)
-            kernel = kernel.repeat(3, 1, 1, 1)
+            kernel = kernel.repeat(1, 1, 1, 1)
             kernel = kernel.to(DEVICE)
 
             gaussian_kernels.append(kernel)
@@ -95,7 +94,6 @@ class CascadeGaussianSmoothing(nn.Module):
 
     def forward(self, input):
         input = F.pad(input, [self.pad, self.pad, self.pad, self.pad], mode='reflect')
-
         # Apply Gaussian kernels depthwise over the input (hence groups equals the number of input channels)
         # shape = (1, 3, H, W) -> (1, 3, H, W)
         num_in_channels = input.shape[1]
@@ -159,7 +157,7 @@ def gradient_ascent(model, input_tensor, layer_ids_to_use, iteration, activation
     # sigma is calculated using an arbitrary heuristic feel free to experiment
     sigma = ((iteration + 1) / config['num_gradient_ascent_iterations']) * 2.0 + config['smoothing_coefficient']
     smooth_grad = CascadeGaussianSmoothing(kernel_size=9, sigma=sigma)(grad)  # "magic number" 9 just works well
-
+    
     # Normalize the gradients (make them have mean = 0 and std = 1)
     # I didn't notice any big difference normalizing the mean as well - feel free to experiment
     g_std = torch.std(smooth_grad)
@@ -176,10 +174,10 @@ def gradient_ascent(model, input_tensor, layer_ids_to_use, iteration, activation
 
 
 def deep_dream_static_image(model, layer, activation):
-    shape = (16,16,1)
+    shape = (32,32,1)
     img = np.random.uniform(low=0.0, high=1.0, size=shape).astype(np.float32)
-
     img = pre_process_numpy_img(img)
+
     base_shape = img.shape[:-1]  # save initial height and width
 
     # Note: simply rescaling the whole result (and not only details, see original implementation) gave me better results
@@ -199,13 +197,13 @@ def deep_dream_static_image(model, layer, activation):
 
         img = pytorch_output_adapter(input_tensor)
 
-    return post_process_numpy_img(img)
+    return post_process_numpy_img(img).squeeze()
 
 config = {
 'pyramid_size': 4,
 'num_gradient_ascent_iterations' : 10,
 'spatial_shift_size' : 5,
 'lr' : 0.09,
-'pyramid_ratio' : 1.8,
+'pyramid_ratio' : 1.4,
 'smoothing_coefficient' : 0.5
 }

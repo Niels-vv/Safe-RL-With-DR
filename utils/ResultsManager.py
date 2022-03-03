@@ -327,10 +327,13 @@ class AEAnalysis:
             width = 32
             height = 32
             colour_channels = 1
-            img = torch.randn(1,colour_channels,height, width, requires_grad=True,device=device)   
-
+            #img = torch.randn(1,colour_channels,height, width, requires_grad=True,device=device)   
+            img = np.random.uniform(low=0.0, high=1.0, size=(1,1,32,32)).astype(np.float32)
+            #img = (img - np.array([0.485, 0.456, 0.406], dtype=np.float32)) / np.array([0.229, 0.224, 0.225], dtype=np.float32)
+            img = torch.from_numpy(img).to(device).requires_grad_(True)
+            print(img)
             opt_steps = 50
-            optimizer = torch.optim.Adam([img], lr=0.1, weight_decay=1e-6)
+            optimizer = torch.optim.Adam([img], lr=0.1)
             for _ in range(opt_steps):
                 model.zero_grad()
                 optimizer.zero_grad()
@@ -339,13 +342,9 @@ class AEAnalysis:
                 model(img)
                 loss = -activation[f'conv{layer}'][:,filter,:,:].mean()
                 # loss = torch.nn.MSELoss(reduction='mean')(activation[f'conv{layer}'], torch.zeros_like(activation[f'conv{layer}']))
-                a = img.clone()
                 loss.backward()
                 optimizer.step()
-                b = img.clone()
-                print(img.grad)
-                print(img.grad_fn)
-                print(torch.equal(a.data, b.data))
+                print(img)
             
             return img.detach().cpu().squeeze().numpy()
         
@@ -363,10 +362,12 @@ class AEAnalysis:
             #deep_dream_static_image(model, 1, activation)
             for filter in range(conv_layers[i].weight.shape[0]):
                 print(f'Getting image for filter {filter+1} of conv layer {i+1}.')
-                initial_img = torch.randn(1, 32, 32, requires_grad=True).to(device)
-                initial_img = initial_img.unsqueeze(0)
-                img = get_image(i,filter)
-                #img = act_max(model, activation, f'conv{i}', filter)
+                img = np.random.uniform(low=0.0, high=1.0, size=(1,1,32,32)).astype(np.float32)
+                #img = (img - np.array([0.485, 0.456, 0.406], dtype=np.float32)) / np.array([0.229, 0.224, 0.225], dtype=np.float32)
+                img = torch.from_numpy(img).to(device).requires_grad_(True)
+            
+                #img = get_image(i,filter)
+                img = act_max(model, img, activation, f'conv{i}', filter)
                 plt.imshow(img)
                 plt.savefig(f'activation_image_layer_{i}_filter_{filter}.jpg')
                 break
