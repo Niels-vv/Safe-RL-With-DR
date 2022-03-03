@@ -13,7 +13,7 @@ from vae.VAE import VAE, VaeManager
 import seaborn as sns
 from math import sqrt
 
-from flashtorch.activmax import GradientAscent
+from torch.functional import F #TODO weghalen
 
 PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -151,25 +151,27 @@ class PCAAnalysis:
 # Class methods showing analyses of autoencoder, e.g. visualizing feature maps and showing correlation matrix
 class AEAnalysis:
     def reduced_features_correlation_matrix(ae, obs_dir):
-        def create_plot(filename, data):
-            fig, ax = plt.subplots(figsize=(30,8))
-            sns.heatmap(data, annot=False, ax=ax)
+        def create_plot(filename, data, fig_size):
+            fig, ax = plt.subplots(figsize=fig_size)
+            sns.heatmap(data, vmin=-1, vmax=1, annot=False, ax=ax)
             plt.savefig(filename)
             plt.show()
-        states = [np.array([0,0,0,1,5,1]), np.array([5,5,1,1,0,1]), np.array([1,1,5,5,1,1]),np.array([0,0,1,0,0,0])]
-        reduced_states = [np.array([1,1,5,1,5,5]), np.array([0,0,0,5,5,5]), np.array([0,1,1,1,5,5]), np.array([1,1,5,5,1,0])]
-        states = pd.DataFrame(states, columns=list(range(states[0].shape[0])))
-        reduced_states = pd.DataFrame(reduced_states, columns=list(range(reduced_states[0].shape[0])))
 
-        print(f'Calculating correlation matrix...')
-        df_cor = pd.concat([states, reduced_states], axis=1, keys=['df1', 'df2']).corr().loc['df2', 'df1']
-        create_plot(f'corr_matrix_reduced.png', df_cor)
-
-        # Show correlation for single latent feature
-        print(df_cor)
-        cor_latent_feature = df_cor.iloc[0].to_numpy().reshape(2,3)
-        create_plot(f'corr_matrix_latent_feature.png', cor_latent_feature)
-        raise NotImplementedError
+        # Get correlation matrix of single latent feature
+        def get_cor_of_latent_feature(corr_matrix, feature):
+            cor_latent_feature = corr_matrix.iloc[feature].to_numpy().reshape(32,32)
+            cor_latent_feature = pd.DataFrame(cor_latent_feature,columns=list(range(cor_latent_feature[0].shape[0])))
+            create_plot(f'corr_matrix_latent_feature_{feature+1}.png', cor_latent_feature, (10,5))
+     
+        # Show placement of latent feature in its original 16x16 grid
+        def get_grid_for_latent_feature(feature, grid_rows, grid_columns):
+            grid = np.ones(grid_rows *grid_columns)
+            grid[feature] = 0
+            grid = grid.reshape(grid_rows, grid_columns) 
+            plt.figure(figsize=(5, 5))
+            plt.imshow(grid, cmap='gray')
+            plt.savefig(f'grid_latent_feature_{feature+1}.jpg')
+            plt.show()
 
         data_manager = DataManager(observation_sub_dir = obs_dir)
         print("Retrieving observations...")
@@ -197,12 +199,13 @@ class AEAnalysis:
 
                 print(f'Calculating correlation matrix...')
                 df_cor = pd.concat([states, reduced_states], axis=1, keys=['df1', 'df2']).corr().loc['df2', 'df1']
-                create_plot(f'corr_matrix_reduced.png', df_cor)
+                create_plot(f'corr_matrix_reduced.png', df_cor,(30,8))
 
                 # Show correlation for single latent feature
-                cor_latent_feature = df_cor.iloc[0].to_numpy().reshape(32,32)
-                create_plot(f'corr_matrix_latent_feature.png', cor_latent_feature)
-
+                features = [67, 119, 203]
+                for feature in features:
+                    get_cor_of_latent_feature(df_cor, feature)
+                    get_grid_for_latent_feature(feature, grid_rows = 16, grid_columns = 16)
                 break
 
         print("Done calculating and storing correlation matrices")
@@ -331,7 +334,7 @@ class AEAnalysis:
             #img = torch.from_numpy(img).to(device).float()
             #img.requires_grad_(True)
 
-            img = torch.randn(32, 32, requires_grad=True,device=device)   
+            img = torch.randn(1,1,32, 32, requires_grad=True,device=device)   
 
             #img = nn.Parameter(img,requires_grad=True)
             #print(list(model.parameters())[0])
@@ -344,7 +347,7 @@ class AEAnalysis:
                 optimizer.zero_grad()
                 img.retain_grad()
                 #model.state_dim_reduction(img)
-                model(img.unsqueeze(0).unsqueeze(0))
+                model(img)
                 loss = -activation[f'conv{layer}'][filter].mean().mul(20)
                 #print(loss.item())
                 a = img.clone()
@@ -522,9 +525,46 @@ def show_epsilon_decay():
     plt.savefig("Epsilon_decay.png")
     plt.show()
 
+class Model(nn.Module):
+    """Custom Pytorch model for gradient optimization.
+    """
+    def __init__(self):
+        
+        super().__init__()
+        # initialize weights with random numbers
+        weights = torch.randn(1,1,32, 32, requires_grad=True,device=device)  
+        # make weights torch parameters
+        self.weights = nn.Parameter(weights)        
+        
+    def forward(self, X):
+        """Implement function to be optimised. In this case, an exponential decay
+        function (a + exp(-k * X) + b),
+        """
+        return X(self.weights)
+
+def img_train():
+    ae = AEAnalysis.get_ae().vae_model.to(device)
+    img_model = Model()
+    optimizer = torch.optim.Adam(img_model.parameters(), lr=0.1, weight_decay=1e-6)
+    a = img_model.weights.clone()
+    y = torch.randn(1,1,32, 32, requires_grad=True,device=device)
+
+    preds = img_model(ae)
+    loss = F.mse_loss(preds, y).sqrt()
+    loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+
+    print(img_model.weights.grad)
+    print(img_model.weights.grad_fn)
+
+    b = img_model.weights.clone()
+    print(torch.equal(a.data,b.data))
+
 
 if __name__ == "__main__":
-    most_activation_image_ae()
+    show_reduced_features_correlation()
+    #most_activation_image_ae()
     # a = torch.randn(5,requires_grad=True).to(device)
     # print(a.grad_fn)
     # a.retain_grad()
