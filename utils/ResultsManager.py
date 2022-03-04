@@ -358,8 +358,10 @@ class AEAnalysis:
 
         for i in range(len(conv_layers)):
             conv_layers[i].register_forward_hook(get_activation(f'conv{i}'))
-            #deep_dream_static_image(model, 0, activation)
-            #deep_dream_static_image(model, 1, activation)
+            # im = deep_dream_static_image(model, i, activation)
+            # plt.imshow(img)
+            # plt.savefig(f'DeepDream_activation_image_layer_{i}.jpg')
+            # continue
             for filter in range(conv_layers[i].weight.shape[0]):
                 print(f'Getting image for filter {filter+1} of conv layer {i+1}.')
                 img = np.random.uniform(low=0.0, high=1.0, size=(1,1,32,32)).astype(np.float32)

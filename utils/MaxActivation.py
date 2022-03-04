@@ -60,7 +60,6 @@ def act_max(network,
 
     best_activation = -float('inf')
     best_img = img
-    print(img)
 
     for k in range(steps):
 
@@ -74,10 +73,10 @@ def act_max(network,
 
         # compute gradients w.r.t. target unit,
         # then access the gradient of img (image) w.r.t. target unit (neuron) 
-        #layer_out[0][unit].backward(retain_graph=True)
+        # layer_out[0][unit].backward(retain_graph=True)
 
-        #loss = -layer_out[:,unit,:,:].mean()
-        loss = torch.nn.MSELoss(reduction='mean')(layer_out, torch.zeros_like(layer_out))
+        loss = -layer_out[:,unit,:,:].mean() # loss for act of filter
+        # loss = torch.nn.MSELoss(reduction='mean')(layer_out, torch.zeros_like(layer_out)) #loss for act of layer
         loss.backward(retain_graph=True)
         img_grad = img.grad
         
@@ -121,7 +120,6 @@ def act_max(network,
         if best_activation < loss.item():
             best_activation = loss.item()
             best_img = img
-            print(img)
 
     return best_img.detach().cpu().squeeze().numpy()
 
