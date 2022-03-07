@@ -15,7 +15,7 @@ def _xy_locs(mask):
   return list(zip(x, y))
 
 class Agent:
-    def __init__(self, env, max_episodes, store_obs, store_obs_rule = False):
+    def __init__(self, env, max_episodes, store_obs, store_obs_rule = True):
         self.env = env
         self.max_episodes = max_episodes
         self.store_obs = store_obs
@@ -27,7 +27,7 @@ class Agent:
         print("Running Scripted agent on MoveToBeacon")
         if self.store_obs:
             print("Storing observations")
-            self.data_manager = DataManager(observation_sub_dir=f'/content/drive/MyDrive/Thesis/Code/PySC2/Observations_Rule/{self.map}')
+            self.data_manager = DataManager(observation_sub_dir=f'../drive/MyDrive/Thesis/Code/PySC2/Observations_Rule/{self.map}')
             self.data_manager.create_observation_file()
 
         for eps in range(self.max_episodes):
@@ -46,7 +46,7 @@ class Agent:
 
             if self.obs_num >= 240000: # Stored 240.000 obs
                 break
-
+        print(self.obs_num)
         self.env.close()
 
     def get_env_action(self, obs):
@@ -62,11 +62,7 @@ class Agent:
         player_relative = obs.observation.feature_screen.player_relative
         beacon = _xy_locs(player_relative == _PLAYER_NEUTRAL)
         beacon_center = np.mean(beacon, axis=0).round()
-        print(beacon_center)
-        if beacon_center[0] in list(range(20, 24)): # Store only obs located on y indices 20-23
-            plt.imshow(player_relative)
-            plt.savefig(f'state_test.jpg')
-            self.env.close()
+        if beacon_center[1] in list(range(16, 20)): # Store only obs located on y indices 16-19
             self.obs_num += 1
             return True
     

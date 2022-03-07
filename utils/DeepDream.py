@@ -201,7 +201,7 @@ def deep_dream_static_image(model, layer, activation):
 
 config = {
 'pyramid_size': 4,
-'num_gradient_ascent_iterations' : 10,
+'num_gradient_ascent_iterations' : 500,
 'spatial_shift_size' : 5,
 'lr' : 0.09,
 'pyramid_ratio' : 1.4,

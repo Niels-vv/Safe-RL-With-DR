@@ -163,7 +163,7 @@ class AEAnalysis:
         def get_cor_of_latent_feature(corr_matrix, feature):
             cor_latent_feature = corr_matrix.iloc[feature].to_numpy().reshape(32,32)
             cor_latent_feature = pd.DataFrame(cor_latent_feature,columns=list(range(cor_latent_feature[0].shape[0])))
-            create_plot(f'corr_matrix_latent_feature_{feature+1}.png', cor_latent_feature, (10,5))
+            create_plot(f'AeRule_corr_matrix_latent_feature_{feature+1}.png', cor_latent_feature, (10,5))
      
         # Show placement of latent feature in its original 16x16 grid
         def get_grid_for_latent_feature(feature, grid_rows, grid_columns):
@@ -201,7 +201,7 @@ class AEAnalysis:
 
                 print(f'Calculating correlation matrix...')
                 df_cor = pd.concat([states, reduced_states], axis=1, keys=['df1', 'df2']).corr().loc['df2', 'df1']
-                create_plot(f'corr_matrix_reduced.png', df_cor,(30,8))
+                create_plot(f'AeRule_corr_matrix_reduced.png', df_cor,(30,8))
 
                 # Show correlation for single latent feature
                 features = [67, 119, 203]
@@ -255,7 +255,7 @@ class AEAnalysis:
 
             print(f'Creating feature maps for state {state_num+1} / {max_num_states}...')
             for i in range(len(conv_layers)):
-                image_name = f'State_{index+1}_Layer_{i+1}_Feature_Map.png'
+                image_name = f'AeRule_State_{index+1}_Layer_{i+1}_Feature_Map.png'
 
                 # Conv layer only has 1 channel/feature map
                 if (activation[f'conv{i}'].shape[1] == 1):
@@ -284,7 +284,7 @@ class AEAnalysis:
         # for i, layer in enumerate(model.encoder[0], start = 1):
         for i, layer in enumerate(model.encoder, start = 1):
             if type(layer) == nn.Conv2d:
-                image_name = f'Filters_Layer_{i+1}_Feature_Map.png'
+                image_name = f'AeRule_Filters_Layer_{i+1}_Feature_Map.png'
                 filters = layer.weight.detach().cpu().numpy()
                 #plt.imshow(filters[0, ...])
                 #plt.savefig(image_name)
@@ -340,8 +340,8 @@ class AEAnalysis:
                 img.retain_grad()
                 
                 model(img)
-                loss = -activation[f'conv{layer}'][:,filter,:,:].mean()
-                # loss = torch.nn.MSELoss(reduction='mean')(activation[f'conv{layer}'], torch.zeros_like(activation[f'conv{layer}']))
+                #loss = -activation[f'conv{layer}'][:,filter,:,:].mean()
+                loss = torch.nn.MSELoss(reduction='mean')(activation[f'conv{layer}'], torch.zeros_like(activation[f'conv{layer}']))
                 loss.backward()
                 optimizer.step()
                 print(img)
@@ -358,7 +358,7 @@ class AEAnalysis:
 
         for i in range(len(conv_layers)):
             conv_layers[i].register_forward_hook(get_activation(f'conv{i}'))
-            # img = deep_dream_static_image(model, i, activation)
+            # im = deep_dream_static_image(model, i, activation)
             # plt.imshow(img)
             # plt.savefig(f'DeepDream_activation_image_layer_{i}.jpg')
             # continue
@@ -368,12 +368,11 @@ class AEAnalysis:
                 #img = (img - np.array([0.485, 0.456, 0.406], dtype=np.float32)) / np.array([0.229, 0.224, 0.225], dtype=np.float32)
                 img = torch.from_numpy(img).to(device).requires_grad_(True)
             
-                #img = get_image(i,filter)
+                #img = deep_dream_static_image(model, f'conv{i}', activation)
                 img = act_max(model, img, activation, f'conv{i}', filter)
                 plt.imshow(img)
-                plt.savefig(f'activation_image_layer_{i}_filter_{filter}.jpg')
+                plt.savefig(f'AeRule_ActMax_activation_image_layer_{i}.jpg')
                 break
-            break
 
     # GRAD-LAM
     @staticmethod
@@ -435,7 +434,7 @@ class AEAnalysis:
     @staticmethod
     def get_ae():
         ae_dir = "env_pysc2/results_vae/MoveToBeacon"
-        ae_name = "vae.pt"
+        ae_name = "AE_Rule.pt"
         return AEAnalysis.get_component(ae_dir, ae_name)
 
 def get_rectangle(area):
@@ -467,13 +466,13 @@ def show_online_ae_deepmdp_comparison():
 # Show a heatmap of the correlation matrix between original state features and reduced state features (reduced by an autoencoder)
 def show_reduced_features_correlation():
     ae = AEAnalysis.get_ae().vae_model
-    obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
+    obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations_Rule/MoveToBeacon"
     AEAnalysis.reduced_features_correlation_matrix(ae, obs_dir)
 
 # Visualize the feature map of the encoder of an autoencoder
 def show_feature_map_ae():
     ae = AEAnalysis.get_ae().vae_model
-    obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
+    obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations_Rule/MoveToBeacon"
     AEAnalysis.visualize_feature_maps(ae, obs_dir)
     
 # Visualize the filters of the encoder of an autoencoder
@@ -588,6 +587,10 @@ def img_train():
 
 
 if __name__ == "__main__":
+    show_reduced_features_correlation()
+    show_feature_map_ae()
+    show_filters_ae()
+    most_activation_image_ae()
     #img_train()
     most_activation_image_ae()
     
@@ -598,3 +601,4 @@ if __name__ == "__main__":
     # print(a.grad)
     # print(a.grad_fn)
     
+
