@@ -1,4 +1,4 @@
-import torch, copy
+import torch, time, copy, random, traceback, math, csv
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
@@ -7,54 +7,33 @@ import numpy as np
 from collections import deque
 from itertools import chain
 from utils.Epsilon import Epsilon
-from utils.ReplayMemory import ReplayMemory
+from utils.ReplayMemory import ReplayMemory, Transition
 from deepmdp.DeepMDP import TransitionAux
 from deepmdp.DeepMDP import compute_deepmdp_loss
 
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Based on https://github.com/alanxzhou/sc2bot/blob/master/sc2bot/agents/rl_agent.py
 # DeepMDP based on paper en https://github.com/MkuuWaUjinga/DeepMDP-SSL4RL
 
 seed = 0
 torch.manual_seed(seed)
+np.random.seed(seed)
+random.seed(seed)
 #torch.backends.cudnn.deterministic = True
 #torch.backends.cudnn.benchmark = False
 
+
 class MlpPolicy(nn.Module):
-    def __init__(self, input_dim, output_dim, deepmdp = False):
+    def __init__(self, mlp, conv_last = True, encoder = None, deepmdp = False):
         super(MlpPolicy, self).__init__()
-        self.deepmdp = deepmdp
-        latent_dim = 256
-        c_hid = 32
-        act_fn = nn.GELU
-        #self.linear = nn.Sequential(
-        #    nn.Linear(latent_dim, 256*c_hid),
-        #    act_fn()
-        #)
-
-        if deepmdp:
-            self.encoder = nn.Sequential(
-                nn.Conv2d(1, c_hid, kernel_size=3, padding=1, stride=2), # 32x32 => 16x16
-                act_fn(),
-                nn.Conv2d(c_hid, 1, kernel_size=3, padding=1, stride=1),
-                act_fn()
-            )
-
-        self.mlp = nn.Sequential(
-            nn.ConvTranspose2d(1, c_hid, kernel_size=3, stride=2, padding=1, output_padding = 1), # 16 x 16 => 32 x 32
-            #self.conv0 = nn.ConvTranspose2d(1, c_hid, kernel_size=3, stride=1, padding=1), # 32 x 32 => 32 x 32
-            nn.ReLU(),
-            nn.Conv2d(c_hid, c_hid, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(c_hid, 1, kernel_size=3, stride=1, padding=1)
-        )
-        
-        self.name = 'BeaconCNN'
-        self.conv = True # Whether we're using a conv or linear output layer. Needed in def train_q(self)
+        self.deepmdp = deepmdp # Flag for whether we need to use the encoder
+        self.encoder = encoder # Encoder for DeepMDP
+        self.mlp = mlp         # Q* MLP
+        self.conv = conv_last  # Whether we're using a conv or linear output layer. Needed in def train_q(self)
 
     def forward(self, z, return_deepmdp = False):
-        #x = self.linear(x)
-        #x = x.reshape(x.shape[0], -1, 16, 16)
         if self.deepmdp:
             z = self.encoder(z)
         x = self.mlp(z)
@@ -80,35 +59,157 @@ class AgentConfig:
 class Agent(AgentConfig):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, env, observation_space, action_space, max_steps, max_episodes):
+    def __init__(self, env, max_steps, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp):
         super(Agent, self).__init__()
+
         self.env = env
+        self.device = device
         self.max_steps = max_steps
         self.max_episodes = max_episodes
-        self.policy_network = MlpPolicy(self.latent_space, self.observation_space).to(self.device)
+        self.duration = 0                   # Time duration of current episode
+        self.data_manager = data_manager
+
+        self.reduce_dim = False             # Whether to use dimensionality reduction on observations
+        self.dim_reduction_component = None
+        self.latent_space = None
+        self.pca = False
+        self.ae = False
+        self.deepmdp = False
+        self.train_ae_online = False        # When using an ae, whether it is pre-trained or not
+        
+        self.policy_network = MlpPolicy(mlp, conv_last, encoder, deepmdp).to(self.device)
         self.target_network = copy.deepcopy(self.policy_network)
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr = self.config['lr'])
         self.epsilon = Epsilon(start=1.0, end=0.1, decay_steps=self.config['decay_steps'])
-        self.loss = deque(maxlen=int(1e5))
-        self.max_q = deque(maxlen=int(1e5))
-        self.loss_history = []
-        self.max_q_history = []
-        self.reward_evaluation = []
         self.criterion = nn.MSELoss()
         self.max_gradient_norm = float('inf')
         self.memory = ReplayMemory(50000)
 
-        # DeepMDP
-        self.auxiliary_objective = None # Only used for DeepMDP (initialized in def setup_deepmdp(self))
+        # DeepMDP (initialized in def setup_deepmdp(self))
+        self.auxiliary_objective = None 
         self.params = None
         self.penalty = 0.01
-
-        self.data_manager = None
         self.deepmdp = False
 
-    @abc.abstractmethod
+        self.reward_history = []
+        self.duration_history = []
+        self.epsilon_history = []
+
+    def run_agent(self):
+        print("Running dqn")
+        # Setup file storage
+        if self.train:
+            self.data_manager.create_results_files()
+        else:
+            self.epsilon.isTraining = False # Act greedily
+
+        # Run agent
+        self.run_loop()
+
+        # Store final results
+        if self.train:
+            variant = {'pca' : self.pca, 'ae' : self.ae, 'shield' : self.shield, 'latent_space' : self.latent_space}
+            print("Rewards history:")
+            for r in self.rewards:
+                print(r)
+            self.data_manager.write_results(self.reward_history, self.epsilon_history, self.duration_history, self.config, variant, self.get_policy_checkpoint())
+
+    def reset(self):
+        self.duration = 0
+        return self.env.reset
+
     def run_loop(self):
-        return
+        try:
+            # A new episode
+            while self.env.episode < self.max_episodes:
+                state = self.reset()
+
+                # Get state from env; applies dimensionality reduction if pca or ae are used
+                state = self.env.get_state(state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space)
+                
+                # A step in an episode
+                while self.step < self.max_steps:
+                    self.env.step += 1
+                    self.env.total_steps += 1
+                    start_duration = time.time()
+
+                    # Choose action
+                    action = self.env.get_action(state, self.policy_network, self.epsilon, self.train)
+
+                    # Act
+                    new_state, reward, done = self.env.step(action)
+
+                    # Get new state observation; applies dimensionality reduction if pca or ae are used
+                    new_state = self.env.get_state(new_state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space)
+
+                    self.env.reward += reward
+
+                    # Store transition to replay memory
+                    if self.train: 
+                        transition = Transition(state, action, new_state, reward, done)
+                        self.memory.push(transition)
+
+                    # Train Q network
+                    if self.total_steps % self.config['train_q_per_step'] == 0 and self.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
+                        self.train_q()
+
+                    # Update Target network
+                    if self.total_steps % self.config['target_q_update_frequency'] == 0 and self.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
+                        for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
+                            target.data.copy_(online.data)
+                    
+                    state = new_state
+
+                    # Train ae (if non-pretrained ae is used)
+                    if self.train_ae_online and len(self.env.ae_batch) >= self.dim_reduction_component.batch_size: 
+                        ae_batch = np.array(self.env.ae_batch)
+                        self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(device).float())
+                        self.env.ae_batch = []
+
+                    # Episode done
+                    if self.env.is_last_obs():
+                        # Train ae (if non-pretrained ae is used)
+                        if self.train_ae_online and len(self.env.ae_batch) > 0: 
+                            ae_batch = np.array(self.env.ae_batch)
+                            self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(device).float())
+                            self.env.ae_batch = []
+
+                        # Store and show info
+                        end_duration = time.time()
+                        self.duration += end_duration - start_duration
+
+                        print(f'Episode {self.env.episode} done. Score: {self.env.reward}. Steps: {self.env.step}. Epsilon: {self.epsilon._value}')
+                        self.reward_history.append(self.env.reward)
+                        self.duration_history.append(self.env.duration)
+                        self.epsilon_history.append(self.epsilon._value)
+
+                        break
+
+                # Store intermediate results in Google Drive
+                if self.train and self.episode % 16 == 0: # TODO verbeteren in datamanager (kan gewoon results file in colab gebruiken, dus aangepaste write results aanroepen (want 'open "a"') oid)
+                    eps = [x for x in range(len(self.reward_history))]
+                    rows = zip(eps, self.reward_history, self.epsilon_history, self.duration_history)
+                    try:
+                        with open("/content/drive/MyDrive/Thesis/Code/PySC2/Results/Results.csv", "w") as f:
+                            pass
+                        with open("/content/drive/MyDrive/Thesis/Code/PySC2/Results/Results.csv", "a") as f:
+                            writer = csv.writer(f)
+                            writer.writerow(["Episode", "Reward", "Epsilon", "Duration"])
+                            for row in rows:
+                                writer.writerow(row)
+
+                        torch.save(self.get_policy_checkpoint(), "/content/drive/MyDrive/Thesis/Code/PySC2/Results/policy_network.pt")
+                    except Exception as e:
+                        print("writing results failed")
+                        print(e)
+
+        except KeyboardInterrupt:
+            pass
+        except Exception as e:
+            print(e)
+            print(traceback.format_exc())
+        finally:
+            self.env.close()
 
     @abc.abstractmethod
     def run_agent(self):
@@ -202,8 +303,6 @@ class Agent(AgentConfig):
             loss += compute_deepmdp_loss(self.policy_network, self.auxiliary_objective, s, s_1, a, state_embeds, new_states, self.penalty, self.device)
             #print(f'Loss after deepmdp {loss}')
 
-        self.loss.append(loss.sum().cpu().data.numpy())
-        self.max_q.append(Q.max().cpu().data.numpy().reshape(-1)[0])
         self.optimizer.zero_grad()  # zero the gradient buffers
         loss.backward()
         parameters = chain(*self.params) if self.deepmdp else self.policy_network.parameters()
