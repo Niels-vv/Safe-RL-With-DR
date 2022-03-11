@@ -11,9 +11,6 @@ from utils.ReplayMemory import ReplayMemory, Transition
 from deepmdp.DeepMDP import TransitionAux
 from deepmdp.DeepMDP import compute_deepmdp_loss
 
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 # Based on https://github.com/alanxzhou/sc2bot/blob/master/sc2bot/agents/rl_agent.py
 # DeepMDP based on paper en https://github.com/MkuuWaUjinga/DeepMDP-SSL4RL
 
@@ -42,29 +39,15 @@ class MlpPolicy(nn.Module):
         else:
             return x
 
-class AgentConfig:
-    def __init__(self):
-        self.config = {
-                        # Learning
-                        'train_q_per_step' : 4,
-                        'gamma' : 0.99,
-                        'train_q_batch_size' : 256,
-                        'batches_before_training' : 20,
-                        'target_q_update_frequency' : 250,
-                        'lr' : 0.0001,
-                        'plot_every' : 10,
-                        'decay_steps' : 100000
-        }
 
-class Agent(AgentConfig):
+class Agent():
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, env, max_steps, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp):
-        super(Agent, self).__init__()
+    def __init__(self, env, config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp):
 
         self.env = env
+        self.config = config
         self.device = device
-        self.max_steps = max_steps
         self.max_episodes = max_episodes
         self.duration = 0                   # Time duration of current episode
         self.data_manager = data_manager
@@ -128,7 +111,7 @@ class Agent(AgentConfig):
                 state = self.env.get_state(state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space)
                 
                 # A step in an episode
-                while self.step < self.max_steps:
+                while True:
                     self.env.step += 1
                     self.env.total_steps += 1
                     start_duration = time.time()
@@ -186,7 +169,7 @@ class Agent(AgentConfig):
                         break
 
                 # Store intermediate results in Google Drive
-                if self.train and self.episode % 16 == 0: # TODO verbeteren in datamanager (kan gewoon results file in colab gebruiken, dus aangepaste write results aanroepen (want 'open "a"') oid)
+                if self.train and self.episode % self.config['intermediate_results_freq'] == 0: # TODO verbeteren in datamanager (kan gewoon results file in colab gebruiken, dus aangepaste write results aanroepen (want 'open "a"') oid)
                     eps = [x for x in range(len(self.reward_history))]
                     rows = zip(eps, self.reward_history, self.epsilon_history, self.duration_history)
                     try:

@@ -22,10 +22,6 @@ class EnvWrapperAbstract(ABC):
         pass
 
     @abstractmethod
-    def is_terminal(self):
-        pass
-
-    @abstractmethod
     def close(self):
         pass
 
