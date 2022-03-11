@@ -1,5 +1,5 @@
 import torch
-from env_wrapper.env_wrapper import EnvWrapperAbstract
+from env_wrapper_abstract.env_wrapper import EnvWrapperAbstract
 import numpy as np
 from math import sqrt
 from scipy.ndimage.interpolation import zoom
@@ -18,14 +18,14 @@ class EnvWrapper(EnvWrapperAbstract):
 
         self.reward = 0
         self.episode = 0
-        self.step = 0
+        self.step_num = 0
         self.total_steps = 0
         self.duration = 0
         self.done = False
 
     def get_action(self, state, model, epsilon, train):
         # greedy
-        if np.random.rand() > self.epsilon.value():
+        if np.random.rand() > epsilon.value():
             state = torch.from_numpy(state).to(self.device).unsqueeze(0).float()
             with torch.no_grad():
                 action = model(state).detach().cpu().data.numpy().squeeze()
@@ -53,7 +53,7 @@ class EnvWrapper(EnvWrapperAbstract):
 
     def reset(self):
         self.done = False
-        self.step = 0
+        self.step_num = 0
         self.reward = 0
         self.episode += 1
         ob = self.env.reset()
@@ -62,7 +62,7 @@ class EnvWrapper(EnvWrapperAbstract):
         return self.preprocess_screen()
 
     def close(self):
-        pass
+        self.env.close()
 
     def is_last_obs(self):
         return self.done

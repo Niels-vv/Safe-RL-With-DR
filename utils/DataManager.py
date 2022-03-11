@@ -29,14 +29,14 @@ class DataManager:
 
     '''Setup directories and files for storing state observations'''
     def create_observation_file(self):
-        if not os.path.isdir(f'{self.observations_path}'): os.mkdirs(self.observations_path)
+        if not os.path.isdir(f'{self.observations_path}'): os.makedirs(self.observations_path)
         self.obs_file = f'{self.observations_path}/Observations.csv'
         with open(self.obs_file, mode='w') as fp:
             pass
 
     '''Setup directories and files for storing results'''
     def create_results_files(self):
-        if not os.path.isdir(self.results_path): os.mkdirs(self.results_path)
+        if not os.path.isdir(self.results_path): os.makedirs(self.results_path)
         i = 1
         self.results_file = f'{self.results_path}/results_{i}.csv'
         while(os.path.isfile(self.results_file)):
@@ -48,7 +48,7 @@ class DataManager:
         self.variant_file = f'{self.results_path}/variant_{i}.json'
         self.policy_network_file = f'{self.results_path}/policy_network_{i}.pt'
 
-        if not os.path.isdir(self.intermediate_results_path): os.mkdirs(self.intermediate_results_path)
+        if not os.path.isdir(self.intermediate_results_path): os.makedirs(self.intermediate_results_path)
         with open(f'{self.intermediate_results_path}/Results.csv', "w") as f:
             pass
         self.intermediate_policy_network_file = f'{self.intermediate_results_path}/policy_network.pt'
@@ -70,12 +70,12 @@ class DataManager:
         return pd.read_csv(f'{self.observations_sub_dir}/Observations.csv')
 
     def store_dim_reduction_component(self, component, name):
-        if not os.path.isdir(f'{self.results_path}'): os.mkdirs(self.results_path)
+        if not os.path.isdir(f'{self.results_path}'): os.makedirs(self.results_path)
         with open(f'{self.results_path}/{name}', 'wb') as fp:
           pickle.dump(component, fp)
 
     def store_network(self, checkpoint, name):
-        if not os.path.isdir(f'{self.results_path}'): os.mkdirs(self.results_path)
+        if not os.path.isdir(f'{self.results_path}'): os.makedirs(self.results_path)
         torch.save(checkpoint, f'{self.results_path}/{name}')
 
     @staticmethod

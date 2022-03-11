@@ -13,7 +13,7 @@ def policy_network(input_shape, linear_output):
     structure = [(c_hid_first, 8, 4, 0), (c_hid_second, 4, 2, 0), (c_hid_second, 3, 1, 0)] # structure of each conv layer: (out_channels, kernel_size, stride, padding)
     linear_input = get_conv_output_shape_flattened(input_shape, structure)
     return nn.Sequential(
-                nn.Conv2d(1, c_hid_first, kernel_size=8, stride=4),
+                nn.Conv2d(4, c_hid_first, kernel_size=8, stride=4),
                 nn.ReLU(),
                 nn.Conv2d(c_hid_first, c_hid_second, kernel_size=4, stride=2),
                 nn.ReLU(),

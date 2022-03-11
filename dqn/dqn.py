@@ -43,7 +43,7 @@ class MlpPolicy(nn.Module):
 class Agent():
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, env, config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp):
+    def __init__(self, env, config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp, train):
 
         self.env = env
         self.config = config
@@ -52,6 +52,7 @@ class Agent():
         self.duration = 0                   # Time duration of current episode
         self.data_manager = data_manager
 
+        self.train = train 
         self.reduce_dim = False             # Whether to use dimensionality reduction on observations
         self.dim_reduction_component = None
         self.latent_space = None
@@ -80,11 +81,7 @@ class Agent():
 
     def run_agent(self):
         print("Running dqn")
-        # Setup file storage
-        if self.train:
-            self.data_manager.create_results_files()
-        else:
-            self.epsilon.isTraining = False # Act greedily
+        if not self.train: self.epsilon.isTraining = False # Act greedily
 
         # Run agent
         self.run_loop()
@@ -93,13 +90,13 @@ class Agent():
         if self.train:
             variant = {'pca' : self.pca, 'ae' : self.ae, 'shield' : self.shield, 'latent_space' : self.latent_space}
             print("Rewards history:")
-            for r in self.rewards:
+            for r in self.reward_history:
                 print(r)
             self.data_manager.write_results(self.reward_history, self.epsilon_history, self.duration_history, self.config, variant, self.get_policy_checkpoint())
 
     def reset(self):
         self.duration = 0
-        return self.env.reset
+        return self.env.reset()
 
     def run_loop(self):
         try:
@@ -112,7 +109,7 @@ class Agent():
                 
                 # A step in an episode
                 while True:
-                    self.env.step += 1
+                    self.env.step_num += 1
                     self.env.total_steps += 1
                     start_duration = time.time()
 
@@ -133,11 +130,11 @@ class Agent():
                         self.memory.push(transition)
 
                     # Train Q network
-                    if self.total_steps % self.config['train_q_per_step'] == 0 and self.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
+                    if self.env.total_steps % self.config['train_q_per_step'] == 0 and self.env.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
                         self.train_q()
 
                     # Update Target network
-                    if self.total_steps % self.config['target_q_update_frequency'] == 0 and self.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
+                    if self.env.total_steps % self.config['target_q_update_frequency'] == 0 and self.env.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
                         for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
                             target.data.copy_(online.data)
                     
@@ -161,7 +158,7 @@ class Agent():
                         end_duration = time.time()
                         self.duration += end_duration - start_duration
 
-                        print(f'Episode {self.env.episode} done. Score: {self.env.reward}. Steps: {self.env.step}. Epsilon: {self.epsilon._value}')
+                        print(f'Episode {self.env.episode} done. Score: {self.env.reward}. Steps: {self.env.step_num}. Epsilon: {self.epsilon._value}')
                         self.reward_history.append(self.env.reward)
                         self.duration_history.append(self.env.duration)
                         self.epsilon_history.append(self.epsilon._value)
@@ -193,10 +190,6 @@ class Agent():
             print(traceback.format_exc())
         finally:
             self.env.close()
-
-    @abc.abstractmethod
-    def run_agent(self):
-        return
 
     def setup_deepmdp(self):
         self.deepmdp = True
@@ -241,7 +234,7 @@ class Agent():
                 'optimizer_state_dict': self.optimizer.state_dict(),
                 'deepmdp_state_dict' : deepmdp_state_dict,
                 'lr' : self.config['lr'],
-                'episode' : self.episode,
+                'episode' : self.env.episode,
                 'epsilon' : self.epsilon._value,
                 'epsilon_t' : self.epsilon.t
         }
