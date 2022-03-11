@@ -65,7 +65,7 @@ class Agent():
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr = self.config['lr'])
         self.epsilon = Epsilon(start=1.0, end=0.1, decay_steps=self.config['decay_steps'])
         self.criterion = nn.MSELoss()
-        self.max_gradient_norm = float('inf')
+        self.max_gradient_norm = self.config['max_gradient_norm'] #float('inf')
         self.memory = ReplayMemory(50000)
 
         # DeepMDP (initialized in def setup_deepmdp(self))
@@ -146,7 +146,7 @@ class Agent():
                     # Train ae (if non-pretrained ae is used)
                     if self.train_ae_online and len(self.env.ae_batch) >= self.dim_reduction_component.batch_size: 
                         ae_batch = np.array(self.env.ae_batch)
-                        self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(device).float())
+                        self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(self.device).float())
                         self.env.ae_batch = []
 
                     # Episode done
@@ -154,7 +154,7 @@ class Agent():
                         # Train ae (if non-pretrained ae is used)
                         if self.train_ae_online and len(self.env.ae_batch) > 0: 
                             ae_batch = np.array(self.env.ae_batch)
-                            self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(device).float())
+                            self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(self.device).float())
                             self.env.ae_batch = []
 
                         # Store and show info

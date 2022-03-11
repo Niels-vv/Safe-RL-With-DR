@@ -14,7 +14,7 @@ flags.DEFINE_bool("load_policy", False, "Whether to load an existing policy netw
 flags.DEFINE_bool("train_ae_online", False, "Whether to use train ae online.") # TODO do this differently
 flags.DEFINE_integer("max_episodes", 5000, "Total episodes.")
 #flags.DEFINE_integer("max_agent_steps", 1000, "Total agent steps.")
-flags.DEFINE_string("map", "Assault -v0", "OpenAI name of the game/env to use.")
+flags.DEFINE_string("map", "Breakout -v4", "OpenAI name of the game/env to use.")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -24,7 +24,7 @@ intermediate_results_path = f'../drive/MyDrive/Thesis/Code/Atari/{FLAGS.map}/Res
 data_manager = DataManager(results_sub_dir=results_path, intermediate_results_sub_dir=intermediate_results_path)
 if FLAGS.train:
     data_manager.create_results_files()
-mlp = policy_network                          # Q* network
+mlp = None                                    # Q* network
 conv_last = False                             # Whether last layer in mlp is conv layer
 encoder = None                                # DeepMDP encoder
 deep_mdp = False
@@ -33,6 +33,8 @@ if deep_mdp:
 
 def main(unused_argv):
     env = EnvWrapper(gym.make(FLAGS.map), device)
+    input_shape = (84,84) # Shape of mlp input image
+    mlp = policy_network(input_shape, env.env.action_space.n)
 
     if FLAGS.variant.lower() in ["base"]:
         agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp)
