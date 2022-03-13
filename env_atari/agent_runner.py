@@ -34,7 +34,7 @@ def main(unused_argv):
     if FLAGS.train:
         data_manager.create_results_files()
     env = EnvWrapper(gym.make(FLAGS.map), device)
-    input_shape = (84,84) # Shape of mlp input image
+    input_shape = (4,84,84) # Shape of mlp input image: CxHxW
     mlp = policy_network(input_shape, env.env.action_space.n)
     encoder = deep_mdp_encoder if deep_mdp else None
 
