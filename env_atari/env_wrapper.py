@@ -1,9 +1,35 @@
 import torch
+from torch import nn
 from env_wrapper_abstract.env_wrapper import EnvWrapperAbstract
 import numpy as np
 from math import sqrt
 from scipy.ndimage.interpolation import zoom
 from collections import deque
+import matplotlib.pyplot as plt
+from torchvision import transforms
+
+class SimpleCrop(nn.Module):
+    """
+    Crops an image (deterministically) using the transforms.functional.crop function. (No simple crop can be found in
+    the torchvision.transforms library
+    """
+
+    def __init__(self, top: int, left: int, height: int, width: int) -> None:
+        """
+        See transforms.functional.crop for parameter descriptions
+        """
+        super().__init__()
+        self.top = top
+        self.left = left
+        self.height = height
+        self.width = width
+
+    def forward(self, img):
+        """
+        Forward pass for input img
+        :param img: image tensor
+        """
+        return transforms.functional.crop(img, self.top, self.left, self.height, self.width)
 
 class EnvWrapper(EnvWrapperAbstract):
     def __init__(self, env, device):
@@ -56,9 +82,15 @@ class EnvWrapper(EnvWrapperAbstract):
         self.step_num = 0
         self.reward = 0
         self.episode += 1
-        ob = self.env.reset()
+        self.env.reset()
+        obs, _, done, _ = self.env.step(1)
+        if done:
+            self.env.reset()
+        obs, _, done, _ = self.env.step(2)
+        if done:
+            self.env.reset()
         for _ in range(self.history_length):
-            self.observation_stack.append(ob)
+            self.observation_stack.append(obs)
         return self.preprocess_screen()
 
     def close(self):
@@ -77,11 +109,16 @@ class EnvWrapper(EnvWrapperAbstract):
         self.ae_batch.append(np.array(np.expand_dims(state, 0)))
 
     def preprocess_screen(self):
-        if self.observation_stack[-1] is None:
-            state = None
-        else:
-            gray = np.array(self.observation_stack).mean(3)
-            gray_width = float(gray.shape[1])
-            gray_height = float(gray.shape[2])
-            state = zoom(gray,[1, self.state_width/gray_width, self.state_height/gray_height]).astype('float32')
-        return state
+        trans = transforms.Compose(
+        [transforms.Grayscale(), transforms.Resize((110, 84)), SimpleCrop(18, 0, 84, 84)]
+         )
+        obs_maxed_seq_arr = np.array(self.observation_stack)
+
+        result = torch.tensor(obs_maxed_seq_arr)
+        orig_device = result.device
+        result = result.to(self.device)
+        result = result.permute(0, 3, 1, 2)  # ensure "channels" dimension is in correct place
+        result = trans(result)
+        result = result.squeeze(1)
+        result = result.to(orig_device)  # Squeeze out grayscale dimension (original RGB dim)
+        return np.array(result)

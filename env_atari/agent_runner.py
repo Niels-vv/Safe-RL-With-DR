@@ -26,7 +26,7 @@ if deep_mdp:
     encoder = not None # TODO
 
 def main(unused_argv):
-    results_path = f'Atari/results/dqn/{FLAGS.map}'                                         # Path for final results, relative to Package root
+    results_path = f'env_atari/results/dqn/{FLAGS.map}'                                     # Path for final results, relative to Package root
     intermediate_results_path = f'../drive/MyDrive/Thesis/Code/Atari/{FLAGS.map}/Results'   # Path for intermediate results relative to package root. Using Google drive in case colab disconnects
 
     data_manager = DataManager(results_sub_dir=results_path, intermediate_results_sub_dir=intermediate_results_path)

@@ -14,7 +14,6 @@
 	- Resultsmanager: activation_image nu soort van 3 versies: 2 algoritmen, act_max en deepdream, en bij act_max twee versies: act voor filters of voor layers (zoals deepdream)
 	- Datamanager make_dir -> make_dirs voor meerdere mappen
 	- MAx acivation (incl deepdream): 2e conv layer moet 16 x16 krijgen ipv 32x32. In deepdream danook pyramid_ratio naar 1.1. Plus, loss printen zodat je laagste loss kan plaatje kan pakken
-
 ### Generalisering:
 	- PPO specifiek voor movetobeacon uitbreiden naar alle minigames/obs+actions; dus dan iets van van network voor player_relative in + move_screen out naar algemeen network. Zie https://github.com/haroldmei/pysc2-study en https://github.com/simonmeister/pysc2-rl-agents/blob/master/run.py en https://github.com/pekaalto/sc2aibot
 

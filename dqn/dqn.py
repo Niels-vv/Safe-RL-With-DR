@@ -88,11 +88,12 @@ class Agent():
 
         # Store final results
         if self.train:
-            variant = {'pca' : self.pca, 'ae' : self.ae, 'shield' : self.shield, 'latent_space' : self.latent_space}
+            variant = {'pca' : self.pca, 'ae' : self.ae, 'latent_space' : self.latent_space}
             print("Rewards history:")
             for r in self.reward_history:
                 print(r)
             self.data_manager.write_results(self.reward_history, self.epsilon_history, self.duration_history, self.config, variant, self.get_policy_checkpoint())
+            self.data_manager.write_intermediate_results(self.reward_history, self.duration_history, self.epsilon_history, self.get_policy_checkpoint())
 
     def reset(self):
         self.duration = 0
@@ -130,11 +131,11 @@ class Agent():
                         self.memory.push(transition)
 
                     # Train Q network
-                    if self.env.total_steps % self.config['train_q_per_step'] == 0 and self.env.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
+                    if self.epsilon.isTraining and self.env.total_steps % self.config['train_q_per_step'] == 0 and self.env.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']):
                         self.train_q()
 
                     # Update Target network
-                    if self.env.total_steps % self.config['target_q_update_frequency'] == 0 and self.env.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']) and self.epsilon.isTraining:
+                    if self.epsilon.isTraining and self.env.total_steps % self.config['target_q_update_frequency'] == 0 and self.env.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']):
                         for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
                             target.data.copy_(online.data)
                     
@@ -166,22 +167,8 @@ class Agent():
                         break
 
                 # Store intermediate results in Google Drive
-                if self.train and self.episode % self.config['intermediate_results_freq'] == 0: # TODO verbeteren in datamanager (kan gewoon results file in colab gebruiken, dus aangepaste write results aanroepen (want 'open "a"') oid)
-                    eps = [x for x in range(len(self.reward_history))]
-                    rows = zip(eps, self.reward_history, self.epsilon_history, self.duration_history)
-                    try:
-                        with open("/content/drive/MyDrive/Thesis/Code/PySC2/Results/Results.csv", "w") as f:
-                            pass
-                        with open("/content/drive/MyDrive/Thesis/Code/PySC2/Results/Results.csv", "a") as f:
-                            writer = csv.writer(f)
-                            writer.writerow(["Episode", "Reward", "Epsilon", "Duration"])
-                            for row in rows:
-                                writer.writerow(row)
-
-                        torch.save(self.get_policy_checkpoint(), "/content/drive/MyDrive/Thesis/Code/PySC2/Results/policy_network.pt")
-                    except Exception as e:
-                        print("writing results failed")
-                        print(e)
+                if self.train and self.env.episode % self.config['intermediate_results_freq'] == 0: # TODO verbeteren in datamanager (kan gewoon results file in colab gebruiken, dus aangepaste write results aanroepen (want 'open "a"') oid)
+                    self.data_manager.write_intermediate_results(self.reward_history, self.duration_history, self.epsilon_history, self.get_policy_checkpoint())
 
         except KeyboardInterrupt:
             pass
@@ -219,7 +206,7 @@ class Agent():
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.epsilon._value = checkpoint['epsilon']
         self.epsilon.t = checkpoint['epsilon_t']
-        self.episode = checkpoint['episode'] - 1     
+        self.env.episode = checkpoint['episode'] - 1     
         if self.train:
             self.policy_network.train()
             self.target_network.train()

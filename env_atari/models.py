@@ -36,14 +36,16 @@ deep_mdp_encoder = nn.Sequential(
 
 def get_conv_output_shape_flattened(input_shape, structure):
     """
-        Input_shape: (Height, Width) of input image
+        Input_shape: (Channels, Height, Width) of input image
         structure: List containing tuple (out_channels, kernel_size, stride, padding) per conv layer
     """
     def get_layer_output(input, layer_structure):
-        return int((input + 2*layer_structure[3] - layer_structure[1] - 2) / layer_structure[2]) + 1
+        # See shape calculation in Conv2d docs: https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html
+        return int((input + 2*layer_structure[3] - 1*(layer_structure[1]-1) - 1) / layer_structure[2] + 1)
         
-    w = input_shape[0]
+        
     h = input_shape[1]
+    w = input_shape[2]
     c = structure[-1][0]
     for layer in structure:
         w = get_layer_output(w, layer)
