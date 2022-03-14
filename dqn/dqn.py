@@ -353,7 +353,7 @@ class Agent():
         s_1_q = self.policy_network(s_1)
         s_1_target_q = self.target_network(s_1)
 
-        selected_q = s_q.gather(1, a.unsqueeze(1)).squeeze(1)
+        selected_q = s_q.gather(1, a).squeeze(1)
         s_1_target = s_1_target_q.gather(1, s_1_q.max(1)[1].unsqueeze(1)).squeeze(1)
 
         expected_q = r + self.config['gamma'] * s_1_target * (1-done)
