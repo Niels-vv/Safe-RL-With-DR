@@ -37,16 +37,16 @@ def main(unused_argv):
         data_manager.create_results_files()
     env = EnvWrapper(gym.make(FLAGS.map), device)
     input_shape = (4,84,84) # Shape of mlp input image: CxHxW
-    mlp = policy_network(input_shape, env.env.action_space.n)
+    convs, act_lin, value_lin = policy_network(input_shape, env.env.action_space.n)
     encoder = deep_mdp_encoder if deep_mdp else None
 
     if FLAGS.store_obs:
-        agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, False)
+        agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, (convs, act_lin, value_lin), conv_last, encoder, deep_mdp, False, dueling = True)
         load_policy()
-        agent.store_observations()
+        agent.store_observations(total_obs = 1000000)
     else:
         if FLAGS.variant.lower() in ["base"]:
-            agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train)
+            agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, (convs, act_lin, value_lin), conv_last, encoder, deep_mdp, FLAGS.train, dueling = True)
         elif FLAGS.variant.lower() in ["pca"]:
             pass
         elif FLAGS.variant.lower() in ["ae"]:
@@ -60,7 +60,7 @@ def main(unused_argv):
         agent.run_agent(print_every_episode=10)
 
 def load_policy(agent):
-    checkpoint = DataManager.get_network(f'env_atari/results/dqn/{FLAGS.map_name}', "policy_network.pt", device)
+    checkpoint = DataManager.get_network(f'env_atari/results/dqn/{FLAGS.map}', "policy_network.pt", device)
     agent.load_policy_checkpoint(checkpoint)
     if agent.train:
         agent.fill_buffer()

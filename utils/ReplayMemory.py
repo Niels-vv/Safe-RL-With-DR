@@ -31,7 +31,7 @@ class ReplayMemory(object):
         return [s, a, s_1, r, done]
 
     def is_filled(self):
-        return len(self.memory >= self.capacity)
+        return len(self.memory) >= self.capacity
 
     def __len__(self):
         return len(self.memory)

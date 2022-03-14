@@ -1,7 +1,7 @@
 config = {
             # Learning
-            'train_q_per_step' : 8,
-            'gamma' : 0.99,
+            'train_q_per_step' : 4,
+            'gamma' : 0.97,
             'train_q_batch_size' : 256,
             'batches_before_training' : 200,
             'target_q_update_frequency' : 10000,

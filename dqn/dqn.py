@@ -23,17 +23,29 @@ random.seed(seed)
 
 
 class MlpPolicy(nn.Module):
-    def __init__(self, mlp, conv_last = True, encoder = None, deepmdp = False):
+    def __init__(self, mlp, conv_last = True, encoder = None, deepmdp = False, dueling = False):
         super(MlpPolicy, self).__init__()
+        self.dueling = dueling
         self.deepmdp = deepmdp # Flag for whether we need to use the encoder
         self.encoder = encoder # Encoder for DeepMDP
-        self.mlp = mlp         # Q* MLP
+        if self.dueling:
+            self.mlp = mlp[0]         # Q* MLP
+            self.act_lin = mlp[1]
+            self.value_lin = mlp[2]
+        else:
+            self.mlp = mlp
         self.conv = conv_last  # Whether we're using a conv or linear output layer. Needed in def train_q(self)
 
     def forward(self, z, return_deepmdp = False):
         if self.deepmdp:
             z = self.encoder(z)
-        x = self.mlp(z)
+        if self.dueling:
+            x = self.mlp(z)
+            Ax = self.act_lin(x)
+            Vx = self.value_lin(x)
+            x = Vx + (Ax - Ax.mean())
+        else:
+            x = self.mlp(z)
         if return_deepmdp:
             return z, x
         else:
@@ -43,7 +55,7 @@ class MlpPolicy(nn.Module):
 class Agent():
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, env, config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp, train):
+    def __init__(self, env, config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp, train, dueling):
 
         self.env = env
         self.config = config
@@ -61,13 +73,15 @@ class Agent():
         self.deepmdp = False
         self.train_ae_online = False        # When using an ae, whether it is pre-trained or not
         
-        self.policy_network = MlpPolicy(mlp, conv_last, encoder, deepmdp).to(self.device)
+        self.policy_network = MlpPolicy(mlp, conv_last, encoder, deepmdp, dueling).to(self.device)
         self.target_network = copy.deepcopy(self.policy_network)
+        self.target_network.eval()
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr = self.config['lr'])
         self.epsilon = Epsilon(start=1.0, end=0.1, decay_steps=self.config['decay_steps'])
         self.criterion = nn.MSELoss()
         self.max_gradient_norm = self.config['max_gradient_norm'] #float('inf')
         self.memory = ReplayMemory(50000)
+        self.dueling = dueling
 
         # DeepMDP (initialized in def setup_deepmdp(self))
         self.auxiliary_objective = None 
@@ -166,7 +180,8 @@ class Agent():
                         break
 
                 # Store intermediate results in Google Drive
-                if self.train and self.env.episode % self.config['intermediate_results_freq'] == 0: # TODO verbeteren in datamanager (kan gewoon results file in colab gebruiken, dus aangepaste write results aanroepen (want 'open "a"') oid)
+                if self.train and self.env.episode % self.config['intermediate_results_freq'] == 0:
+                    print("Storing intermediate results")
                     self.data_manager.write_intermediate_results(self.reward_history, self.duration_history, self.epsilon_history, self.get_policy_checkpoint())
 
         except KeyboardInterrupt:
@@ -219,10 +234,10 @@ class Agent():
                     episode += 1
                     break
 
-            self.env.episode = current_eps
-            self.env.total_steps = current_steps
-            self.epsilon.isTraining = epsilon_training
-            print("Done filling Memory.")
+        self.env.episode = current_eps
+        self.env.total_steps = current_steps
+        self.epsilon.isTraining = epsilon_training
+        print("Done filling Memory.")
 
     def store_observations(self, total_obs):
         print("Storing observations...")
@@ -322,6 +337,31 @@ class Agent():
         r = torch.from_numpy(r).to(self.device).float()
         done = torch.from_numpy(done).to(self.device).float()
 
+        if self.dueling:
+            loss = self.get_loss_dueling_dqn(s,a,s_1,r,done)
+        else:
+            loss = self.get_loss_double_dqn(s,a,s_1,r,done)        
+
+        self.optimizer.zero_grad()  # zero the gradient buffers
+        loss.backward()
+        parameters = chain(*self.params) if self.deepmdp else self.policy_network.parameters()
+        torch.nn.utils.clip_grad_norm_(parameters, self.max_gradient_norm)
+        self.optimizer.step()
+
+    def get_loss_dueling_dqn(self, s, a, s_1, r, done):
+        s_q  = self.policy_network(s)
+        s_1_q = self.policy_network(s_1)
+        s_1_target_q = self.target_network(s_1)
+
+        selected_q = s_q.gather(1, a.unsqueeze(1)).squeeze(1)
+        s_1_target = s_1_target_q.gather(1, s_1_q.max(1)[1].unsqueeze(1)).squeeze(1)
+
+        expected_q = r + self.config['gamma'] * s_1_target * (1-done)
+
+        loss = (selected_q - expected_q.detach()).pow(2).mean()
+        return loss
+
+    def get_loss_double_dqn(self, s, a, s_1, r, done):
         if self.policy_network.conv:
             Q = self.policy_network(s, return_deepmdp = self.deepmdp)
             Qt = self.target_network(s_1).view(self.config['train_q_batch_size'], -1).detach()
@@ -350,9 +390,4 @@ class Agent():
             #print(f'Loss before deepmdp {loss}')
             loss += compute_deepmdp_loss(self.policy_network, self.auxiliary_objective, s, s_1, a, state_embeds, new_states, self.penalty, self.device)
             #print(f'Loss after deepmdp {loss}')
-
-        self.optimizer.zero_grad()  # zero the gradient buffers
-        loss.backward()
-        parameters = chain(*self.params) if self.deepmdp else self.policy_network.parameters()
-        torch.nn.utils.clip_grad_norm_(parameters, self.max_gradient_norm)
-        self.optimizer.step()
+        return loss

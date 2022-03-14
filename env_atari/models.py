@@ -13,18 +13,29 @@ def policy_network(input_shape, linear_output):
     input_channels = input_shape[0]
     structure = [(c_hid_first, 8, 4, 0), (c_hid_second, 4, 2, 0), (c_hid_second, 3, 1, 0)] # structure of each conv layer: (out_channels, kernel_size, stride, padding)
     linear_input = get_conv_output_shape_flattened(input_shape, structure)
-    return nn.Sequential(
+    convs =  nn.Sequential(
                 nn.Conv2d(input_channels, c_hid_first, kernel_size=8, stride=4),
+                nn.BatchNorm2d(c_hid_first),
                 nn.ReLU(),
                 nn.Conv2d(c_hid_first, c_hid_second, kernel_size=4, stride=2),
+                nn.BatchNorm2d(c_hid_second),
                 nn.ReLU(),
                 nn.Conv2d(c_hid_second, c_hid_second, kernel_size=3, stride=1),
+                nn.BatchNorm2d(c_hid_second),
                 nn.ReLU(),
                 nn.Flatten(),
-                nn.Linear(linear_input, 512),
-                nn.ReLU(),
-                nn.Linear(512, linear_output)
             )
+    act_linear = nn.Sequential(
+                nn.Linear(linear_input, 128),
+                nn.LeakyReLU(),
+                nn.Linear(128, linear_output)
+            )
+    value_linear = nn.Sequential(
+                nn.Linear(linear_input, 128),
+                nn.LeakyReLU(),
+                nn.Linear(128, 1)
+            )
+    return convs, act_linear, value_linear
 
 # Encoder for mlp when using Deep_MDP
 deep_mdp_encoder = nn.Sequential(
