@@ -57,7 +57,7 @@ def main(unused_argv):
     if not FLAGS.store_obs:
         if FLAGS.load_policy:
             load_policy(agent)
-        agent.run_agent(print_every_episode=10)
+        agent.run_agent(print_every_episode=5)
 
 def load_policy(agent):
     checkpoint = DataManager.get_network(f'env_atari/results/dqn/{FLAGS.map}', "policy_network.pt", device)
