@@ -7,7 +7,7 @@ config = {
             'target_q_update_frequency' : 10000,
             'lr' : 0.00025,
             'plot_every' : 10,
-            'decay_steps' : 500000,
+            'decay_steps' : 1000000,
             'max_gradient_norm' : 10,
             'intermediate_results_freq' : 250       # Store intermediate results in drive every x episodes
         }

@@ -70,12 +70,13 @@ class EnvWrapper(EnvWrapperAbstract):
         return state
 
     def step(self, action):
+        self.total_steps += 1
+        self.step_num += 1
         obs, reward, done, info = self.env.step(action)
         self.done = done
         self.observation_stack.append(obs)
         state = self.preprocess_screen()
         return state, reward, done
-
 
     def reset(self):
         self.done = False
@@ -117,8 +118,11 @@ class EnvWrapper(EnvWrapperAbstract):
         result = torch.tensor(obs_maxed_seq_arr)
         orig_device = result.device
         result = result.to(self.device)
-        result = result.permute(0, 3, 1, 2)  # ensure "channels" dimension is in correct place
+        result = result.permute(0, 3, 1, 2)  # ensure "channels" dimension is in correct index
         result = trans(result)
-        result = result.squeeze(1)
-        result = result.to(orig_device)  # Squeeze out grayscale dimension (original RGB dim)
+        result = result.squeeze(1)           # Squeeze out grayscale dimension (original RGB dim)
+        result = result.to(orig_device)  
         return np.array(result)
+
+    def get_state_from_stored_obs(self, obs):
+        return obs.reshape(self.history_length, self.state_height, self.state_width)

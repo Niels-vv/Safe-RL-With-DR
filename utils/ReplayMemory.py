@@ -30,6 +30,9 @@ class ReplayMemory(object):
         done = np.expand_dims(np.array(list(batched.done)), axis=1)
         return [s, a, s_1, r, done]
 
+    def is_filled(self):
+        return len(self.memory >= self.capacity)
+
     def __len__(self):
         return len(self.memory)
 

@@ -30,7 +30,11 @@ class DataManager:
     '''Setup directories and files for storing state observations'''
     def create_observation_file(self):
         if not os.path.isdir(f'{self.observations_path}'): os.makedirs(self.observations_path)
-        self.obs_file = f'{self.observations_path}/Observations.csv'
+        i = 1
+        self.obs_file = f'{self.observations_path}/Observations_{i}.csv'
+        while(os.path.isfile(self.obs_file)):
+            i += 1
+            self.obs_file = f'{self.obs_file}/Observations_{i}.csv'
         with open(self.obs_file, mode='w') as fp:
             pass
 
@@ -54,7 +58,7 @@ class DataManager:
         self.intermediate_policy_network_file = f'{self.intermediate_results_path}/policy_network.pt'
         self.intermediate_results_file = f'{self.intermediate_results_path}/Results.csv'
 
-    '''Write state observation to file, creating demo trajectories to use for training PCA and VAE'''
+    '''Write state observation to file, creating demo trajectories to use for training PCA and AE'''
     def store_observation(self, data):
         if not (isinstance(data, list) or isinstance(data, np.ndarray)):
             raise TypeError

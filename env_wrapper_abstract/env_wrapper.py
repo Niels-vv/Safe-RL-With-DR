@@ -32,3 +32,7 @@ class EnvWrapperAbstract(ABC):
     @abstractmethod
     def add_obs_to_ae_batch(self):
         pass
+
+    @abstractmethod
+    def get_state_from_stored_obs(self, obs):
+        pass

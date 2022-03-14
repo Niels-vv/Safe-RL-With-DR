@@ -79,12 +79,12 @@ class Agent():
         self.duration_history = []
         self.epsilon_history = []
 
-    def run_agent(self):
+    def run_agent(self, print_every_episode):
         print("Running dqn")
         if not self.train: self.epsilon.isTraining = False # Act greedily
 
         # Run agent
-        self.run_loop()
+        self.run_loop(print_every_episode)
 
         # Store final results
         if self.train:
@@ -99,7 +99,7 @@ class Agent():
         self.duration = 0
         return self.env.reset()
 
-    def run_loop(self):
+    def run_loop(self, print_every_episode = 1):
         try:
             # A new episode
             while self.env.episode < self.max_episodes:
@@ -110,8 +110,6 @@ class Agent():
                 
                 # A step in an episode
                 while True:
-                    self.env.step_num += 1
-                    self.env.total_steps += 1
                     start_duration = time.time()
 
                     # Choose action
@@ -159,7 +157,8 @@ class Agent():
                         end_duration = time.time()
                         self.duration += end_duration - start_duration
 
-                        print(f'Episode {self.env.episode} done. Score: {self.env.reward}. Steps: {self.env.step_num}. Epsilon: {self.epsilon._value}')
+                        if self.env.episode % print_every_episode == 0:
+                            print(f'Episode {self.env.episode} done. Score: {self.env.reward}. Steps: {self.env.step_num}. Epsilon: {self.epsilon._value}')
                         self.reward_history.append(self.env.reward)
                         self.duration_history.append(self.env.duration)
                         self.epsilon_history.append(self.epsilon._value)
@@ -177,6 +176,92 @@ class Agent():
             print(traceback.format_exc())
         finally:
             self.env.close()
+
+    def fill_buffer(self):
+        print("Filling replay memory buffer...")
+        # Retain current settings
+        current_eps = self.env.episode
+        current_steps = self.env.total_steps
+        epsilon_training = self.epsilon.isTraining
+
+        self.epsilon.isTraining = False # Using greedy strategy
+        episode = 0
+        # A new episode
+        while not self.memory.is_filled():
+            state = self.reset()
+
+            # Get state from env; applies dimensionality reduction if pca or ae are used
+            state = self.env.get_state(state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space)
+            
+            # A step in an episode
+            while True:
+                # Choose action. Set train to False so we don't increment epsilon
+                action = self.env.get_action(state, self.policy_network, self.epsilon, train = False)
+
+                # Act
+                new_state, reward, done = self.env.step(action)
+
+                # Get new state observation; applies dimensionality reduction if pca or ae are used
+                new_state = self.env.get_state(new_state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space)
+
+                self.env.reward += reward
+
+                # Store transition to replay memory
+                if self.train: 
+                    transition = Transition(state, action, new_state, reward, done)
+                    self.memory.push(transition)
+                
+                state = new_state
+
+                # Episode done
+                if self.env.is_last_obs():
+                    print(f'Filling memory buffer episode {episode} done.')
+                    episode += 1
+                    break
+
+            self.env.episode = current_eps
+            self.env.total_steps = current_steps
+            self.epsilon.isTraining = epsilon_training
+            print("Done filling Memory.")
+
+    def store_observations(self, total_obs):
+        print("Storing observations...")
+
+        self.epsilon.isTraining = False # Using greedy strategy
+        # A new episode
+        while self.env.total_steps < total_obs:
+            state = self.reset()
+
+            # Get state from env; applies dimensionality reduction if pca or ae are used
+            state = self.env.get_state(state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space)
+
+            # A step in an episode
+            while True:
+                if self.env.total_steps % 200000 == 0:
+                    print("Creating new Observations file")
+                    self.data_manager.create_observation_file()
+
+                # Choose action. Set train to False so we don't increment epsilon
+                action = self.env.get_action(state, self.policy_network, self.epsilon, train = False)
+
+                # Act
+                new_state, _, _ = self.env.step(action)
+                
+                # Store observation
+                self.data_manager.store_observation(state.flatten())
+                if self.env.total_steps % 10000 == 0:
+                    print(f'Stored {self.env.total_steps} / {total_obs} observations.')
+
+                # Get new state observation; applies dimensionality reduction if pca or ae are used
+                new_state = self.env.get_state(new_state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space)
+                
+                state = new_state
+
+                # Episode done
+                if self.env.is_last_obs():
+                    break
+
+            print("Done storing observations.")
 
     def setup_deepmdp(self):
         self.deepmdp = True
