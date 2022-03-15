@@ -77,7 +77,7 @@ class Agent():
         self.target_network = copy.deepcopy(self.policy_network)
         self.target_network.eval()
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr = self.config['lr'])
-        self.epsilon = Epsilon(start=1.0, end=0.1, decay_steps=self.config['decay_steps'])
+        self.epsilon = Epsilon(start=1.0, end=0.05, decay_steps=self.config['decay_steps'])
         self.criterion = nn.MSELoss()
         self.max_gradient_norm = self.config['max_gradient_norm'] #float('inf')
         self.memory = ReplayMemory(50000)
