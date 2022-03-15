@@ -11,7 +11,7 @@ class ReplayMemory(object):
     def __init__(self, capacity, min_train_buffer):
         self.capacity = capacity
         self.memory = []
-        self.min_train_buffer = min_train_buffer
+        self.min_train_buffer = min(min_train_buffer, capacity)
         self.position = 0
 
     def push(self, item):
