@@ -8,9 +8,10 @@ Transition = namedtuple("Transition", ["s", "a", "s_1", "r", "done"])
 
 
 class ReplayMemory(object):
-    def __init__(self, capacity):
+    def __init__(self, capacity, min_train_buffer):
         self.capacity = capacity
         self.memory = []
+        self.min_train_buffer = min_train_buffer
         self.position = 0
 
     def push(self, item):
@@ -32,6 +33,9 @@ class ReplayMemory(object):
 
     def is_filled(self):
         return len(self.memory) >= self.capacity
+
+    def ready_for_training(self):
+        return len(self.memory) >= self.min_train_buffer
 
     def __len__(self):
         return len(self.memory)

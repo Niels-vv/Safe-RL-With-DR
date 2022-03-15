@@ -80,7 +80,7 @@ class Agent():
         self.epsilon = Epsilon(start=1.0, end=0.05, decay_steps=self.config['decay_steps'])
         self.criterion = nn.MSELoss()
         self.max_gradient_norm = self.config['max_gradient_norm'] #float('inf')
-        self.memory = ReplayMemory(50000)
+        self.memory = ReplayMemory(50000, min_train_buffer =  self.config['batches_before_training'] * self.config['train_q_batch_size'])
         self.dueling = dueling
 
         # DeepMDP (initialized in def setup_deepmdp(self))
@@ -143,11 +143,11 @@ class Agent():
                         self.memory.push(transition)
 
                     # Train Q network
-                    if self.epsilon.isTraining and self.env.total_steps % self.config['train_q_per_step'] == 0 and self.env.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']):
+                    if self.epsilon.isTraining and self.env.total_steps % self.config['train_q_per_step'] == 0 and self.memory.ready_for_training():
                         self.train_q()
 
                     # Update Target network
-                    if self.epsilon.isTraining and self.env.total_steps % self.config['target_q_update_frequency'] == 0 and self.env.total_steps > (self.config['batches_before_training'] * self.config['train_q_batch_size']):
+                    if self.epsilon.isTraining and self.env.total_steps % self.config['target_q_update_frequency'] == 0 and self.memory.ready_for_training():
                         for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
                             target.data.copy_(online.data)
                     
