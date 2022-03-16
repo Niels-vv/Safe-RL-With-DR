@@ -36,7 +36,12 @@ class EnvWrapper(EnvWrapperAbstract):
         self.env = env
         self.device = device
         self.ae_batch = []
-        
+
+        self.state_width = 84
+        self.state_height = 84
+        self.history_length = 4
+        self.observation_stack = deque(maxlen = self.history_length) # 4 Stacked observations together make up one agent observation
+
         self.reward = 0
         self.episode = 0
         self.step_num = 0
@@ -67,16 +72,27 @@ class EnvWrapper(EnvWrapperAbstract):
     def step(self, action):
         self.total_steps += 1
         self.step_num += 1
-        obs, reward, done, _ = self.env.step(action)
+        obs, reward, done, info = self.env.step(action)
         self.done = done
-        return obs, reward, done
+        self.observation_stack.append(obs)
+        state = self.preprocess_screen()
+        return state, reward, done
 
     def reset(self):
         self.done = False
         self.step_num = 0
         self.reward = 0
         self.episode += 1
-        return self.env.reset()
+        self.env.reset()
+        obs, _, done, _ = self.env.step(1)
+        if done:
+            self.env.reset()
+        obs, _, done, _ = self.env.step(2)
+        if done:
+            self.env.reset()
+        for _ in range(self.history_length):
+            self.observation_stack.append(obs)
+        return self.preprocess_screen()
 
     def close(self):
         self.env.close()
@@ -93,18 +109,20 @@ class EnvWrapper(EnvWrapperAbstract):
     def add_obs_to_ae_batch(self, state):
         self.ae_batch.append(np.array(np.expand_dims(state, 0)))
 
-    def get_loss(s,a,s_1,r, policy_network, target_network, gamma, multi_step):
-        s_q  = policy_network(s)
-        s_1_q = policy_network(s_1)
-        s_1_target_q = target_network(s_1)
+    def preprocess_screen(self):
+        trans = transforms.Compose(
+        [transforms.Grayscale(), transforms.Resize((110, 84)), SimpleCrop(18, 0, 84, 84)]
+         )
+        obs_maxed_seq_arr = np.array(self.observation_stack)
 
-        selected_q = s_q.gather(1, a).squeeze(-1)
-        s_1_q_max = s_1_q.max(1)[1]
-        s_1_q_max.detach()
+        result = torch.tensor(obs_maxed_seq_arr)
+        orig_device = result.device
+        result = result.to(self.device)
+        result = result.permute(0, 3, 1, 2)  # ensure "channels" dimension is in correct index
+        result = trans(result)
+        result = result.squeeze(1)           # Squeeze out grayscale dimension (original RGB dim)
+        result = result.to(orig_device)  
+        return np.array(result)
 
-        s_1_target = s_1_target_q.gather(1, s_1_q_max[:,None]).squeeze(-1).detach()
-
-        expected_q = r + (gamma ** multi_step) * s_1_target 
-
-        loss = nn.MSELoss(selected_q, expected_q)
-        return loss
+    def get_state_from_stored_obs(self, obs):
+        return obs.reshape(self.history_length, self.state_height, self.state_width)

@@ -5,6 +5,7 @@ from utils.DataManager import DataManager
 from env_atari.models import policy_network, deep_mdp_encoder
 from env_atari.env_wrapper import EnvWrapper
 from env_atari.Hyperparameters import config
+from env_atari.atari_wrappers import make_env
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("strategy", "dqn", "Which RL strategy to use.")
@@ -14,7 +15,7 @@ flags.DEFINE_bool("load_policy", False, "Whether to load an existing policy netw
 flags.DEFINE_bool("train_ae_online", False, "Whether to use train ae online.") # TODO do this differently
 flags.DEFINE_integer("max_episodes", 5000, "Total episodes.")
 #flags.DEFINE_integer("max_agent_steps", 1000, "Total agent steps.")
-flags.DEFINE_string("map", "ALE/Pong-v5", "OpenAI name of the game/env to use.")
+flags.DEFINE_string("map", "PongNoFrameskip-v4", "OpenAI name of the game/env to use.")
 flags.DEFINE_bool("store_obs", False, "Whether to store observations.")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -35,18 +36,18 @@ def main(unused_argv):
 
     if FLAGS.train and not FLAGS.store_obs:
         data_manager.create_results_files()
-    env = EnvWrapper(gym.make(FLAGS.map, full_action_space=False, repeat_action_probability=0.0), device)
+    env = EnvWrapper(make_env(FLAGS.map), device)
     input_shape = (4,84,84) # Shape of mlp input image: CxHxW
-    convs, act_lin, value_lin = policy_network(input_shape, env.env.action_space.n)
+    mlp = policy_network(input_shape, env.env.action_space.n)
     encoder = deep_mdp_encoder if deep_mdp else None
 
     if FLAGS.store_obs:
-        agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, (convs, act_lin, value_lin), conv_last, encoder, deep_mdp, False, dueling = True)
+        agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, False)
         load_policy()
         agent.store_observations(total_obs = 1000000)
     else:
         if FLAGS.variant.lower() in ["base"]:
-            agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, (convs, act_lin, value_lin), conv_last, encoder, deep_mdp, FLAGS.train, dueling = True)
+            agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train)
         elif FLAGS.variant.lower() in ["pca"]:
             pass
         elif FLAGS.variant.lower() in ["ae"]:

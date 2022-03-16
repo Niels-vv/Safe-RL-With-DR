@@ -23,29 +23,17 @@ random.seed(seed)
 
 
 class MlpPolicy(nn.Module):
-    def __init__(self, mlp, conv_last = True, encoder = None, deepmdp = False, dueling = False):
+    def __init__(self, mlp, conv_last = True, encoder = None, deepmdp = False):
         super(MlpPolicy, self).__init__()
-        self.dueling = dueling
         self.deepmdp = deepmdp # Flag for whether we need to use the encoder
         self.encoder = encoder # Encoder for DeepMDP
-        if self.dueling:
-            self.mlp = mlp[0]         # Q* MLP
-            self.act_lin = mlp[1]
-            self.value_lin = mlp[2]
-        else:
-            self.mlp = mlp
+        self.mlp = mlp
         self.conv = conv_last  # Whether we're using a conv or linear output layer. Needed in def train_q(self)
 
     def forward(self, z, return_deepmdp = False):
         if self.deepmdp:
             z = self.encoder(z)
-        if self.dueling:
-            x = self.mlp(z)
-            Ax = self.act_lin(x)
-            Vx = self.value_lin(x)
-            x = Vx + (Ax - Ax.mean())
-        else:
-            x = self.mlp(z)
+        x = self.mlp(z)
         if return_deepmdp:
             return z, x
         else:
@@ -55,7 +43,7 @@ class MlpPolicy(nn.Module):
 class Agent():
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, env, config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp, train, dueling):
+    def __init__(self, env, config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp, train):
 
         self.env = env
         self.config = config
@@ -73,15 +61,14 @@ class Agent():
         self.deepmdp = False
         self.train_ae_online = False        # When using an ae, whether it is pre-trained or not
         
-        self.policy_network = MlpPolicy(mlp, conv_last, encoder, deepmdp, dueling).to(self.device)
+        self.policy_network = MlpPolicy(mlp, conv_last, encoder, deepmdp).to(self.device)
         self.target_network = copy.deepcopy(self.policy_network)
         self.target_network.eval()
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr = self.config['lr'])
-        self.epsilon = Epsilon(start=1.0, end=0.05, decay_steps=self.config['decay_steps'])
+        self.epsilon = Epsilon(start=1.0, end=self.config['eps_end'], decay_steps=self.config['decay_steps'])
         self.criterion = nn.MSELoss()
         self.max_gradient_norm = self.config['max_gradient_norm'] #float('inf')
         self.memory = ReplayMemory(50000, min_train_buffer =  self.config['batches_before_training'] * self.config['train_q_batch_size'])
-        self.dueling = dueling
 
         # DeepMDP (initialized in def setup_deepmdp(self))
         self.auxiliary_objective = None 
@@ -148,8 +135,7 @@ class Agent():
 
                     # Update Target network
                     if self.epsilon.isTraining and self.env.total_steps % self.config['target_q_update_frequency'] == 0 and self.memory.ready_for_training():
-                        for target, online in zip(self.target_network.parameters(), self.policy_network.parameters()):
-                            target.data.copy_(online.data)
+                        self.target_network.load_state_dict(self.policy_network.state_dict())
                     
                     state = new_state
 
@@ -169,10 +155,10 @@ class Agent():
 
                         # Store and show info
                         end_duration = time.time()
-                        self.duration += end_duration - start_duration
+                        self.duration = end_duration - start_duration
 
                         if self.env.episode % print_every_episode == 0:
-                            print(f'Episode {self.env.episode} done. Score: {self.env.reward}. Steps: {self.env.step_num}. Epsilon: {self.epsilon._value}')
+                            print(f'Episode {self.env.episode} done. Score: {self.env.reward}. Steps: {self.env.step_num}. Epsilon: {self.epsilon._value}. Fps: {self.env.step_num / self.duration}')
                         self.reward_history.append(self.env.reward)
                         self.duration_history.append(self.env.duration)
                         self.epsilon_history.append(self.epsilon._value)
@@ -337,10 +323,8 @@ class Agent():
         r = torch.from_numpy(r).to(self.device).float()
         done = torch.from_numpy(done).to(self.device).float()
 
-        if self.dueling:
-            loss = self.get_loss_dueling_dqn(s,a,s_1,r,done)
-        else:
-            loss = self.get_loss_double_dqn(s,a,s_1,r,done)        
+        #loss = self.env.get_loss(s,a,s_1,r, self.policy_network, self.target_network, self.config['gamma'], self.config['multi_step'])        
+        loss = self.get_loss_pysc2_backup(s,a,s_1,r,done)
 
         self.optimizer.zero_grad()  # zero the gradient buffers
         loss.backward()
@@ -348,20 +332,7 @@ class Agent():
         torch.nn.utils.clip_grad_norm_(parameters, self.max_gradient_norm)
         self.optimizer.step()
 
-    def get_loss_dueling_dqn(self, s, a, s_1, r, done):
-        s_q  = self.policy_network(s)
-        s_1_q = self.policy_network(s_1)
-        s_1_target_q = self.target_network(s_1)
-
-        selected_q = s_q.gather(1, a).squeeze(1)
-        s_1_target = s_1_target_q.gather(1, s_1_q.max(1)[1].unsqueeze(1)).squeeze(1)
-
-        expected_q = r + self.config['gamma'] * s_1_target * (1-done)
-
-        loss = (selected_q - expected_q.detach()).pow(2).mean()
-        return loss
-
-    def get_loss_double_dqn(self, s, a, s_1, r, done):
+    def get_loss_pysc2_backup(self, s, a, s_1, r, done):
         if self.policy_network.conv:
             Q = self.policy_network(s, return_deepmdp = self.deepmdp)
             Qt = self.target_network(s_1).view(self.config['train_q_batch_size'], -1).detach()
