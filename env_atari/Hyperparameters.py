@@ -9,7 +9,7 @@ config = {
             'multi_step' : 1,
             'plot_every' : 1,
             'eps_end' : 0.02,
-            'decay_steps' : 100000,
+            'decay_steps' : 400000,
             'max_gradient_norm' : 10,
             'intermediate_results_freq' : 20       # Store intermediate results in drive every x episodes
         }

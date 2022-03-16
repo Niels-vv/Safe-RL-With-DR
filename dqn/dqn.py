@@ -80,12 +80,12 @@ class Agent():
         self.duration_history = []
         self.epsilon_history = []
 
-    def run_agent(self, print_every_episode):
+    def run_agent(self):
         print("Running dqn")
         if not self.train: self.epsilon.isTraining = False # Act greedily
 
         # Run agent
-        self.run_loop(print_every_episode)
+        self.run_loop()
 
         # Store final results
         if self.train:
@@ -100,7 +100,7 @@ class Agent():
         self.duration = 0
         return self.env.reset()
 
-    def run_loop(self, print_every_episode = 1):
+    def run_loop(self):
         try:
             # A new episode
             while self.env.episode < self.max_episodes:
@@ -157,7 +157,7 @@ class Agent():
                         end_duration = time.time()
                         self.duration = end_duration - start_duration
 
-                        if self.env.episode % print_every_episode == 0:
+                        if self.env.episode % self.config['plot_every'] == 0:
                             print(f'Episode {self.env.episode} done. Score: {self.env.reward}. Steps: {self.env.step_num}. Epsilon: {self.epsilon._value}. Fps: {self.env.step_num / self.duration}')
                         self.reward_history.append(self.env.reward)
                         self.duration_history.append(self.env.duration)
