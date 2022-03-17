@@ -253,7 +253,7 @@ class Agent():
                 if self.env.total_steps % 10000 == 0:
                     print(f'Stored {self.env.total_steps} / {total_obs} observations.')
 
-                # Get new state observation; applies dimensionality reduction if pca or ae are used
+                # Get new state observation;
                 new_state = self.env.get_state(new_state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space)
                 
                 state = new_state
@@ -324,7 +324,7 @@ class Agent():
         done = torch.from_numpy(done).to(self.device).float()
 
         #loss = self.env.get_loss(s,a,s_1,r, self.policy_network, self.target_network, self.config['gamma'], self.config['multi_step'])        
-        loss = self.get_loss_pysc2_backup(s,a,s_1,r,done)
+        loss = self.get_loss(s,a,s_1,r,done) # TODO self.env.get_loss weghalen als niet gebruikt
 
         self.optimizer.zero_grad()  # zero the gradient buffers
         loss.backward()
@@ -332,7 +332,7 @@ class Agent():
         torch.nn.utils.clip_grad_norm_(parameters, self.max_gradient_norm)
         self.optimizer.step()
 
-    def get_loss_pysc2_backup(self, s, a, s_1, r, done):
+    def get_loss(self, s, a, s_1, r, done):
         if self.policy_network.conv:
             Q = self.policy_network(s, return_deepmdp = self.deepmdp)
             Qt = self.target_network(s_1).view(self.config['train_q_batch_size'], -1).detach()

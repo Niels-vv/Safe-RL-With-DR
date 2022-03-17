@@ -54,7 +54,8 @@ class DataManager:
 
         if not os.path.isdir(self.intermediate_results_path): os.makedirs(self.intermediate_results_path)
         with open(f'{self.intermediate_results_path}/Results.csv', "w") as f:
-            pass
+            writer = csv.writer(f)
+            writer.writerow(["Episode", "Reward", "Epsilon", "Duration"])
         self.intermediate_policy_network_file = f'{self.intermediate_results_path}/policy_network.pt'
         self.intermediate_results_file = f'{self.intermediate_results_path}/Results.csv'
 
@@ -124,7 +125,6 @@ class DataManager:
         try:
             with open(self.intermediate_results_file, "a") as f:
                 writer = csv.writer(f)
-                writer.writerow(["Episode", "Reward", "Epsilon", "Duration"])
                 for row in rows:
                     writer.writerow(row)
 

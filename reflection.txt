@@ -1,0 +1,10 @@
+Learned: 
+about RL, NN, etc.
+About reserach process:
+	Seeing signs of bad coding / bad seperation of concerns (like using lots of flags), which came to light when switching to different env
+	Doing things too far in advance: reading a lot about safety RL, shielding, and already minding it while coding, while not used -> doings things more iteratively
+	
+Improvement over research internship:
+	Better organisation:
+		Versioning
+		Keeping track of what done and what to do; weekly task docs and long term todo docs

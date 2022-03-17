@@ -13,7 +13,7 @@ flags.DEFINE_string("variant", "base", "Whether to use baseline, AE, PCA, or Dee
 flags.DEFINE_bool("train", True, "Whether we are training or evaluating.")
 flags.DEFINE_bool("load_policy", False, "Whether to load an existing policy network.")
 flags.DEFINE_bool("train_ae_online", False, "Whether to use train ae online.") # TODO do this differently
-flags.DEFINE_integer("max_episodes", 5000, "Total episodes.")
+flags.DEFINE_integer("max_episodes", 400, "Total episodes.")
 #flags.DEFINE_integer("max_agent_steps", 1000, "Total agent steps.")
 flags.DEFINE_string("map", "PongNoFrameskip-v4", "OpenAI name of the game/env to use.")
 flags.DEFINE_bool("store_obs", False, "Whether to store observations.")
@@ -33,8 +33,9 @@ def main(unused_argv):
     observations_path = f'../drive/MyDrive/Thesis/Code/Atari/{FLAGS.map}/Observations'
 
     data_manager = DataManager(observation_sub_dir = observations_path, results_sub_dir=results_path, intermediate_results_sub_dir=intermediate_results_path)
-
-    if FLAGS.train and not FLAGS.store_obs:
+    if FLAGS.store_obs:
+        FLAGS.train = False
+    if FLAGS.train:
         data_manager.create_results_files()
     env = EnvWrapper(make_env(FLAGS.map), device)
     input_shape = (4,84,84) # Shape of mlp input image: CxHxW
@@ -42,7 +43,7 @@ def main(unused_argv):
     encoder = deep_mdp_encoder if deep_mdp else None
 
     if FLAGS.store_obs:
-        agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, False)
+        agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, train=False)
         load_policy()
         agent.store_observations(total_obs = 1000000)
     else:
