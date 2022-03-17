@@ -1,4 +1,5 @@
 import gym, torch
+import numpy as np
 from absl import app, flags
 from dqn.dqn import Agent as DQNAgent
 from utils.DataManager import DataManager
@@ -37,15 +38,21 @@ def main(unused_argv):
         FLAGS.train = False
     if FLAGS.train:
         data_manager.create_results_files()
-    env = EnvWrapper(make_env(FLAGS.map), device)
+    env = make_env(FLAGS.map)
+    env.seed(0)
+    env = EnvWrapper(env, device)
     input_shape = (4,84,84) # Shape of mlp input image: CxHxW
     mlp = policy_network(input_shape, env.env.action_space.n)
     encoder = deep_mdp_encoder if deep_mdp else None
 
     if FLAGS.store_obs:
         agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, train=False)
-        load_policy()
-        agent.store_observations(total_obs = 1000000)
+        load_policy(agent)
+        agent.epsilon._value = 0.2 # 0.2 randomness when choosing action to prevent similar episodes
+        agent.epsilon.isTraining = True
+        total_obs = 100000
+        obs = np.empty((total_obs, input_shape[0], input_shape[1], input_shape[2]),dtype=np.float32)
+        agent.store_observations(total_obs = total_obs, observations = obs, skip_frame = 50)
     else:
         if FLAGS.variant.lower() in ["base"]:
             agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train)

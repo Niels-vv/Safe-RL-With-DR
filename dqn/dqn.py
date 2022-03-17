@@ -65,7 +65,7 @@ class Agent():
         self.target_network = copy.deepcopy(self.policy_network)
         self.target_network.eval()
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr = self.config['lr'])
-        self.epsilon = Epsilon(start=1.0, end=self.config['eps_end'], decay_steps=self.config['decay_steps'])
+        self.epsilon = Epsilon(start=1.0, end=self.config['eps_end'], decay_steps=self.config['decay_steps'], train=self.train)
         self.criterion = nn.MSELoss()
         self.max_gradient_norm = self.config['max_gradient_norm'] #float('inf')
         self.memory = ReplayMemory(50000, min_train_buffer =  self.config['batches_before_training'] * self.config['train_q_batch_size'])
@@ -82,7 +82,6 @@ class Agent():
 
     def run_agent(self):
         print("Running dqn")
-        if not self.train: self.epsilon.isTraining = False # Act greedily
 
         # Run agent
         self.run_loop()
@@ -183,9 +182,7 @@ class Agent():
         # Retain current settings
         current_eps = self.env.episode
         current_steps = self.env.total_steps
-        epsilon_training = self.epsilon.isTraining
 
-        self.epsilon.isTraining = False # Using greedy strategy
         episode = 0
         # A new episode
         while not self.memory.is_filled():
@@ -222,36 +219,42 @@ class Agent():
 
         self.env.episode = current_eps
         self.env.total_steps = current_steps
-        self.epsilon.isTraining = epsilon_training
         print("Done filling Memory.")
 
-    def store_observations(self, total_obs):
+    def store_observations(self, total_obs, observations, skip_frame):
+        self.data_manager.create_observation_file()
+
+        stored_obs = 0
+        may_store = False
+        
         print("Storing observations...")
 
-        self.epsilon.isTraining = False # Using greedy strategy
         # A new episode
-        while self.env.total_steps < total_obs:
+        while stored_obs < total_obs:
             state = self.reset()
 
             # Get state from env; applies dimensionality reduction if pca or ae are used
             state = self.env.get_state(state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space)
 
             # A step in an episode
-            while True:
-                if self.env.total_steps % 200000 == 0:
-                    print("Creating new Observations file")
-                    self.data_manager.create_observation_file()
-
+            while stored_obs < total_obs:
+                
                 # Choose action. Set train to False so we don't increment epsilon
                 action = self.env.get_action(state, self.policy_network, self.epsilon, train = False)
 
                 # Act
-                new_state, _, _ = self.env.step(action)
+                new_state, reward, _ = self.env.step(action)
+                self.env.reward += reward
                 
                 # Store observation
-                self.data_manager.store_observation(state.flatten())
-                if self.env.total_steps % 10000 == 0:
-                    print(f'Stored {self.env.total_steps} / {total_obs} observations.')
+                if self.env.total_steps % skip_frame == 0:
+                    observations[stored_obs] = new_state
+                    stored_obs += 1
+                    may_store = True
+                if stored_obs % 1000 == 0 and may_store:
+                    self.data_manager.store_observation(observations[:stored_obs])
+                    may_store = False
+                    print(f'Stored {stored_obs} / {total_obs} observations.')
 
                 # Get new state observation;
                 new_state = self.env.get_state(new_state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space)
@@ -260,9 +263,11 @@ class Agent():
 
                 # Episode done
                 if self.env.is_last_obs():
+                    print(f'Episode reward: {self.env.reward}')
                     break
-
-            print("Done storing observations.")
+        print("Storing final obs...")
+        self.data_manager.store_observation(observations)
+        print("Done")
 
     def setup_deepmdp(self):
         self.deepmdp = True

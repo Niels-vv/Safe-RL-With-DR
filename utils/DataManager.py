@@ -31,10 +31,10 @@ class DataManager:
     def create_observation_file(self):
         if not os.path.isdir(f'{self.observations_path}'): os.makedirs(self.observations_path)
         i = 1
-        self.obs_file = f'{self.observations_path}/Observations_{i}.csv'
+        self.obs_file = f'{self.observations_path}/Observations_{i}.npy'
         while(os.path.isfile(self.obs_file)):
             i += 1
-            self.obs_file = f'{self.obs_file}/Observations_{i}.csv'
+            self.obs_file = f'{self.observations_path}/Observations_{i}.npy'
         with open(self.obs_file, mode='w') as fp:
             pass
 
@@ -61,18 +61,15 @@ class DataManager:
 
     '''Write state observation to file, creating demo trajectories to use for training PCA and AE'''
     def store_observation(self, data):
-        if not (isinstance(data, list) or isinstance(data, np.ndarray)):
-            raise TypeError
-        try:
-            with open(self.obs_file, mode='a') as fp:
-                data_writer = csv.writer(fp, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                data_writer.writerow(data)
-        except Exception as e:
-            print("Writing data to csv failed.")
-            print(e)
+        with open(self.obs_file, 'wb') as f:
+            np.save(f,data)
 
     def get_observations(self):
-        return pd.read_csv(f'{self.observations_sub_dir}/Observations.csv')
+        data = None
+        with open(self.obs_file, 'rb') as f:
+            data = np.load(self.obs_file)
+        return data
+        #return pd.read_csv(f'{self.observations_sub_dir}/Observations.csv')
 
     def store_dim_reduction_component(self, component, name):
         if not os.path.isdir(f'{self.results_path}'): os.makedirs(self.results_path)

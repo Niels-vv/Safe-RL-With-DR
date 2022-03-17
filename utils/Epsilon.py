@@ -1,7 +1,7 @@
 # adapted from https://github.com/whathelll/DeepRLBootCampLabs/tree/master/pytorch/utils
 import numpy as np
 class Epsilon(object):
-    def __init__(self, start=1.0, end=0.1, decay_steps=80000):
+    def __init__(self, start=1.0, end=0.1, decay_steps=80000, train = True):
         self.start = start
         self.end = end
         #self._update_increment = update_increment
@@ -10,7 +10,7 @@ class Epsilon(object):
         self.epsilons = self.epsilons * (start - end) + end
         self._value = self.start
         self.t = 0
-        self.isTraining = True
+        self.isTraining = train
     
     def increment(self):
         #self.value = max(self._end, self._value - self._update_increment*count)
