@@ -1,4 +1,4 @@
-import gym, torch
+import torch
 import numpy as np
 from absl import app, flags
 from dqn.dqn import Agent as DQNAgent
@@ -47,7 +47,7 @@ def main(unused_argv):
 
     if FLAGS.store_obs:
         agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, train=False)
-        load_policy(agent)
+        load_policy(agent, results_path)
         agent.epsilon._value = 0.2 # 0.2 randomness when choosing action to prevent similar episodes
         agent.epsilon.isTraining = True
         total_obs = 100000
@@ -65,11 +65,11 @@ def main(unused_argv):
     
     if not FLAGS.store_obs:
         if FLAGS.load_policy:
-            load_policy(agent)
+            load_policy(agent, results_path)
         agent.run_agent(print_every_episode=5)
 
-def load_policy(agent):
-    checkpoint = DataManager.get_network(f'env_atari/results/dqn/{FLAGS.map}', "policy_network.pt", device)
+def load_policy(agent, results_path):
+    checkpoint = DataManager.get_network(results_path, "policy_network.pt", device)
     agent.load_policy_checkpoint(checkpoint)
     if agent.train:
         agent.fill_buffer()

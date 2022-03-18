@@ -38,6 +38,10 @@ class DataManager:
         with open(self.obs_file, mode='w') as fp:
             pass
 
+    '''Setup directories for storing AE results'''
+    def create_ae_resuls_dirs(self):
+        if not os.path.isdir(f'{self.results_path}'): os.makedirs(self.results_path)
+
     '''Setup directories and files for storing results'''
     def create_results_files(self):
         if not os.path.isdir(self.results_path): os.makedirs(self.results_path)
