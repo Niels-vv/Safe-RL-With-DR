@@ -5,11 +5,12 @@ from autoencoder.ae import AE, AEManager
 
 class AEAgent(DQNAgent):
     def __init__(self, env, dqn_config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp, train, train_ae_online, ae_encoder, ae_decoder, ae_config):
-        ae_component = get_component(ae_config, ae_encoder, ae_decoder, train_ae_online)
+        ae_component = get_component(ae_config, ae_encoder, ae_decoder, train_ae_online, device)
         latent_space = ae_component.latent_space
         print(f'Latent space: {latent_space}')
         super(AEAgent, self).__init__(env, dqn_config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp, train)
 
+        self.dim_reduction_component = ae_component
         self.reduce_dim = True
         self.ae = True
         self.train_ae_online = train_ae_online
@@ -45,19 +46,23 @@ def train_ae(ae_config, ae_encoder, ae_decoder, data_manager, device):
     ae_lr = ae_config['lr']
     ae_batch_size = ae_config['batch_size']
 
-    # Create VAE model
+    # Create AE model
     ae_model = AE(ae_encoder, ae_decoder).to(device)
     ae_optimizer = optim.Adam(params=ae_model.parameters(), lr=ae_lr)
     ae_manager = AEManager(ae_model, ae_optimizer, ae_batch_size, latent_space, ae_lr)
 
-    # Train VAE on observation trace
-    print("Retreiving observations...")
-    observation_trace = data_manager.get_observations()
-    print("Training AE...")
-    ae_manager.train_on_trace(observation_trace)
+    # Train AE on observation traces
+    i = 1
+    while (data_manager.create_ae_resuls_dirs(i)): # Loop through all existing obs files
+        print("Retreiving observations...")
+        observation_trace = data_manager.get_observations()
+        print("Training AE...")
+        ae_manager.train_on_trace(observation_trace)
+        del observation_trace
+        i += 1
 
-    # Store VAE
-    print("Training done. Storing VAE...")
+    # Store AE
+    print("Training done. Storing AE...")
     checkpoint = ae_manager.get_checkpoint()
     data_manager.store_network(checkpoint, ae_config['file_name'])
 

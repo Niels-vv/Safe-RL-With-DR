@@ -10,10 +10,10 @@ c_hid_second = 64
 # Q network for agent.
 def policy_network(input_shape, linear_output):
     input_channels = input_shape[0]
-    structure = [(c_hid_first, 8, 4, 0), (c_hid_second, 4, 2, 0), (c_hid_second, 3, 1, 0)] # structure of each conv layer: (out_channels, kernel_size, stride, padding)
+    structure = [(c_hid_first, 6, 3, 0), (c_hid_second, 4, 2, 0), (c_hid_second, 3, 1, 0)] # structure of each conv layer: (out_channels, kernel_size, stride, padding)
     linear_input = get_conv_output_shape_flattened(input_shape, structure)
     mlp =  nn.Sequential(
-                nn.Conv2d(input_channels, c_hid_first, kernel_size=8, stride=4),
+                nn.Conv2d(input_channels, c_hid_first, kernel_size=6, stride=3),
                 nn.BatchNorm2d(c_hid_first),
                 nn.ReLU(),
                 nn.Conv2d(c_hid_first, c_hid_second, kernel_size=4, stride=2),

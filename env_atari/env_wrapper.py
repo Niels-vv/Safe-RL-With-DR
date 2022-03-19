@@ -3,33 +3,6 @@ from torch import nn
 from env_wrapper_abstract.env_wrapper import EnvWrapperAbstract
 import numpy as np
 from math import sqrt
-from scipy.ndimage.interpolation import zoom
-from collections import deque
-import matplotlib.pyplot as plt
-from torchvision import transforms
-
-class SimpleCrop(nn.Module):
-    """
-    Crops an image (deterministically) using the transforms.functional.crop function. (No simple crop can be found in
-    the torchvision.transforms library
-    """
-
-    def __init__(self, top: int, left: int, height: int, width: int) -> None:
-        """
-        See transforms.functional.crop for parameter descriptions
-        """
-        super().__init__()
-        self.top = top
-        self.left = left
-        self.height = height
-        self.width = width
-
-    def forward(self, img):
-        """
-        Forward pass for input img
-        :param img: image tensor
-        """
-        return transforms.functional.crop(img, self.top, self.left, self.height, self.width)
 
 class EnvWrapper(EnvWrapperAbstract):
     def __init__(self, env, device):
@@ -58,10 +31,11 @@ class EnvWrapper(EnvWrapperAbstract):
             epsilon.increment()
         return action
 
-    def get_state(self, state, reduce_dim, reduction_component, pca, ae, latent_space):                 
+    def get_state(self, state, reduce_dim, reduction_component, pca, ae, latent_space, train_online):                 
         if reduce_dim:
-            self.add_obs_to_ae_batch(state)
-            self.reduce_dim(state, reduction_component, pca, ae, latent_space)           
+            if train_online:
+                self.add_obs_to_ae_batch(state)
+            state = self.reduce_dim(state, reduction_component, pca, ae, latent_space)           
         return state
 
     def step(self, action):
@@ -87,8 +61,8 @@ class EnvWrapper(EnvWrapperAbstract):
     def reduce_dim(self, state, reduction_component, pca, ae, latent_space):
         state = torch.tensor(state, dtype=torch.float, device=self.device)
         state = reduction_component.state_dim_reduction(state)
-        if ae: return state.detach().cpu().numpy() #Voor AE
-        if pca: return torch.reshape(state, (int(sqrt(latent_space)), int(sqrt(latent_space)))).detach().cpu().numpy() #Voor Pca
+        if ae: return state.detach().cpu().numpy()
+        if pca: return torch.reshape(state, (int(sqrt(latent_space)), int(sqrt(latent_space)))).detach().cpu().numpy()
 
     def add_obs_to_ae_batch(self, state):
         self.ae_batch.append(np.array(np.expand_dims(state, 0)))

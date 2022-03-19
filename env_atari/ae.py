@@ -7,7 +7,7 @@ from absl import app, flags
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("map", "PongNoFrameskip-v4", "OpenAI name of the game/env whose obs to train on.")
+flags.DEFINE_string("game", "PongNoFrameskip-v4", "OpenAI name of the game/env whose obs to train on.")
 
 def get_ae_config(path):
     ae_config = {
@@ -19,14 +19,15 @@ def get_ae_config(path):
     }
     return ae_config
 
-def train_ae(unused_args):
-    observation_sub_dir = f'../drive/MyDrive/Thesis/Code/Atari/{FLAGS.map}/Observations'
-    results_sub_dir = f'env_atari/results_ae/{FLAGS.map}'
+def training_ae(unused_args):
+    observation_sub_dir = f'../drive/MyDrive/Thesis/Code/Atari/{FLAGS.game}/Observations'
+    results_sub_dir = f'env_atari/results_ae/{FLAGS.game}'
     data_manager = DataManager(observation_sub_dir = observation_sub_dir, results_sub_dir = results_sub_dir)
 
-    path = f'env_atari/results_ae/{FLAGS.map}'
+    path = f'env_atari/results_ae/{FLAGS.game}'
     config = get_ae_config(path)
     train_ae(config, ae_encoder, ae_decoder, data_manager, device)
 
 if __name__ == '__main__':
-    app.run(train_ae)
+    app.run(training_ae)
+

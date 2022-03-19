@@ -67,11 +67,12 @@ class AEManager():
         return loss
 
     def train_on_trace(self, obs):
-        obs = random.shuffle(obs)
+        random.shuffle(obs)
         while len(obs) >= self.batch_size:
-            batch = obs[-self.batch_size:]
+            batch = obs[:self.batch_size]
+            batch = torch.from_numpy(batch).to(device).float()
             self.train_step(batch)
-            del obs[-self.batch_size]
+            obs = obs[self.batch_size:]
 
     def state_dim_reduction(self, state):
         return self.ae_model.state_dim_reduction(state).squeeze()

@@ -39,8 +39,10 @@ class DataManager:
             pass
 
     '''Setup directories for storing AE results'''
-    def create_ae_resuls_dirs(self):
+    def create_ae_resuls_dirs(self, i=1):
         if not os.path.isdir(f'{self.results_path}'): os.makedirs(self.results_path)
+        self.obs_file = f'{self.observations_path}/Observations_{i}.npy'
+        return os.path.isfile(self.obs_file)
 
     '''Setup directories and files for storing results'''
     def create_results_files(self):
