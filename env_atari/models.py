@@ -30,18 +30,18 @@ def policy_network(input_shape, linear_output):
     return mlp
 
 ae_encoder = nn.Sequential(
-            nn.Conv2d(4, 32, kernel_size=3, padding=1, stride=2),
+            nn.Conv2d(1, 32, kernel_size=3, padding=1, stride=2),
             nn.GELU(),
             nn.Conv2d(32, 32, kernel_size=3, padding=1, stride=1),
             nn.GELU(),
-            nn.Conv2d(32, 4, kernel_size=3, padding=1, stride=1),
+            nn.Conv2d(32, 1, kernel_size=3, padding=1, stride=1),
             nn.GELU(),
         )
 
 ae_decoder = nn.Sequential(
-            nn.ConvTranspose2d(4, 32, kernel_size=3, output_padding=1, padding=1, stride=2),
+            nn.ConvTranspose2d(1, 32, kernel_size=3, output_padding=1, padding=1, stride=2),
             nn.GELU(),
-            nn.Conv2d(32, 4, kernel_size=3, padding=1, stride=1)
+            nn.Conv2d(32, 1, kernel_size=3, padding=1, stride=1)
         )
 
 # Encoder for mlp when using Deep_MDP

@@ -55,7 +55,8 @@ def train_ae(ae_config, ae_encoder, ae_decoder, data_manager, device):
     i = 1
     while (data_manager.create_ae_resuls_dirs(i)): # Loop through all existing obs files
         print("Retreiving observations...")
-        observation_trace = data_manager.get_observations()
+        observation_trace = data_manager.get_observations() # Shape: n X 4 X 84 X 84
+        observation_trace = observation_trace.reshape(observation_trace.shape[0] * observation_trace.shape[1], 1, observation_trace.shape[2], observation_trace.shape[3]) # Reshape to n*4 X 1 X 84 X 84
         print("Training AE...")
         ae_manager.train_on_trace(observation_trace)
         del observation_trace

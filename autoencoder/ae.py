@@ -29,7 +29,6 @@ class AE(nn.Module):
         return x
 
     def state_dim_reduction(self, state):
-        state = state.unsqueeze(0)
         z = self.encode(state)
         return z
 

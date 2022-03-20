@@ -10,3 +10,7 @@ ae_1.pt: loss 10
 		nn.ConvTranspose2d(4, 32, kernel_size=3, output_padding=1, padding=1, stride=2),
             nn.GELU(),
             nn.Conv2d(32, 4, kernel_size=3, padding=1, stride=1)	
+            
+            
+ae_2.pt:
+	zelfde opzet maar 1 channel ipv 4
