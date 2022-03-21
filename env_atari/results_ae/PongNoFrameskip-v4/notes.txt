@@ -12,5 +12,5 @@ ae_1.pt: loss 10
             nn.Conv2d(32, 4, kernel_size=3, padding=1, stride=1)	
             
             
-ae_2.pt:
+ae_2.pt: loss: 0.9
 	zelfde opzet maar 1 channel ipv 4

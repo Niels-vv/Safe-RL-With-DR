@@ -59,7 +59,7 @@ class EnvWrapper(EnvWrapperAbstract):
         return self.done
 
     def reduce_dim(self, state, reduction_component, pca, ae, latent_space):
-        state = torch.tensor(state.unsqueeze(1), dtype=torch.float, device=self.device) # Reshape to 4 X 1 X 84 X 84
+        state = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze(1) # Reshape to 4 X 1 X 84 X 84
         state = reduction_component.state_dim_reduction(state)
         if ae: return state.detach().cpu().numpy()
         if pca: return torch.reshape(state, (int(sqrt(latent_space)), int(sqrt(latent_space)))).detach().cpu().numpy()
