@@ -1,4 +1,4 @@
-import os, torch, math
+import os, torch, math, time,copy
 import torch.nn as nn
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -24,9 +24,9 @@ class AgentPerformance:
     def show_agent_results(results_file, name, store_img_filename):
         i = 1
         rewards = []
-        while os.path.isfile(f'results_file_{i}.csv'):
-            r = pd.read_csv(results_file)
-            rewards.append(r.loc[:, "Reward"])
+        while os.path.isfile(f'{results_file}_{i}.csv'):
+            r = pd.read_csv(f'{results_file}_{i}.csv')
+            rewards += r.loc[:, "Reward"].tolist()
             i += 1
 
         learning_period = 30
@@ -66,7 +66,7 @@ class AgentPerformance:
         plt.ylabel(y_name)
         plt.plot(rewards, '-b', label = "Rewards per episode")
         plt.plot(average, '-g', label = f'Average reward per {period} episodes')
-        plt.legend(loc="upper left")
+        plt.legend(loc="lower right")
         plt.savefig(filename)
         plt.show()
 
@@ -140,25 +140,28 @@ class AEAnalysis:
         print("Retrieving states and reduced states...")
         
         for state in obs:
-            state = torch.from_numpy(state).to(device).float()
+            state = torch.from_numpy(state).to(device).unsqueeze(0).unsqueeze(0)
             state_red = ae.state_dim_reduction(state).detach().cpu().numpy().flatten()
             reduced_states.append(state_red)
-            states.append(state.detach().cpu().numpy().flatten())
-
             i += 1
             if i >= max_num_states:
-                states = pd.DataFrame(states, columns=list(range(states[0].shape[0])))
-                reduced_states = pd.DataFrame(reduced_states, columns=list(range(reduced_states[0].shape[0])))
-
-                print(f'Calculating correlation matrix...')
-                df_cor = pd.concat([states, reduced_states], axis=1, keys=['df1', 'df2']).corr().loc['df2', 'df1']
-                create_plot(f'corr_matrix_reduced.png', df_cor,(30,8))
-
-                # Show correlation for single latent feature
-                for feature in features:
-                    get_cor_of_latent_feature(df_cor, feature)
-                    get_grid_for_latent_feature(feature, grid_rows = latent_space[0], grid_columns = latent_space[1])
                 break
+        reduced_states = pd.DataFrame(reduced_states, columns=list(range(reduced_states[0].shape[0])))
+        
+        for state in obs:
+            states.append(state.flatten())
+        del obs        
+        states = pd.DataFrame(states, columns=list(range(states[0].shape[0])))
+        
+        print(f'Calculating correlation matrix...')
+        time.sleep(15)
+        df_cor = pd.concat([states, reduced_states], axis=1, keys=['df1', 'df2']).corr().loc['df2', 'df1']
+        create_plot(f'corr_matrix_reduced.png', df_cor,(30,8))
+
+        # Show correlation for single latent feature
+        for feature in features:
+            get_cor_of_latent_feature(df_cor, feature)
+            get_grid_for_latent_feature(feature, grid_rows = latent_space[0], grid_columns = latent_space[1])
 
         print("Done calculating and storing correlation matrices")
 
@@ -221,8 +224,6 @@ class AEAnalysis:
                         if idxi*c+idxj >= len(act): break
                         axarr[idxi, idxj].imshow(act[idxi*c+idxj])
                 plt.savefig(image_name)
-
-            state_num +=1
 
     @staticmethod
     def visualize_filters(model):
@@ -380,7 +381,7 @@ def get_rectangle(area):
 
 # Show results for baseline agent.
 def show_base_results(results_path):
-    base_results_file = f'{results_path}/results'
+    base_results_file = f'{results_path}/Results'
     store_filename_base = "Base_agent_results.png"
     base_name = "base agent"
     AgentPerformance.show_agent_results(base_results_file, base_name, store_filename_base)
@@ -479,7 +480,7 @@ if __name__ == "__main__":
         ae_name = "ae.pt"
         ae = AEAnalysis.get_component(ae_dir, ae_name)
 
-        obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
+        obs_dir = "drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
         data_manager = DataManager(observation_sub_dir = obs_dir)
         data_manager.obs_file = f'{data_manager.observations_path}/Observations.npy'
         print("Retrieving observations...")
@@ -498,12 +499,14 @@ if __name__ == "__main__":
         ae_name = "ae.pt"
         ae = AEAnalysis.get_component(ae_dir, ae_name)
 
-        obs_dir = "/content/drive/MyDrive/Thesis/Code/Atari/PongNoFrameskip-v4/Observations"
+        obs_dir = "../drive/MyDrive/Thesis/Code/Atari/PongNoFrameskip-v4/Observations"
         data_manager = DataManager(observation_sub_dir = obs_dir)
         data_manager.obs_file = f'{data_manager.observations_path}/Observations_1.npy'
         print("Retrieving observations...")
-        obs = data_manager.get_observations()
-        obs = [ob[0] for ob in obs] # take only 1 of the 4 frames that make up a state
+        observs = data_manager.get_observations()
+        observs = [ob[0] for ob in observs] # take only 1 of the 4 frames that make up a state
+        obs = copy.deepcopy(observs)
+        del observs
 
         original_shape = (84,84)
         latent_shape = (42,42)
@@ -512,10 +515,17 @@ if __name__ == "__main__":
     
     results_path = f'{PATH}/../{results_dir}'
 
-    show_base_results(results_path)
-    show_pretrained_ae_results(results_path)
+    #print("Baseline results")
+    #show_base_results(results_path)
+    #print("AE results")
+    #show_pretrained_ae_results(results_path)
+
+    print("Correlation matrix")
     show_reduced_features_correlation(ae, obs, features, original_shape, latent_shape)
+    print("feature maps")
     show_feature_map_ae(ae, obs, states)
+    print("Filters")
     show_filters_ae(ae)
+    print("activation")
     most_activation_image_ae(ae, original_shape,deepdream=True)
     
