@@ -173,8 +173,7 @@ def gradient_ascent(model, input_tensor, layer_ids_to_use, iteration, activation
     input_tensor.data = torch.max(torch.min(input_tensor, UPPER_IMAGE_BOUND), LOWER_IMAGE_BOUND)
 
 
-def deep_dream_static_image(model, layer, activation):
-    shape = (32,32,1)
+def deep_dream_static_image(model, layer, activation, shape):
     img = np.random.uniform(low=0.0, high=1.0, size=shape).astype(np.float32)
     img = pre_process_numpy_img(img)
 
@@ -200,10 +199,10 @@ def deep_dream_static_image(model, layer, activation):
     return post_process_numpy_img(img).squeeze()
 
 config = {
-'pyramid_size': 4,
-'num_gradient_ascent_iterations' : 500,
-'spatial_shift_size' : 5,
-'lr' : 0.09,
-'pyramid_ratio' : 1.4,
-'smoothing_coefficient' : 0.5
+    'pyramid_size': 4,
+    'num_gradient_ascent_iterations' : 500,
+    'spatial_shift_size' : 5,
+    'lr' : 0.09,
+    'pyramid_ratio' : 1.4,
+    'smoothing_coefficient' : 0.5
 }

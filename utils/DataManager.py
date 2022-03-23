@@ -75,7 +75,6 @@ class DataManager:
         with open(self.obs_file, 'rb') as f:
             data = np.load(self.obs_file)
         return data
-        #return pd.read_csv(f'{self.observations_sub_dir}/Observations.csv')
 
     def store_dim_reduction_component(self, component, name):
         if not os.path.isdir(f'{self.results_path}'): os.makedirs(self.results_path)
@@ -99,9 +98,8 @@ class DataManager:
             return pickle.load(fp)
 
 
-    '''Store results of PPO after training; storing setup info, training results and policy network'''
-    def write_results(self, rewards, epsilons, durations, setup, variant, network_checkpoint):
-        eps = [x for x in range(len(rewards))]
+    '''Store results of DQN after training; storing setup info, training results and policy network'''
+    def write_results(self, eps, rewards, epsilons, durations, setup, variant, network_checkpoint):
         rows = zip(eps, rewards, epsilons, durations)
         try:
             with open(self.results_file, "a") as f:
@@ -122,8 +120,7 @@ class DataManager:
             print("writing results failed")
             print(e)
 
-    def write_intermediate_results(self, rewards, durations, epsilons, network):
-        eps = [x for x in range(len(rewards))]
+    def write_intermediate_results(self, eps, rewards, durations, epsilons, network):
         rows = zip(eps, rewards, epsilons, durations)
         try:
             with open(self.intermediate_results_file, "a") as f:

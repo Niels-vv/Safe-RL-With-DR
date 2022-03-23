@@ -1,19 +1,15 @@
-import os, torch, math, random
+import os, torch, math
 import torch.nn as nn
-import torch.optim as optim
-from torch.autograd import Variable
 import pandas as pd
-import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import numpy as np
 from utils.DataManager import DataManager
 from utils.MaxActivation import act_max
-from vae.VAE import VAE, VaeManager
+from autoencoder.ae import AE
+from env_atari.models import ae_encoder, ae_decoder
 import seaborn as sns
 from math import sqrt
-
-from torch.functional import F #TODO weghalen
 
 from utils.DeepDream import deep_dream_static_image
 
@@ -26,22 +22,17 @@ class AgentPerformance:
 
     @staticmethod
     def show_agent_results(results_file, name, store_img_filename):
-        results = pd.read_csv(results_file)
-        rewards = results.loc[:, "Reward"]
-        learning_rewards = []
-        eval_rewards = []
-        for r in range(len(results)):
-            if r % 15 == 0 and r > 0:
-                eval_rewards.append(rewards[r])
-            else:
-                learning_rewards.append(rewards[r])
-        learning_period = 30
-        eval_period = 5
-        learning_average = AgentPerformance.get_average(learning_rewards, learning_period)
-        eval_average = AgentPerformance.get_average(eval_rewards, eval_period)
-        AgentPerformance.show_plot("Episode", "Reward", learning_rewards, learning_average, learning_period, f'Learning results for {name}', store_img_filename)
-        #AgentPerformance.show_plot("Episode", "Reward", eval_rewards, eval_average, eval_period, f'Evaluation results for {name}')
+        i = 1
+        rewards = []
+        while os.path.isfile(f'results_file_{i}.csv'):
+            r = pd.read_csv(results_file)
+            rewards.append(r.loc[:, "Reward"])
+            i += 1
 
+        learning_period = 30
+        learning_average = AgentPerformance.get_average(rewards, learning_period)
+        AgentPerformance.show_plot("Episode", "Reward", rewards, learning_average, learning_period, f'Training results for {name}', store_img_filename)
+        
     @staticmethod
     def get_average(values, period):
         values = torch.tensor(values, dtype=torch.float)
@@ -65,40 +56,6 @@ class AgentPerformance:
             AgentPerformance.show_agent_results(results_file, name)
             i += 1
             results_file = f'{results_path}/results_{i}.csv' 
-
-    @staticmethod
-    def compare_base_and_ae_agents(dir):
-        results_path = f'{PATH}/../{dir}'
-        base_results_file = f'{results_path}/results_1.csv'
-        store_filename_base = "Base_agent_results.png"
-        base_name = "base agent"
-
-        ae_results_file = f'{results_path}/results_vae_1.csv'
-        ae_name = "Pre-trained autoencoder agent"
-        store_filename_ae = "Pretrained_autoencoder_agent_results.png"
-        AgentPerformance.show_agent_results(base_results_file, base_name, store_filename_base)
-        AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae)
-    
-    @staticmethod
-    def compare_online_ae_and_deepmdp_agents(dir):
-        results_path = f'{PATH}/../{dir}'
-        ae_results_file = f'{results_path}/results_ae_online_1.csv'
-        store_filename_ae = "Online_autoencoder_agent_results.png"
-        ae_name = "Online trained autoencoder agent"
-
-        deepmdp_results_file = f'{results_path}/results_deepmdp_1.csv'
-        deepmdp_name = "DeepMDP agent"
-        store_filename_deepmdp = "Deepmdp_agent_results.png"
-        AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae)
-        AgentPerformance.show_agent_results(deepmdp_results_file, deepmdp_name, store_filename_deepmdp)
-
-    @staticmethod
-    def show_pca_agent_results(dir):
-        results_path = f'{PATH}/../{dir}'
-        pca_results_file = f'{results_path}/results_pca_scalar.csv'
-        store_filename_pca = "PCA_with_scalar_agent_results.png"
-        pca_name = "PCA agent"
-        AgentPerformance.show_agent_results(pca_results_file, pca_name, store_filename_pca)
 
     @staticmethod
     def show_plot(x_name, y_name, rewards, average, period, title, filename):
@@ -152,7 +109,7 @@ class PCAAnalysis:
 
 # Class methods showing analyses of autoencoder, e.g. visualizing feature maps and showing correlation matrix
 class AEAnalysis:
-    def reduced_features_correlation_matrix(ae, obs_dir):
+    def reduced_features_correlation_matrix(ae, obs, features, original_space, latent_space):
         def create_plot(filename, data, fig_size):
             fig, ax = plt.subplots(figsize=fig_size)
             sns.heatmap(data, vmin=-1, vmax=1, annot=False, ax=ax)
@@ -161,11 +118,11 @@ class AEAnalysis:
 
         # Get correlation matrix of single latent feature
         def get_cor_of_latent_feature(corr_matrix, feature):
-            cor_latent_feature = corr_matrix.iloc[feature].to_numpy().reshape(32,32)
+            cor_latent_feature = corr_matrix.iloc[feature].to_numpy().reshape(original_space[0], original_space[1])
             cor_latent_feature = pd.DataFrame(cor_latent_feature,columns=list(range(cor_latent_feature[0].shape[0])))
             create_plot(f'corr_matrix_latent_feature_{feature+1}.png', cor_latent_feature, (10,5))
      
-        # Show placement of latent feature in its original 16x16 grid
+        # Show placement of latent feature in its latent space
         def get_grid_for_latent_feature(feature, grid_rows, grid_columns):
             grid = np.ones(grid_rows *grid_columns)
             grid[feature] = 0
@@ -175,27 +132,21 @@ class AEAnalysis:
             plt.savefig(f'grid_latent_feature_{feature+1}.jpg')
             plt.show()
 
-        data_manager = DataManager(observation_sub_dir = obs_dir)
-        print("Retrieving observations...")
-        obs = data_manager.get_observations()
-
         reduced_states = []
         states = []
 
-        i = 1
-        max_num_states = 60000
+        i = 0
+        max_num_states = min(60000, len(obs))
         print("Retrieving states and reduced states...")
         
-        for index, row in obs.iterrows():
-            row = row.to_numpy()
-            state = row.reshape(32,32)
+        for state in obs:
             state = torch.from_numpy(state).to(device).float()
             state_red = ae.state_dim_reduction(state).detach().cpu().numpy().flatten()
             reduced_states.append(state_red)
             states.append(state.detach().cpu().numpy().flatten())
 
             i += 1
-            if i > max_num_states:
+            if i >= max_num_states:
                 states = pd.DataFrame(states, columns=list(range(states[0].shape[0])))
                 reduced_states = pd.DataFrame(reduced_states, columns=list(range(reduced_states[0].shape[0])))
 
@@ -204,27 +155,21 @@ class AEAnalysis:
                 create_plot(f'corr_matrix_reduced.png', df_cor,(30,8))
 
                 # Show correlation for single latent feature
-                features = [67, 119, 203]
                 for feature in features:
                     get_cor_of_latent_feature(df_cor, feature)
-                    get_grid_for_latent_feature(feature, grid_rows = 16, grid_columns = 16)
+                    get_grid_for_latent_feature(feature, grid_rows = latent_space[0], grid_columns = latent_space[1])
                 break
 
         print("Done calculating and storing correlation matrices")
 
     @staticmethod
-    def visualize_feature_maps(model, obs_dir):
-        model.eval()
+    def visualize_feature_maps(model, obs, state_indices):
         activation = {}
         # Get feature map data
         def get_activation(name):
             def hook(model, input, output):
                 activation[name] = output.detach().cpu()
             return hook
-
-        print("Retrieving observations...")
-        data_manager = DataManager(observation_sub_dir = obs_dir)
-        obs = data_manager.get_observations()
 
         # Get conv layers from encoder
         conv_layers = []
@@ -233,14 +178,8 @@ class AEAnalysis:
                 conv_layers.append(layer)
                 
         print("Getting feature maps and storing images...")
-        max_num_states = 2
-        state_num = 0 # Number of states we have analysed
-        jump = 10996 # Take every jumpth state, as to not get similar states
-        for index, row in obs.iterrows():
-            if state_num >= max_num_states: break
-            if index % jump != 0: continue
-            row = row.to_numpy()
-            state = row.reshape(32,32)
+        for index in state_indices:
+            state = obs[index]
 
             # Store original state as image
             norm = plt.Normalize(vmin=state.min(), vmax=state.max())
@@ -248,12 +187,18 @@ class AEAnalysis:
             axarr.imshow(norm(state))
             plt.savefig(f'State_{index+1}_original.png')
 
-            state = torch.from_numpy(state).to(device).float()
+            state = torch.from_numpy(state).to(device).unsqueeze(0)
             for i in range(len(conv_layers)):
                 conv_layers[i].register_forward_hook(get_activation(f'conv{i}'))
-            model.state_dim_reduction(state)
+            
+            output = model.state_dim_reduction(state)
+            # Store ae encodcer output state as image
+            norm = plt.Normalize(vmin=output.min(), vmax=output.max())
+            fig, axarr = plt.subplots(1)
+            axarr.imshow(norm(output))
+            plt.savefig(f'State_{index+1}_Encoder_Output.png')
 
-            print(f'Creating feature maps for state {state_num+1} / {max_num_states}...')
+            print(f'Creating feature maps for state...')
             for i in range(len(conv_layers)):
                 image_name = f'State_{index+1}_Layer_{i+1}_Feature_Map.png'
 
@@ -312,7 +257,7 @@ class AEAnalysis:
     # Find pixel values for which ae feature maps are activated the most
     # https://towardsdatascience.com/how-to-visualize-convolutional-features-in-40-lines-of-code-70b7d87b0030
     @staticmethod
-    def activation_image(model):
+    def activation_image(model, shape, deepdream=True):
         #model.eval()
         activation = {}
 
@@ -331,7 +276,6 @@ class AEAnalysis:
             img = np.random.uniform(low=0.0, high=1.0, size=(1,1,32,32)).astype(np.float32)
             #img = (img - np.array([0.485, 0.456, 0.406], dtype=np.float32)) / np.array([0.229, 0.224, 0.225], dtype=np.float32)
             img = torch.from_numpy(img).to(device).requires_grad_(True)
-            print(img)
             opt_steps = 50
             optimizer = torch.optim.Adam([img], lr=0.1)
             for _ in range(opt_steps):
@@ -344,7 +288,6 @@ class AEAnalysis:
                 # loss = torch.nn.MSELoss(reduction='mean')(activation[f'conv{layer}'], torch.zeros_like(activation[f'conv{layer}']))
                 loss.backward()
                 optimizer.step()
-                print(img)
             
             return img.detach().cpu().squeeze().numpy()
         
@@ -358,13 +301,14 @@ class AEAnalysis:
 
         for i in range(len(conv_layers)):
             conv_layers[i].register_forward_hook(get_activation(f'conv{i}'))
-            # img = deep_dream_static_image(model, i, activation)
-            # plt.imshow(img)
-            # plt.savefig(f'DeepDream_activation_image_layer_{i}.jpg')
-            # continue
+            if deepdream:
+                img = deep_dream_static_image(model, i, activation, (shape[0],shape[1],1))
+                plt.imshow(img)
+                plt.savefig(f'DeepDream_activation_image_layer_{i}.jpg')
+                continue
             for filter in range(conv_layers[i].weight.shape[0]):
                 print(f'Getting image for filter {filter+1} of conv layer {i+1}.')
-                img = np.random.uniform(low=0.0, high=1.0, size=(1,1,32,32)).astype(np.float32)
+                img = np.random.uniform(low=0.0, high=1.0, size=(1,1,shape[0],shape[1])).astype(np.float32)
                 #img = (img - np.array([0.485, 0.456, 0.406], dtype=np.float32)) / np.array([0.229, 0.224, 0.225], dtype=np.float32)
                 img = torch.from_numpy(img).to(device).requires_grad_(True)
             
@@ -419,24 +363,13 @@ class AEAnalysis:
         acts = activation[0].squeeze()
         gradients = gradients.detach().cpu()
 
-
-
-
-
     @staticmethod
-    def get_component(vae_dir, vae_name):
-        checkpoint = DataManager.get_network(vae_dir, vae_name, device)
-        vae_model = VAE(in_channels = 0, latent_dim = checkpoint['latent_space']).to(device) #todo in_channels weghalen
-        vae_model.load_state_dict(checkpoint['model_state_dict'])
-        vae_optimizer = None
-        #vae_model.eval()
-        return VaeManager(vae_model, vae_optimizer, checkpoint['obs_file'],checkpoint['batch_size'], checkpoint['latent_space'], checkpoint['vae_lr'])
-
-    @staticmethod
-    def get_ae():
-        ae_dir = "env_pysc2/results_vae/MoveToBeacon"
-        ae_name = "vae.pt"
-        return AEAnalysis.get_component(ae_dir, ae_name)
+    def get_component(ae_dir, ae_name):
+        checkpoint = DataManager.get_network(ae_dir, ae_name, device)
+        ae_model = AE(ae_encoder, ae_decoder).to(device)
+        ae_model.load_state_dict(checkpoint['model_state_dict'])
+        ae_model.eval()
+        return ae_model
 
 def get_rectangle(area):
     for width in range(int(math.ceil(math.sqrt(area))), 1, -1):
@@ -445,50 +378,54 @@ def get_rectangle(area):
 
 ### Results analysis methods
 
-# Compare the results (in rewards/episode) of a base agent with an agent using a pre-trained autoencoder
-def show_base_ae_comparison():
-    dir = "env_pysc2/results/dqn/MoveToBeacon"
-    AgentPerformance.compare_base_and_ae_agents(dir)
+# Show results for baseline agent.
+def show_base_results(results_path):
+    base_results_file = f'{results_path}/results'
+    store_filename_base = "Base_agent_results.png"
+    base_name = "base agent"
+    AgentPerformance.show_agent_results(base_results_file, base_name, store_filename_base)
 
-# Compare the results (in rewards/episode) of an agent using an online trained autoencoder with a DeepMDP agent
-def show_online_ae_deepmdp_comparison():
-    dir = "env_pysc2/results/dqn/MoveToBeacon"
-    results_dir = f'{PATH}/../{dir}'
-    if not os.path.isfile(f'{results_dir}/results_deepmdp_1.csv'): # DeepMDP results have not yet been combined: combine them to new csv file
-        i = 1
-        filenames = []
-        while os.path.isfile(f'{results_dir}/results_deepmdp_1-{i}.csv'):
-            filenames.append(f'{results_dir}/results_deepmdp_1-{i}.csv')
-            i += 1
-        combined_csv = pd.concat([pd.read_csv(f) for f in filenames ])
-        combined_csv.to_csv(f'{results_dir}/results_deepmdp_1.csv', index=False, encoding='utf-8-sig')
-    AgentPerformance.compare_online_ae_and_deepmdp_agents(dir)
+# Show results for pre-trained ae agent.
+def show_pretrained_ae_results(results_path):
+    ae_results_file = f'{results_path}/results_ae'
+    ae_name = "Pre-trained autoencoder agent"
+    store_filename_ae = "Pretrained_autoencoder_agent_results.png"
+    AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae)
+
+# Show results for non-pretrained (online trained) ae agent
+def show_online_ae_results(results_path):
+    ae_results_file = f'{results_path}/results_ae_online'
+    store_filename_ae = "Online_autoencoder_agent_results.png"
+    ae_name = "Online trained autoencoder agent"
+    AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae)
+
+def show_pca_agent_results(results_path):
+    pca_results_file = f'{results_path}/results_pca_scalar'
+    store_filename_pca = "PCA_with_scalar_agent_results.png"
+    pca_name = "PCA agent"
+    AgentPerformance.show_agent_results(pca_results_file, pca_name, store_filename_pca)
+
+# Show results for deepmdp agent
+def show_deepmdp_results(results_path):
+    deepmdp_results_file = f'{results_path}/results_deepmdp'
+    deepmdp_name = "DeepMDP agent"
+    store_filename_deepmdp = "Deepmdp_agent_results.png"
+    AgentPerformance.show_agent_results(deepmdp_results_file, deepmdp_name, store_filename_deepmdp)
 
 # Show a heatmap of the correlation matrix between original state features and reduced state features (reduced by an autoencoder)
-def show_reduced_features_correlation():
-    ae = AEAnalysis.get_ae().vae_model
-    obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
-    AEAnalysis.reduced_features_correlation_matrix(ae, obs_dir)
+def show_reduced_features_correlation(ae, obs, features, original_shape, latent_shape):
+    AEAnalysis.reduced_features_correlation_matrix(ae, obs, features, original_shape, latent_shape)
 
 # Visualize the feature map of the encoder of an autoencoder
-def show_feature_map_ae():
-    ae = AEAnalysis.get_ae().vae_model
-    obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
-    AEAnalysis.visualize_feature_maps(ae, obs_dir)
+def show_feature_map_ae(ae, obs, states):
+    AEAnalysis.visualize_feature_maps(ae, obs, states)
     
 # Visualize the filters of the encoder of an autoencoder
-def show_filters_ae():
-    ae = AEAnalysis.get_ae().vae_model
+def show_filters_ae(ae):
     AEAnalysis.visualize_filters(ae)
 
-def most_activation_image_ae():
-    ae = AEAnalysis.get_ae().vae_model.to(device)
-    AEAnalysis.activation_image(ae)
-
-
-def show_pca_agent_results():
-    dir = "env_pysc2/results/dqn/MoveToBeacon"
-    AgentPerformance.show_pca_agent_results(dir)
+def most_activation_image_ae(ae, shape, deepdream=True):
+    AEAnalysis.activation_image(ae,shape, deepdream)
 
 def pca_analyses():
     obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
@@ -504,7 +441,7 @@ def pca_analyses():
     pca = DataManager.get_component(f'env_pysc2/results_pca/MoveToBeacon',"pca2_no_scalar.pt") # TODO check of naamgeving nog klopt
     PCAAnalysis.show_state_representation_pca(obs_dir, pca, dim_name, recon_name)
 
-def show_epsilon_decay():
+def show_epsilon_decay_pysc2():
     epsilons = 0.01 / np.logspace(-2, 0, 100000, endpoint=False) - 0.01
     epsilons = epsilons * (1.0 - 0.1) + 0.1
     epsilons = [x for i,x in enumerate(epsilons) if i % 239 == 0 ]
@@ -518,83 +455,67 @@ def show_epsilon_decay():
     plt.savefig("Epsilon_decay.png")
     plt.show()
 
-class Model(nn.Module):
-    """Custom Pytorch model for gradient optimization.
-    """
-    def __init__(self):
-        
-        super().__init__()
-        # initialize weights with random numbers
-        weights = torch.randn(1,1,32, 32, requires_grad=True,device=device)  
-        # make weights torch parameters
-        self.weights = nn.Parameter(weights)        
-        
-    def forward(self, X):
-        """Implement function to be optimised. In this case, an exponential decay
-        function (a + exp(-k * X) + b),
-        """
-        return X(self.weights)
-
-def img_train():
-    activation = {}
-    def get_activation(name):
-        def hook(model, input, output):
-            activation[name] = output.requires_grad_(True)
-        return hook
-    ae = AEAnalysis.get_ae().vae_model.encoder.to(device)
-    img_model = Model()
-    optimizer = torch.optim.Adam(img_model.parameters(), lr=0.1, weight_decay=1e-6)
-    a = img_model.weights.clone()
-    y = torch.randn(1,1,32, 32, requires_grad=True,device=device)
-
-    conv_layers = []
-    for layer in ae:
-        if type(layer) == nn.Conv2d:
-            conv_layers.append(layer)
-    conv_layers[0].register_forward_hook(get_activation(f'conv{0}'))
-
-    img_model.weights.retain_grad()
-    preds = img_model(ae)
-
-    loss = -activation[f'conv{0}'][0][0].mean()
-    print(loss)
-    print(activation[f'conv{0}'][0].shape)
-    print(activation[f'conv{0}'].shape)
-    
-    #loss = F.mse_loss(preds, y).sqrt()
-    loss.backward()
-    print(img_model.weights.grad)
-    print(img_model.weights.grad[0][0][0][0])
-    print(img_model.weights.grad[0][0][10][8])
-    print(img_model.weights.grad[0][0][6][9])
-    print(img_model.weights.grad[0][0][2][1])
-    optimizer.step()
-    print(img_model.weights.grad)
-    print(img_model.weights.grad[0][0][0][0])
-    print(img_model.weights.grad[0][0][10][8])
-    print(img_model.weights.grad[0][0][6][9])
-    print(img_model.weights.grad[0][0][2][1])
-    optimizer.zero_grad()
-
-    print(img_model.weights.grad)
-    print(img_model.weights.grad[0][0][0][0])
-    print(img_model.weights.grad[0][0][10][8])
-    print(img_model.weights.grad[0][0][6][9])
-    print(img_model.weights.grad[0][0][2][1])
-    
-
-    b = img_model.weights.clone()
-    print(torch.equal(a.data,b.data))
+def show_epsilon_decay_pong():
+    epsilons = 0.01 / np.logspace(-2, 0, 100000, endpoint=False) - 0.01
+    epsilons = epsilons * (1.0 - 0.1) + 0.1
+    plt.figure(2)
+    plt.clf()        
+    plt.title("Epsilon decay")
+    plt.xlabel("Steps")
+    plt.ylabel("Epsilon")
+    plt.plot(epsilons, '-b', label = "Epsilon value per step")
+    plt.legend(loc="upper right")
+    plt.savefig("Epsilon_decay_pong.png")
+    plt.show()
 
 
 if __name__ == "__main__":
-    #img_train()
-    most_activation_image_ae()
+    env_name = "pong"
+
+    if env_name == "pysc2":
+        results_dir = "env_pysc2/results/dqn/MoveToBeacon"
+
+        ae_dir = "env_pysc2/results_vae/MoveToBeacon"
+        ae_name = "ae.pt"
+        ae = AEAnalysis.get_component(ae_dir, ae_name)
+
+        obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
+        data_manager = DataManager(observation_sub_dir = obs_dir)
+        data_manager.obs_file = f'{data_manager.observations_path}/Observations.npy'
+        print("Retrieving observations...")
+        obs = data_manager.get_observations()
+
+        original_shape = (32,32)
+        latent_shape = (16,16)
+        features = [67, 119, 203]
+        states = [0,10966]
+
+
+    elif env_name == "pong":
+        results_dir = "env_atari/results/dqn/PongNoFrameskip-v4"
+
+        ae_dir = "env_atari/results_ae/PongNoFrameskip-v4"
+        ae_name = "ae.pt"
+        ae = AEAnalysis.get_component(ae_dir, ae_name)
+
+        obs_dir = "/content/drive/MyDrive/Thesis/Code/Atari/PongNoFrameskip-v4/Observations"
+        data_manager = DataManager(observation_sub_dir = obs_dir)
+        data_manager.obs_file = f'{data_manager.observations_path}/Observations_1.npy'
+        print("Retrieving observations...")
+        obs = data_manager.get_observations()
+        obs = [ob[0] for ob in obs] # take only 1 of the 4 frames that make up a state
+
+        original_shape = (84,84)
+        latent_shape = (42,42)
+        features = [888, 903, 917]
+        states = [10000,15000]
     
-    # a = torch.randn(5,requires_grad=True).to(device)
-    # print(a.grad_fn)
-    # a.retain_grad()
-    # a.backward(torch.ones(5).to(device))
-    # print(a.grad)
-    # print(a.grad_fn)
+    results_path = f'{PATH}/../{results_dir}'
+
+    show_base_results(results_path)
+    show_pretrained_ae_results(results_path)
+    show_reduced_features_correlation(ae, obs, features, original_shape, latent_shape)
+    show_feature_map_ae(ae, obs, states)
+    show_filters_ae(ae)
+    most_activation_image_ae(ae, original_shape,deepdream=True)
     
