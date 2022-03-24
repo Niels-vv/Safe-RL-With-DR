@@ -1,4 +1,4 @@
-import os, torch, math, time,copy
+import os, torch, math, time,copy,psutil
 import torch.nn as nn
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -14,6 +14,7 @@ from math import sqrt
 from utils.DeepDream import deep_dream_static_image
 
 PATH = os.path.dirname(os.path.realpath(__file__))
+process = psutil.Process(os.getpid())
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -109,7 +110,7 @@ class PCAAnalysis:
 
 # Class methods showing analyses of autoencoder, e.g. visualizing feature maps and showing correlation matrix
 class AEAnalysis:
-    def reduced_features_correlation_matrix(ae, obs, features, original_space, latent_space):
+    def reduced_features_correlation_matrix(ae, obs, states, features, original_space, latent_space):
         def create_plot(filename, data, fig_size):
             fig, ax = plt.subplots(figsize=fig_size)
             sns.heatmap(data, vmin=-1, vmax=1, annot=False, ax=ax)
@@ -133,10 +134,12 @@ class AEAnalysis:
             plt.show()
 
         reduced_states = []
-        states = []
+        #states = []
 
         i = 0
         max_num_states = min(60000, len(obs))
+        time.sleep(30)
+        print(process.memory_info().rss,flush=True) 
         print("Retrieving states and reduced states...")
         
         for state in obs:
@@ -146,16 +149,33 @@ class AEAnalysis:
             i += 1
             if i >= max_num_states:
                 break
+        print(f'Retrieved reduced')
+        time.sleep(25)
+        print(process.memory_info().rss) 
         reduced_states = pd.DataFrame(reduced_states, columns=list(range(reduced_states[0].shape[0])))
-        
-        for state in obs:
-            states.append(state.flatten())
-        del obs        
-        states = pd.DataFrame(states, columns=list(range(states[0].shape[0])))
-        
+        print(f'Dataframe reduced')
+        time.sleep(30)
+        print(process.memory_info().rss) 
+        # i=0
+        # for state in obs:
+        #     states.append(state.flatten())
+        #     i+=1
+        #     if i >= max_num_states:
+        #         break
+        # del obs        
+        #obs = [ob.flatten() for ob in obs][:max_num_states]
+        obs = None
+        print("waiting for dataframing")
+        time.sleep(40)
+        print(process.memory_info().rss) 
+        print("dataframing")
+        time.sleep(10)
+        #states = pd.DataFrame(obs, columns=list(range(obs[0].shape[0])))
+        print(process.memory_info().rss) 
         print(f'Calculating correlation matrix...')
         time.sleep(15)
         df_cor = pd.concat([states, reduced_states], axis=1, keys=['df1', 'df2']).corr().loc['df2', 'df1']
+        print("creating plot")
         create_plot(f'corr_matrix_reduced.png', df_cor,(30,8))
 
         # Show correlation for single latent feature
@@ -190,11 +210,11 @@ class AEAnalysis:
             axarr.imshow(norm(state))
             plt.savefig(f'State_{index+1}_original.png')
 
-            state = torch.from_numpy(state).to(device).unsqueeze(0)
+            state = torch.from_numpy(state).to(device).unsqueeze(0).unsqueeze(0)
             for i in range(len(conv_layers)):
                 conv_layers[i].register_forward_hook(get_activation(f'conv{i}'))
             
-            output = model.state_dim_reduction(state)
+            output = model.state_dim_reduction(state).squeeze().detach().cpu().numpy()
             # Store ae encodcer output state as image
             norm = plt.Normalize(vmin=output.min(), vmax=output.max())
             fig, axarr = plt.subplots(1)
@@ -493,6 +513,7 @@ if __name__ == "__main__":
 
 
     elif env_name == "pong":
+        print(process.memory_info().rss,flush=True) 
         results_dir = "env_atari/results/dqn/PongNoFrameskip-v4"
 
         ae_dir = "env_atari/results_ae/PongNoFrameskip-v4"
@@ -501,12 +522,13 @@ if __name__ == "__main__":
 
         obs_dir = "../drive/MyDrive/Thesis/Code/Atari/PongNoFrameskip-v4/Observations"
         data_manager = DataManager(observation_sub_dir = obs_dir)
-        data_manager.obs_file = f'{data_manager.observations_path}/Observations_1.npy'
+        data_manager.obs_file = f'{data_manager.observations_path}/Observations_corr.npy'
         print("Retrieving observations...")
-        observs = data_manager.get_observations()
-        observs = [ob[0] for ob in observs] # take only 1 of the 4 frames that make up a state
-        obs = copy.deepcopy(observs)
-        del observs
+        obs = data_manager.get_observations()   
+        obs = [ob.flatten() for ob in obs]   
+        print(process.memory_info().rss,flush=True)
+        states = pd.DataFrame(obs, columns=list(range(obs[0].shape[0])))
+        print(process.memory_info().rss,flush=True) 
 
         original_shape = (84,84)
         latent_shape = (42,42)
@@ -519,13 +541,12 @@ if __name__ == "__main__":
     #show_base_results(results_path)
     #print("AE results")
     #show_pretrained_ae_results(results_path)
-
     print("Correlation matrix")
-    show_reduced_features_correlation(ae, obs, features, original_shape, latent_shape)
+    show_reduced_features_correlation(ae, obs, states, features, original_shape, latent_shape)
     print("feature maps")
-    show_feature_map_ae(ae, obs, states)
+    #show_feature_map_ae(ae, obs, states)
     print("Filters")
-    show_filters_ae(ae)
+    #show_filters_ae(ae)
     print("activation")
-    most_activation_image_ae(ae, original_shape,deepdream=True)
+    #most_activation_image_ae(ae, original_shape,deepdream=True)
     
