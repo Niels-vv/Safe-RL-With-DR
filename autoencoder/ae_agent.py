@@ -1,4 +1,5 @@
 import torch.optim as optim
+import numpy as np
 from dqn.dqn import Agent as DQNAgent
 from utils.DataManager import DataManager
 from autoencoder.ae import AE, AEManager
@@ -53,10 +54,11 @@ def train_ae(ae_config, ae_encoder, ae_decoder, data_manager, device):
 
     # Train AE on observation traces
     i = 1
-    while (data_manager.create_ae_resuls_dirs(i)): # Loop through all existing obs files
+    while (data_manager.create_ae_results_dirs(i)): # Loop through all existing obs files
         print("Retreiving observations...")
         observation_trace = data_manager.get_observations()
         observation_trace = observation_trace.reshape(observation_trace.shape[0] * observation_trace.shape[1], 1, observation_trace.shape[2], observation_trace.shape[3]) # Reshape to 1 channel if there are multiple ones like with atari
+        observation_trace = np.unique([tuple(obs) for obs in observation_trace],axis=0) # Remove duplicate obs
         print("Training AE...")
         ae_manager.train_on_trace(observation_trace)
         del observation_trace
