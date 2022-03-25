@@ -58,7 +58,6 @@ def train_ae(ae_config, ae_encoder, ae_decoder, data_manager, device):
         print("Retreiving observations...")
         observation_trace = data_manager.get_observations()
         observation_trace = observation_trace.reshape(observation_trace.shape[0] * observation_trace.shape[1], 1, observation_trace.shape[2], observation_trace.shape[3]) # Reshape to 1 channel if there are multiple ones like with atari
-        observation_trace = np.unique([tuple(obs) for obs in observation_trace],axis=0) # Remove duplicate obs
         print("Training AE...")
         ae_manager.train_on_trace(observation_trace)
         del observation_trace

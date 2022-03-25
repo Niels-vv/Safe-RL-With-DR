@@ -1,4 +1,4 @@
-ae_1.pt: loss 0.9
+ae_1.pt: loss 0.9 op alle obs: iets van 83.000 * 4 (na 160.000 al op loss van 1.90)
 	encoder:
 		nn.Conv2d(1, 32, kernel_size=3, padding=1, stride=2),
 	    nn.GELU(),
@@ -12,4 +12,8 @@ ae_1.pt: loss 0.9
             nn.Conv2d(32, 4, kernel_size=3, padding=1, stride=1)	
             
             
-ae_2.pt: loss: 0.9
+ae_3.pt: loss: 30.7, 25.000 obs
+
+ae_4.pt: loss: 86.2, 10.000 obs
+
+Results using agent trained on ae_1
