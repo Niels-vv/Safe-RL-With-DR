@@ -27,7 +27,9 @@
 	- Scripted agent maken die unsafe states vermijdt, zodat je idee hebt van beste policy score
 
 # report
-Amerikaans engels: "optimizer" en "optimization", "analyzer" "color"
+	- Amerikaans engels: "optimizer" en "optimization", "analyzer" "color"
 
-Pipeline van input - output etc voor NN, agents en analyses duidelijker, in methodology
+	- Pipeline van input - output etc voor NN, agents en analyses duidelijker, in methodology
+
+	- Gemaakte plaatjes verbeteren: DQN -> DDQN; action -> action values; iets voor epsilon greedy; in rl_cycle_deepdmp: "baseline agent" -> "deepmdp agent"; verschil deepmdp en baseline agent duidelijker; nu louter inzoom op policy network (geen verschil dus laten zien); deepmdp agent ook transition cost network
 	
