@@ -3,10 +3,12 @@ import numpy as np
 from absl import app, flags
 from dqn.dqn import Agent as DQNAgent
 from autoencoder.ae_agent import AEAgent
+from pca.pca_agent import PCAAgent
 from utils.DataManager import DataManager
 from env_atari.models import policy_network, deep_mdp_encoder
 from env_atari.models import ae_encoder, ae_decoder
 from env_atari.ae import get_ae_config
+from env_atari.pca import get_pca_config
 from env_atari.env_wrapper import EnvWrapper
 from env_atari.Hyperparameters import config
 from env_atari.atari_wrappers import make_env
@@ -60,7 +62,11 @@ def main(unused_argv):
         if FLAGS.variant.lower() in ["base"]:
             agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train)
         elif FLAGS.variant.lower() in ["pca"]:
-            pass
+            pca_path = f'env_atari/results_pca/{FLAGS.map}' 
+            pca_config = get_pca_config(pca_path)
+            input_shape = (4,42,42) # Shape of mlp input image: CxHxW
+            mlp = policy_network(input_shape, env.env.action_space.n)
+            agent = PCAAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train, FLAGS.train_ae_online, pca_config)
         elif FLAGS.variant.lower() in ["ae"]:
             ae_path = f'env_atari/results_ae/{FLAGS.map}' 
             ae_config = get_ae_config(ae_path)

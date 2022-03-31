@@ -54,7 +54,7 @@ def train_ae(ae_config, ae_encoder, ae_decoder, data_manager, device):
 
     # Train AE on observation traces
     i = 1
-    while (data_manager.create_ae_results_dirs(i)): # Loop through all existing obs files
+    while (data_manager.create_dim_red_results_dirs(i)): # Loop through all existing obs files
         print("Retreiving observations...")
         observation_trace = data_manager.get_observations()
         observation_trace = observation_trace.reshape(observation_trace.shape[0] * observation_trace.shape[1], 1, observation_trace.shape[2], observation_trace.shape[3]) # Reshape to 1 channel if there are multiple ones like with atari
