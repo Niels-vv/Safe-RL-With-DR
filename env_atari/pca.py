@@ -1,4 +1,4 @@
-from pca.pca_agent import train_pca
+from principal_component_analysis.pca_agent import train_pca
 from utils.DataManager import DataManager
 from absl import app, flags
 

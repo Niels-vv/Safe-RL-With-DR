@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from dqn.dqn import Agent as DQNAgent
 from utils.DataManager import DataManager
-from pca.pca import PCACompression
+from principal_component_analysis.pca import PCACompression
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

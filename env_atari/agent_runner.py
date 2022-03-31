@@ -3,7 +3,7 @@ import numpy as np
 from absl import app, flags
 from dqn.dqn import Agent as DQNAgent
 from autoencoder.ae_agent import AEAgent
-from pca.pca_agent import PCAAgent
+from principal_component_analysis.pca_agent import PCAAgent
 from utils.DataManager import DataManager
 from env_atari.models import policy_network, deep_mdp_encoder
 from env_atari.models import ae_encoder, ae_decoder
