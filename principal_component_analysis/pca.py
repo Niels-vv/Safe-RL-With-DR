@@ -16,7 +16,7 @@ class PCACompression:
         self.latent_space = latent_space
         self.df = None
 
-    def create_pca(self, observations):
+    def create_pca(self, observations, get_statistics):
         if self.use_scalar:
             print("Fitting the scalar...")
             self.scaler.fit(observations)
@@ -24,8 +24,9 @@ class PCACompression:
             self.df = self.scaler.transform(observations)
         else:
             self.df = observations
-        print("Fitting statistics PCA...")
-        self.pcaStatistic.fit(self.df)
+        if get_statistics:
+            print("Fitting statistics PCA...")
+            self.pcaStatistic.fit(self.df)
         
     def update_pca(self):
         self.pca_main = PCA(n_components=self.latent_space, batch_size = self.batch_size)

@@ -201,4 +201,15 @@ A fundamental difference with using PCA, is the type of functions that can be ap
 To use an autoencoder for state-space dimensionality reduction, we again (like with PCA) use as input an observation the agent got from the environment. We can train the autoencoder using both the encoder and the decoder to calculate the loss. When used in RL, only the encoder is used. The encoder will project the observation input to the dimensionality of the latent space. 
 
 \subsection{DeepMDP}\label{pl-deepmdp}
-Info over deepmdp
+ The agent's network therefore consists of an encoder part and a policy part. This means that when the agent receives an observation from the environment and passes it to its network, it first goes through the encoder whose output is passed to the policy part. In effect this means that the encoder and policy network are now trained on the same loss, using a single optimizer.
+ 
+Over transition network:
+%in pysc2 research deel: The auxiliary objective to calculate the transition loss represents the cost of all possible transitions from a given latent representation. This means that its output has dimensions $(32 \times 32) \times 16 \times 16$. The tuple $(32, 32)$ represents the actions that can be taken in the current state, while the other two dimensions, $16 \times 16$ represent the next (predicted) latent observation. It has only one layer, a convolutional layer, with $32 \times 32$ output channels to represent the action dimensions.
+
+origineel: Additionally, the DeepMDP makes use of an auxiliary objective to calculate the loss: the transition loss. This transition loss represents the cost of all possible transitions from a given latent representation. This means that its output has dimensions $(32 \times 32) \times 16 \times 16$. The tuple $(32, 32)$ represents the actions that can be taken in the current state, while the other two dimensions, $16 \times 16$ represent the next (predicted) latent observation.
+
+Niet in research deel: This transition loss represents the cost of all possible transitions from a given latent representation. This means that its output has dimensions $action space \times latent space$. The action space here represents the actions that can be taken in the current state, while latent space represents the next (predicted) latent observation.
+
+Again this network is a part of the agent's network. Consequently, the agent's network consists of three parts: an encoder part, a policy part, and a transition loss part, all trained on the same loss using a single optimizer.
+
+Lastly, a gradient penalty is calculated on all three parts of the network separately. This represents a Lipschitz-constrained Wasserstein Generative Adversarial Network (lol wat). Its penalty is used in calculating the loss while training the network. 
