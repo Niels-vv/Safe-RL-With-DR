@@ -330,8 +330,7 @@ class Agent():
         r = torch.from_numpy(r).to(self.device).float()
         done = torch.from_numpy(done).to(self.device).float()
 
-        #loss = self.env.get_loss(s,a,s_1,r, self.policy_network, self.target_network, self.config['gamma'], self.config['multi_step'])        
-        loss = self.get_loss(s,a,s_1,r,done) # TODO self.env.get_loss weghalen als niet gebruikt
+        loss = self.get_loss(s,a,s_1,r,done)
 
         self.optimizer.zero_grad()  # zero the gradient buffers
         loss.backward()
