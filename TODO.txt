@@ -19,7 +19,10 @@
 	- Observations van pysc2 omzetten naar Observations.npy
 	- resultsmanager pca analyses aanpassen
 	
-	
+### dim red:
+	doen zoals backup voor pca(zie main folder): 
+		dim red meegeven aan atari wrapper en in step gebruiken zodat ie slechts 1x per frame doet, ipv 4 frames (en dus telkens dezelfde frame 4x)
+
 ### Generalisering:
 	- PPO specifiek voor movetobeacon uitbreiden naar alle minigames/obs+actions; dus dan iets van van network voor player_relative in + move_screen out naar algemeen network. Zie https://github.com/haroldmei/pysc2-study en https://github.com/simonmeister/pysc2-rl-agents/blob/master/run.py en https://github.com/pekaalto/sc2aibot
 

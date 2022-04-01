@@ -1,1 +1,0 @@
-Pca_1: trained on 40.000 frames, latent space: 42*42 for 99% of variance

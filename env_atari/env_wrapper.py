@@ -62,7 +62,7 @@ class EnvWrapper(EnvWrapperAbstract):
         state = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze(1) # Reshape to 4 X 1 X 84 X 84
         state = reduction_component.state_dim_reduction(state)
         if ae: return state.detach().cpu().numpy()
-        if pca: return torch.reshape(state, (int(sqrt(latent_space)), int(sqrt(latent_space)))).detach().cpu().numpy()
+        if pca: return torch.reshape(state, (4, int(sqrt(latent_space)), int(sqrt(latent_space)))).detach().cpu().numpy()
 
     def add_obs_to_ae_batch(self, state):
         self.ae_batch.append(np.array(np.expand_dims(state, 0)))

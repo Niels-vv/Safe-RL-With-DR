@@ -349,7 +349,7 @@ class Agent():
                 Q = Q[1]
             Q = Q.view(self.config['train_q_batch_size'], -1)
         else:
-            Q = self.policy_network(s) #TODO Not done for deepmdp; remove linear stuff if not used
+            Q = self.policy_network(s) #TODO Not done for deepmdp;
             Qt = self.target_network(s_1).detach()
             best_action = self.policy_network(s_1).max(1)[1]
         Q = Q.gather(1, a)

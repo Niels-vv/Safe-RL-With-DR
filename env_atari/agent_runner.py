@@ -66,7 +66,7 @@ def main(unused_argv):
             pca_config = get_pca_config(pca_path)
             input_shape = (4,42,42) # Shape of mlp input image: CxHxW
             mlp = policy_network(input_shape, env.env.action_space.n)
-            agent = PCAAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train, FLAGS.train_ae_online, pca_config)
+            agent = PCAAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train, pca_config)
         elif FLAGS.variant.lower() in ["ae"]:
             ae_path = f'env_atari/results_ae/{FLAGS.map}' 
             ae_config = get_ae_config(ae_path)

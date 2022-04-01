@@ -3,7 +3,7 @@ from utils.DataManager import DataManager
 from absl import app, flags
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("game", "PongNoFrameskip-v4", "OpenAI name of the game/env whose obs to train on.")
+flags.DEFINE_string("game_name", "PongNoFrameskip-v4", "OpenAI name of the game/env whose obs to train on.")
 
 def get_pca_config(path):
     pca_config = {
@@ -15,8 +15,8 @@ def get_pca_config(path):
     return pca_config
 
 def training_pca(unused_args):
-    observation_sub_dir = f'../drive/MyDrive/Thesis/Code/Atari/{FLAGS.game}/Observations'
-    results_sub_dir = f'env_atari/results_pca/{FLAGS.game}'
+    observation_sub_dir = f'../drive/MyDrive/Thesis/Code/Atari/{FLAGS.game_name}/Observations'
+    results_sub_dir = f'env_atari/results_pca/{FLAGS.game_name}'
     data_manager = DataManager(observation_sub_dir = observation_sub_dir, results_sub_dir = results_sub_dir)
 
     config = get_pca_config(results_sub_dir)

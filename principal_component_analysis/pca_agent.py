@@ -15,6 +15,7 @@ class PCAAgent(DQNAgent):
         print(f'PCA scalar: {pca_component.use_scalar}')
         super(PCAAgent, self).__init__(env, dqn_config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp, train)
 
+        self.latent_space = latent_space
         self.dim_reduction_component = pca_component
         self.reduce_dim = True
         self.pca = True

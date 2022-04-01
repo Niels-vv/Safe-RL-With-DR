@@ -42,6 +42,7 @@ class PCACompression:
             else:
                 obs = [obs]
             state.append(self.pca_main.transform(obs)[0])
+        state = np.array(state)
         return torch.tensor(state, dtype=torch.float, device=device)
 
     def get_pca_dimension_info(self):
