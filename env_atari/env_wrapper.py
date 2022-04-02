@@ -8,7 +8,7 @@ class EnvWrapper(EnvWrapperAbstract):
     def __init__(self, env, device):
         self.env = env
         self.device = device
-        self.ae_batch = []
+        self.ae_batch = np.empty((1000, 1, 42, 42),dtype=np.float32) #TODO
         
         self.reward = 0
         self.episode = 0
@@ -34,7 +34,11 @@ class EnvWrapper(EnvWrapperAbstract):
     def get_state(self, state, reduce_dim, reduction_component, pca, ae, latent_space, train_online):                 
         if reduce_dim:
             if train_online:
-                self.add_obs_to_ae_batch(state)
+                self.add_obs_to_ae_batch(state[-1]) # add last frame to ae training batch
+                if len(self.ae_batch) >= 1000: #TODO
+                    self.env.dim.train_on_trace(self.ae_batch)
+                    self.ae_batch = np.empty((1000, 1, 42, 42),dtype=np.float32)
+                    self.ae_index = 0
             state = self.reduce_dim(state, reduction_component, pca, ae, latent_space)           
         return state
 
@@ -65,7 +69,7 @@ class EnvWrapper(EnvWrapperAbstract):
         if pca: return torch.reshape(state, (4, int(sqrt(latent_space)), int(sqrt(latent_space)))).detach().cpu().numpy()
 
     def add_obs_to_ae_batch(self, state):
-        self.ae_batch.append(np.array(np.expand_dims(state, 0)))
+        if self.ae_index < self.ae_batch.shape[0]: self.ae_batch[self.ae_index] = np.expand_dims(state, axis=0)
 
     def get_loss(s,a,s_1,r, policy_network, target_network, gamma, multi_step):
         s_q  = policy_network(s)
