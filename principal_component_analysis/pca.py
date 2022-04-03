@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import IncrementalPCA as PCA
+from math import sqrt
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -34,16 +35,13 @@ class PCACompression:
         self.pca_main.fit(self.df)
 
     def state_dim_reduction(self, observation):
-        state = []
-        for obs in observation:
-            obs = obs.flatten().cpu().numpy()
-            if self.use_scalar:
-                obs = self.scaler.transform([obs])
-            else:
-                obs = [obs]
-            state.append(self.pca_main.transform(obs)[0])
-        state = np.array(state)
-        return torch.tensor(state, dtype=torch.float, device=device)
+        obs = observation.flatten()
+        if self.use_scalar:
+            obs = self.scaler.transform([obs])
+        else:
+            obs = [obs]
+        state =  np.array(self.pca_main.transform(observation)[0])
+        return np.reshape(state,(int(sqrt(self.latent_space)), int(sqrt(self.latent_space))))
 
     def get_pca_dimension_info(self):
         return np.cumsum(self.pcaStatistic.explained_variance_ratio_) 

@@ -1,6 +1,6 @@
 \chapter{Appendix}\label{appendix}
 %TODO pong: explain policy network image reduction?
-\section{RL agent architectures}\label{appendix-agents}
+\section{Starcraft II: RL agent architectures}\label{appendix-agents}
 Here we will lay out the details of the architecture and hyperparameter settings that were used in each agent mentioned in section \ref{research-method}. We will start by showing the baseline agent, which uses an architecture and hyperparameters that are shared by all agents. For all other agents, each extending this baseline agent, we will only give the additional architecture and parameters. For an overview of how each agent works, we refer to section \ref{research-exp}.
 
 
@@ -57,3 +57,4 @@ The transition loss neural network has only $1$ layer, a convolutional layers. M
 
 Besides the usual DDQN loss calculation as with the baseline agent, the DeepMDP has an additional loss added to this; this total loss is used to train all neural networks of the DeepMDP. The transition loss is calculated by comparing the prediction of the next observation after dimensionality reduction given by the transition loss network, with the actual next observation after dimensionality reduction (i.e. the output of the encoder). The loss is calculated using the L1 loss function \cite{l1}. Added to this loss, is the gradient penalty which is discounted by a hyperparameter set to $0.01$. The gradient penalty is a combination of the gradient penalty of the encoder, the policy network and the transition loss network. For each of these three networks, the penalty is calculated using the Wasserstein Generative Adversarial Network penalty \cite{wgan}.
 
+\section{OpenAI Pong: RL agent architectures}\label{appendix-agents-pong}

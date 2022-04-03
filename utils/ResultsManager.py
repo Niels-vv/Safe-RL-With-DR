@@ -74,39 +74,19 @@ class AgentPerformance:
 # Class methods showing analyses of PCA
 class PCAAnalysis:    
     @staticmethod
-    def show_state_representation_pca(obs_dir, pca, dim_name, recon_name):
-        def show_state_representation(obs):
+    def show_state_representation_pca(obs, indices, pca, file_name):
+        def show_state_representation(state, filename):
             # Get state in latent space and save image
-            latent_repr = pca.state_dim_reduction(obs)
-            state = torch.reshape(latent_repr, (int(sqrt(pca.latent_space)), int(sqrt(pca.latent_space)))).detach().cpu().numpy()
-            norm = plt.Normalize(vmin=state.min(), vmax=state.max())
+            latent_repr = pca.state_dim_reduction(state)
+            norm = plt.Normalize(vmin=latent_repr.min(), vmax=latent_repr.max())
             fig, axarr = plt.subplots(1)
-            axarr.imshow(norm(state))
-            plt.savefig(dim_name)
+            axarr.imshow(norm(latent_repr))
+            plt.savefig(filename)
 
-        data_manager = DataManager(observation_sub_dir = obs_dir)
-        obs = data_manager.get_observations()
-
-        jump = 10996 
-        for index, row in obs.iterrows():
-            if index % jump != 0 or index == 0: continue
-            row = row.to_numpy()
-            state = row.reshape(32,32)
-
-            state = torch.tensor(state, dtype=torch.float, device=device)
-            break
-        
-        show_state_representation(state)
-
-        # Store original state as image
-        norm = plt.Normalize(vmin=state.min(), vmax=state.max())
-        fig, axarr = plt.subplots(1)
-        axarr.imshow(norm(state.cpu().numpy()))
-        plt.savefig(f'State_check_original.png')
-
-        # TODO remove test
-        plt.imshow(state.cpu().numpy())
-        plt.savefig("state_check_version2.png")
+        for state_index in indices:
+            state = obs[state_index]
+            filename = f'{file_name}_{state_index+1}.png'
+            show_state_representation(state, filename)
 
 # Class methods showing analyses of autoencoder, e.g. visualizing feature maps and showing correlation matrix
 class AEAnalysis:
@@ -403,26 +383,26 @@ def get_rectangle(area):
 def show_base_results(results_path):
     base_results_file = f'{results_path}/Results'
     store_filename_base = "Base_agent_results.png"
-    base_name = "base agent"
+    base_name = "Baseline agent"
     AgentPerformance.show_agent_results(base_results_file, base_name, store_filename_base)
 
 # Show results for pre-trained ae agent.
 def show_pretrained_ae_results(results_path):
-    ae_results_file = f'{results_path}/results_ae'
+    ae_results_file = f'{results_path}/Results_ae'
     ae_name = "Pre-trained autoencoder agent"
     store_filename_ae = "Pretrained_autoencoder_agent_results.png"
     AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae)
 
 # Show results for non-pretrained (online trained) ae agent
 def show_online_ae_results(results_path):
-    ae_results_file = f'{results_path}/results_ae_online'
+    ae_results_file = f'{results_path}/Results_online_ae'
     store_filename_ae = "Online_autoencoder_agent_results.png"
     ae_name = "Online trained autoencoder agent"
     AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae)
 
 def show_pca_agent_results(results_path):
-    pca_results_file = f'{results_path}/results_pca_scalar'
-    store_filename_pca = "PCA_with_scalar_agent_results.png"
+    pca_results_file = f'{results_path}/Results_pca'
+    store_filename_pca = "PCA_results.png"
     pca_name = "PCA agent"
     AgentPerformance.show_agent_results(pca_results_file, pca_name, store_filename_pca)
 
@@ -448,19 +428,10 @@ def show_filters_ae(ae):
 def most_activation_image_ae(ae, shape, deepdream=True):
     AEAnalysis.activation_image(ae,shape, deepdream)
 
-def pca_analyses():
-    obs_dir = "/content/drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
-    # Analysis of PCA with scalar
-    dim_name = "pca_with_scalar_latent_state.png"
-    recon_name = "pca_with_scalar_reconstructed_state.png"
-    pca = DataManager.get_component(f'env_pysc2/results_pca/MoveToBeacon',"pca1_with_scalar.pt") # TODO check of naamgeving nog klopt
-    PCAAnalysis.show_state_representation_pca(obs_dir, pca, dim_name, recon_name)
-
-    # Analysis of PCA without scalar
-    dim_name = "pca_without_scalar_latent_state.png"
-    recon_name = "pca_without_scalar_reconstructed_state.png"
-    pca = DataManager.get_component(f'env_pysc2/results_pca/MoveToBeacon',"pca2_no_scalar.pt") # TODO check of naamgeving nog klopt
-    PCAAnalysis.show_state_representation_pca(obs_dir, pca, dim_name, recon_name)
+def pca_analyses(obs, state_indices, pca_path, pca_name):
+    pca = DataManager.get_component(pca_path,pca_name)
+    filename = "PCA_latent_representation"
+    PCAAnalysis.show_state_representation_pca(obs, state_indices, pca, filename)
 
 def show_epsilon_decay_pysc2():
     epsilons = 0.01 / np.logspace(-2, 0, 100000, endpoint=False) - 0.01
@@ -520,15 +491,17 @@ if __name__ == "__main__":
         ae_name = "ae.pt"
         ae = AEAnalysis.get_component(ae_dir, ae_name)
 
+        pca_name = "pca.pt"
+
         obs_dir = "../drive/MyDrive/Thesis/Code/Atari/PongNoFrameskip-v4/Observations"
         data_manager = DataManager(observation_sub_dir = obs_dir)
         data_manager.obs_file = f'{data_manager.observations_path}/Observations_corr.npy'
         print("Retrieving observations...")
         obs = data_manager.get_observations()   
-        obs = [ob.flatten() for ob in obs]   
-        print(process.memory_info().rss,flush=True)
-        states = pd.DataFrame(obs, columns=list(range(obs[0].shape[0])))
-        print(process.memory_info().rss,flush=True) 
+        # obs = [ob.flatten() for ob in obs]   
+        # print(process.memory_info().rss,flush=True)
+        # states = pd.DataFrame(obs, columns=list(range(obs[0].shape[0])))
+        # print(process.memory_info().rss,flush=True) 
 
         original_shape = (84,84)
         latent_shape = (42,42)
@@ -541,12 +514,20 @@ if __name__ == "__main__":
     #show_base_results(results_path)
     #print("AE results")
     #show_pretrained_ae_results(results_path)
-    print("Correlation matrix")
-    show_reduced_features_correlation(ae, obs, states, features, original_shape, latent_shape)
-    print("feature maps")
+    print("AE results")
+    show_online_ae_results(results_path)
+    print("PCA agent results")
+    show_pca_agent_results
+
+    print("PCA analyses")
+    pca_analyses(obs,states,results_dir,pca_name)
+
+    #print("Correlation matrix")
+    #show_reduced_features_correlation(ae, obs, states, features, original_shape, latent_shape)
+    #print("feature maps")
     #show_feature_map_ae(ae, obs, states)
-    print("Filters")
+    #print("Filters")
     #show_filters_ae(ae)
-    print("activation")
+    #print("activation")
     #most_activation_image_ae(ae, original_shape,deepdream=True)
     

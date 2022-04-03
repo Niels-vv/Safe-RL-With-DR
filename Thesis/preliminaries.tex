@@ -83,7 +83,14 @@ To produce an output, a neuron sums its input. Each input of a neuron has its ow
 
 Different types of neural networks exist. One important difference here is the connections between neurons. The simplest form is a \emph{feedforward} neural network. Here, each neuron is only connected to neurons of the next layer, meaning there are no cycles. They are often fully connected: a neuron passes its output to each neuron of the next layer. An example of fully connected feedforward neural network can be seen in figure \ref{fig:nn}.
 
-Another important type of neural network is a \emph{convolutional neural network} (CNN). This is a network that is useful for grid-like data, like image data. It is well suited for applications like image recognition. Such a network makes use of at least one convolutional layer. A convolutional layer consists of multiple kernels (or: filters): a set of trainable parameters. Each kernel convolves across the input to produce a feature map (or: activation map). Since each kernel has different parameters, each feature map will highlight different features of the input. These feature maps are then stacked to produce the output of the convolutional layer.
+Another important type of neural network is a \emph{convolutional neural network} (CNN). This is a network that is useful for grid-like data, like image data. It is well suited for applications like image recognition. Such a network makes use of at least one convolutional layer. A convolutional layer consists of multiple filters (or: kernels): a set of trainable parameters. Each kernel convolves across the input to produce a feature map (or: activation map). Since each kernel has different parameters, each feature map will highlight different features of the input. These feature maps are then stacked to produce the output of the convolutional layer. This process is shown in figure \ref{fig:cnn}, where a convolutional with a single filter is shown. Adding filters would mean that those filters would convolve in the same way over the same input, creating multiple feature maps that are stacked to produce its output.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{CNN}
+    \caption{A convolutional layer with a single filter. The filter convolves across the input image to produce one feature map. Adding more filters would results in a stack of feature maps (one per filter).}
+    \label{fig:nn}
+\end{figure}
 
 To improve the given output, a network can update its weights. For this it needs a loss function that computes how incorrect given output was. To calculate how much each weight needs to be changed, backpropagation is used. This computes the gradient for each weight with respect to the loss function. This way, loss can be minimized out therefore the output optimized.
 
@@ -123,7 +130,14 @@ Additionally, we don't train the policy network with every step, but use a hyper
 
 Thus, when training the policy network we pass batches of next states to the policy network to get their maximum Q-values. The corresponding rewards are added to calculate the TD-target. Then the initial states are passed to the policy network to get their Q-values. These values are then used to calculate the TD-error which used to calculate the loss using the loss-function. Then the policy network is updated by backpropagating the loss.
 
-Now we can look at the algorithm used in this paper: double-DQN (DDQN). DDQN is every similar to DQN. The difference is in how the policy network is trained \cite{ddqn}. In DQN we are taking the maximum of all Q-values. Since these values are estimates that differ from their true value, DQN tends to overestimate the highest Q-value. Doing this often will lead to divergence \cite[p. 293-297]{grokking}. Implicitly we are using the target network for two things: to get the action with the highest value, and what its value is. To solve the problem of overestimating Q-values, DDQN separates these two concerns: we use the policy network to get the action with the highest Q-value and then use the target network to get this action's Q-value. This way, the target network cross-validates the estimates of the policy network.
+Now we can look at the algorithm used in this paper: double-DQN (DDQN). An overview of how a DDQN agent works is given in figure \ref{fig:ddqn}. DDQN is every similar to DQN. The difference is in how the policy network is trained \cite{ddqn}. In DQN we are taking the maximum of all Q-values. Since these values are estimates that differ from their true value, DQN tends to overestimate the highest Q-value. Doing this often will lead to divergence \cite[p. 293-297]{grokking}. Implicitly we are using the target network for two things: to get the action with the highest value, and what its value is. To solve the problem of overestimating Q-values, DDQN separates these two concerns: we use the policy network to get the action with the highest Q-value and then use the target network to get this action's Q-value. This way, the target network cross-validates the estimates of the policy network.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{DDQN}
+    \caption{An overview of how a DDQN RL agent works.}
+    \label{fig:ddqn}
+\end{figure}
 
 The pseudocode for DDQN is given in figure \ref{alg:ddqn}. This shows its training step for optimizing the policy network. This method is called within the interaction between agent and environment as explained in section \ref{pl-rl}. In short, the agent will receive an observation from the environment and the agent will, in our case, use a {$\epsilon$}-greedy strategy to choose an action, where the policy network is used. Then, the environment transitions and gives a new observation to the agent. Hyperparameters are used to set the number of such steps in between training the policy network, and to set the number of steps between updating the target network.
 

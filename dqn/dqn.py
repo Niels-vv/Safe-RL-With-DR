@@ -140,18 +140,18 @@ class Agent():
                     state = new_state
 
                     # Train ae (if non-pretrained ae is used)
-                    if self.train_ae_online and len(self.env.ae_batch) >= self.dim_reduction_component.batch_size: 
-                        ae_batch = np.array(self.env.ae_batch)
-                        self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(self.device).float())
-                        self.env.ae_batch = []
+                    # if self.train_ae_online and len(self.env.ae_batch) >= self.dim_reduction_component.batch_size: 
+                    #     ae_batch = np.array(self.env.ae_batch)
+                    #     self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(self.device).float())
+                    #     self.env.ae_batch = []
 
                     # Episode done
                     if self.env.is_last_obs():
                         # Train ae (if non-pretrained ae is used)
-                        if self.train_ae_online and len(self.env.ae_batch) > 0: 
-                            ae_batch = np.array(self.env.ae_batch)
-                            self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(self.device).float())
-                            self.env.ae_batch = []
+                        # if self.train_ae_online and len(self.env.ae_batch) > 0: 
+                        #     ae_batch = np.array(self.env.ae_batch)
+                        #     self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(self.device).float())
+                        #     self.env.ae_batch = []
 
                         # Store and show info
                         end_duration = time.time()
