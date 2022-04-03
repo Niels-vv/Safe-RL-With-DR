@@ -1,32 +1,33 @@
-\contentsline {chapter}{\numberline {1}Introduction}{2}{chapter.1}%
-\contentsline {chapter}{\numberline {2}Preliminaries}{3}{chapter.2}%
-\contentsline {section}{\numberline {2.1}Reinforcement learning}{3}{section.2.1}%
-\contentsline {subsection}{\numberline {2.1.1}General overview}{3}{subsection.2.1.1}%
-\contentsline {subsection}{\numberline {2.1.2}Artificial neural networks}{7}{subsection.2.1.2}%
-\contentsline {subsection}{\numberline {2.1.3}Double deep-q-network}{8}{subsection.2.1.3}%
-\contentsline {section}{\numberline {2.2}State-space dimensionality reduction}{11}{section.2.2}%
-\contentsline {subsection}{\numberline {2.2.1}Principal Component Analysis}{11}{subsection.2.2.1}%
-\contentsline {subsection}{\numberline {2.2.2}Autoencoder}{12}{subsection.2.2.2}%
-\contentsline {subsection}{\numberline {2.2.3}DeepMDP}{13}{subsection.2.2.3}%
-\contentsline {chapter}{\numberline {3}Research}{15}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Method}{15}{section.3.1}%
-\contentsline {subsection}{\numberline {3.1.1}Experiments}{15}{subsection.3.1.1}%
-\contentsline {subsection}{\numberline {3.1.2}Environment: Starcraft II}{17}{subsection.3.1.2}%
-\contentsline {subsubsection}{Agents setup}{19}{section*.11}%
-\contentsline {subsection}{\numberline {3.1.3}Environment: OpenAI Pong}{21}{subsection.3.1.3}%
-\contentsline {subsubsection}{Agents setup}{21}{section*.14}%
-\contentsline {section}{\numberline {3.2}Results}{21}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Research results: Starcraft II}{22}{subsection.3.2.1}%
-\contentsline {subsubsection}{Discussion}{22}{section*.17}%
-\contentsline {subsection}{\numberline {3.2.2}Research results: OpenAI Pong}{26}{subsection.3.2.2}%
-\contentsline {subsubsection}{Discussion}{26}{section*.26}%
-\contentsline {subsection}{\numberline {3.2.3}Results discussion}{28}{subsection.3.2.3}%
-\contentsline {chapter}{\numberline {4}Related work}{39}{chapter.4}%
-\contentsline {chapter}{\numberline {5}Future work}{41}{chapter.5}%
-\contentsline {chapter}{\numberline {6}Conclusions}{42}{chapter.6}%
-\contentsline {chapter}{\numberline {A}Appendix}{45}{appendix.A}%
-\contentsline {section}{\numberline {A.1}RL agent architectures}{45}{section.A.1}%
-\contentsline {subsection}{\numberline {A.1.1}Baseline agent}{45}{subsection.A.1.1}%
-\contentsline {subsection}{\numberline {A.1.2}PCA agent}{47}{subsection.A.1.2}%
-\contentsline {subsection}{\numberline {A.1.3}Pre-trained and online trained autoencoder agent}{47}{subsection.A.1.3}%
-\contentsline {subsection}{\numberline {A.1.4}DeepMDP agent}{48}{subsection.A.1.4}%
+\contentsline {chapter}{\numberline {1}Introduction}{3}{chapter.1}%
+\contentsline {chapter}{\numberline {2}Preliminaries}{4}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Reinforcement learning}{4}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}General overview}{4}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Artificial neural networks}{8}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Double deep-q-network}{9}{subsection.2.1.3}%
+\contentsline {section}{\numberline {2.2}State-space dimensionality reduction}{12}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Principal Component Analysis}{13}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Autoencoder}{14}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}DeepMDP}{15}{subsection.2.2.3}%
+\contentsline {chapter}{\numberline {3}Research}{17}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Method}{17}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Experiments}{17}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Environment: Starcraft II}{22}{subsection.3.1.2}%
+\contentsline {subsubsection}{Agents setup}{23}{section*.18}%
+\contentsline {subsection}{\numberline {3.1.3}Environment: OpenAI Pong}{26}{subsection.3.1.3}%
+\contentsline {subsubsection}{Agents setup}{27}{section*.23}%
+\contentsline {section}{\numberline {3.2}Results}{29}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Research results: Starcraft II}{29}{subsection.3.2.1}%
+\contentsline {subsubsection}{Discussion}{31}{section*.27}%
+\contentsline {subsection}{\numberline {3.2.2}Research results: OpenAI Pong}{37}{subsection.3.2.2}%
+\contentsline {subsubsection}{Discussion}{37}{section*.37}%
+\contentsline {subsection}{\numberline {3.2.3}Results discussion}{39}{subsection.3.2.3}%
+\contentsline {chapter}{\numberline {4}Related work}{49}{chapter.4}%
+\contentsline {chapter}{\numberline {5}Future work}{51}{chapter.5}%
+\contentsline {chapter}{\numberline {6}Conclusions}{52}{chapter.6}%
+\contentsline {chapter}{\numberline {A}Appendix}{56}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Starcraft II: RL agent architectures}{56}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Baseline agent}{56}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {A.1.2}PCA agent}{58}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Pre-trained and online trained autoencoder agent}{58}{subsection.A.1.3}%
+\contentsline {subsection}{\numberline {A.1.4}DeepMDP agent}{59}{subsection.A.1.4}%
+\contentsline {section}{\numberline {A.2}OpenAI Pong: RL agent architectures}{59}{section.A.2}%

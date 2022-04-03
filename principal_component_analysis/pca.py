@@ -40,7 +40,7 @@ class PCACompression:
             obs = self.scaler.transform([obs])
         else:
             obs = [obs]
-        state =  np.array(self.pca_main.transform(observation)[0])
+        state =  np.array(self.pca_main.transform(obs)[0])
         return np.reshape(state,(int(sqrt(self.latent_space)), int(sqrt(self.latent_space))))
 
     def get_pca_dimension_info(self):

@@ -18,7 +18,7 @@
 	- 2e results file ae begint op 0 ipv 320 oid
 	- Observations van pysc2 omzetten naar Observations.npy
 	- resultsmanager pca analyses aanpassen
-	
+	- opgeslagen pca.pt voor zowel pong als pysc2 gebruiken nog oude code voor state_dim
 ### dim red:
 	doen zoals backup voor pca(zie main folder): 
 		dim red meegeven aan atari wrapper en in step gebruiken zodat ie slechts 1x per frame doet, ipv 4 frames (en dus telkens dezelfde frame 4x)

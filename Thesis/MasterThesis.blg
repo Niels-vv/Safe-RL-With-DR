@@ -8,45 +8,45 @@ Warning--empty journal in mario
 Warning--empty journal in grokking
 Warning--empty booktitle in relu
 Warning--empty journal in ddqn
-You've used 21 entries,
+You've used 22 entries,
             2118 wiz_defined-function locations,
-            619 strings with 8093 characters,
-and the built_in function-call counts, 7884 in all, are:
-= -- 695
-> -- 564
+            622 strings with 8231 characters,
+and the built_in function-call counts, 8272 in all, are:
+= -- 725
+> -- 602
 < -- 5
-+ -- 224
-- -- 202
-* -- 591
-:= -- 1370
-add.period$ -- 62
-call.type$ -- 21
-change.case$ -- 162
++ -- 239
+- -- 216
+* -- 622
+:= -- 1438
+add.period$ -- 64
+call.type$ -- 22
+change.case$ -- 172
 chr.to.int$ -- 0
-cite$ -- 25
-duplicate$ -- 251
-empty$ -- 502
-format.name$ -- 202
-if$ -- 1587
+cite$ -- 26
+duplicate$ -- 258
+empty$ -- 524
+format.name$ -- 216
+if$ -- 1662
 int.to.chr$ -- 0
-int.to.str$ -- 21
+int.to.str$ -- 22
 missing$ -- 19
-newline$ -- 106
-num.names$ -- 42
-pop$ -- 188
+newline$ -- 110
+num.names$ -- 44
+pop$ -- 203
 preamble$ -- 1
-purify$ -- 143
+purify$ -- 152
 quote$ -- 0
-skip$ -- 202
+skip$ -- 210
 stack$ -- 0
-substring$ -- 262
-swap$ -- 51
+substring$ -- 267
+swap$ -- 52
 text.length$ -- 5
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 80
+type$ -- 84
 warning$ -- 4
-while$ -- 54
-width$ -- 23
-write$ -- 220
+while$ -- 56
+width$ -- 24
+write$ -- 228
 (There were 5 warnings)

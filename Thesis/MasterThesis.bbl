@@ -5,6 +5,11 @@ Blizzard.
 \newblock Blizzard/s2client-proto: Starcraft {II} {Client} - protocol
   definitions used to communicate with {StarCraft II}.
 
+\bibitem{pong}
+Greg Brockman, Vicki Cheung, Ludwig Pettersson, Jonas Schneider, John Schulman,
+  Jie Tang, and Wojciech Zaremba.
+\newblock Openai gym, 2016.
+
 \bibitem{mario}
 William Curran, Tim Brys, Matthew Taylor, and William Smart.
 \newblock Using pca to efficiently represent state spaces.

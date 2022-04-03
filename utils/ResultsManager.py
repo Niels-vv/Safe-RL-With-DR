@@ -22,7 +22,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class AgentPerformance:
 
     @staticmethod
-    def show_agent_results(results_file, name, store_img_filename):
+    def show_agent_results(results_file, name, store_img_filename,yrange):
         i = 1
         rewards = []
         while os.path.isfile(f'{results_file}_{i}.csv'):
@@ -32,7 +32,7 @@ class AgentPerformance:
 
         learning_period = 30
         learning_average = AgentPerformance.get_average(rewards, learning_period)
-        AgentPerformance.show_plot("Episode", "Reward", rewards, learning_average, learning_period, f'Training results for {name}', store_img_filename)
+        AgentPerformance.show_plot("Episode", "Reward", rewards, learning_average, learning_period, f'Training results for {name}', store_img_filename, yrange)
         
     @staticmethod
     def get_average(values, period):
@@ -59,7 +59,7 @@ class AgentPerformance:
             results_file = f'{results_path}/results_{i}.csv' 
 
     @staticmethod
-    def show_plot(x_name, y_name, rewards, average, period, title, filename):
+    def show_plot(x_name, y_name, rewards, average, period, title, filename,yrange):
         plt.figure(2)
         plt.clf()        
         plt.title(title)
@@ -67,6 +67,7 @@ class AgentPerformance:
         plt.ylabel(y_name)
         plt.plot(rewards, '-b', label = "Rewards per episode")
         plt.plot(average, '-g', label = f'Average reward per {period} episodes')
+        plt.ylim([yrange[0],yrange[1]])
         plt.legend(loc="lower right")
         plt.savefig(filename)
         plt.show()
@@ -380,38 +381,38 @@ def get_rectangle(area):
 ### Results analysis methods
 
 # Show results for baseline agent.
-def show_base_results(results_path):
+def show_base_results(results_path, yrange):
     base_results_file = f'{results_path}/Results'
     store_filename_base = "Base_agent_results.png"
     base_name = "Baseline agent"
-    AgentPerformance.show_agent_results(base_results_file, base_name, store_filename_base)
+    AgentPerformance.show_agent_results(base_results_file, base_name, store_filename_base, yrange)
 
 # Show results for pre-trained ae agent.
-def show_pretrained_ae_results(results_path):
+def show_pretrained_ae_results(results_path, yrange):
     ae_results_file = f'{results_path}/Results_ae'
     ae_name = "Pre-trained autoencoder agent"
     store_filename_ae = "Pretrained_autoencoder_agent_results.png"
-    AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae)
+    AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae, yrange)
 
 # Show results for non-pretrained (online trained) ae agent
-def show_online_ae_results(results_path):
+def show_online_ae_results(results_path, yrange):
     ae_results_file = f'{results_path}/Results_online_ae'
     store_filename_ae = "Online_autoencoder_agent_results.png"
     ae_name = "Online trained autoencoder agent"
-    AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae)
+    AgentPerformance.show_agent_results(ae_results_file, ae_name, store_filename_ae, yrange)
 
-def show_pca_agent_results(results_path):
+def show_pca_agent_results(results_path, yrange):
     pca_results_file = f'{results_path}/Results_pca'
-    store_filename_pca = "PCA_results.png"
+    store_filename_pca = "PCA_agent_results.png"
     pca_name = "PCA agent"
-    AgentPerformance.show_agent_results(pca_results_file, pca_name, store_filename_pca)
+    AgentPerformance.show_agent_results(pca_results_file, pca_name, store_filename_pca, yrange)
 
 # Show results for deepmdp agent
-def show_deepmdp_results(results_path):
+def show_deepmdp_results(results_path, yrange):
     deepmdp_results_file = f'{results_path}/results_deepmdp'
     deepmdp_name = "DeepMDP agent"
     store_filename_deepmdp = "Deepmdp_agent_results.png"
-    AgentPerformance.show_agent_results(deepmdp_results_file, deepmdp_name, store_filename_deepmdp)
+    AgentPerformance.show_agent_results(deepmdp_results_file, deepmdp_name, store_filename_deepmdp, yrange)
 
 # Show a heatmap of the correlation matrix between original state features and reduced state features (reduced by an autoencoder)
 def show_reduced_features_correlation(ae, obs, features, original_shape, latent_shape):
@@ -466,6 +467,7 @@ if __name__ == "__main__":
 
     if env_name == "pysc2":
         results_dir = "env_pysc2/results/dqn/MoveToBeacon"
+        yrange = (0,30)
 
         ae_dir = "env_pysc2/results_vae/MoveToBeacon"
         ae_name = "ae.pt"
@@ -484,13 +486,14 @@ if __name__ == "__main__":
 
 
     elif env_name == "pong":
-        print(process.memory_info().rss,flush=True) 
         results_dir = "env_atari/results/dqn/PongNoFrameskip-v4"
+        yrange = (-21,21)
 
         ae_dir = "env_atari/results_ae/PongNoFrameskip-v4"
         ae_name = "ae.pt"
         ae = AEAnalysis.get_component(ae_dir, ae_name)
 
+        pca_dir = "env_atari/results_pca/PongNoFrameskip-v4"
         pca_name = "pca.pt"
 
         obs_dir = "../drive/MyDrive/Thesis/Code/Atari/PongNoFrameskip-v4/Observations"
@@ -511,13 +514,13 @@ if __name__ == "__main__":
     results_path = f'{PATH}/../{results_dir}'
 
     #print("Baseline results")
-    #show_base_results(results_path)
+    #show_base_results(results_path, yrange)
     #print("AE results")
-    #show_pretrained_ae_results(results_path)
+    #show_pretrained_ae_results(results_path, yrange)
     print("AE results")
-    show_online_ae_results(results_path)
+    show_online_ae_results(results_path, yrange)
     print("PCA agent results")
-    show_pca_agent_results
+    show_pca_agent_results(results_path, yrange)
 
     print("PCA analyses")
     pca_analyses(obs,states,results_dir,pca_name)
