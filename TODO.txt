@@ -7,7 +7,7 @@
 	- obs_dir als argument aangezien die in drive staat
 	- Resultsmanager aanpassen; in notebook nu main aanroepen voor verschillende doeleindes
 	- Resultsmanager: visualize_feature_maps aanpassen/verkleinen
-	- Linear dingen en PPO weghalen als ongebruikt is
+	- PPO weghalen
 	- In dqn_base, in zowel fill_buffer als run_loop: in if self.reduce_dim: niet moeten hoeven commenten en uncommenten voor switchen tussen pca en ae
 	- paths naar sub dirs (bv resultsmnaager obs_dir) als globala variabele
 	- max_norm_clip op float('inf')
@@ -19,6 +19,7 @@
 	- Observations van pysc2 omzetten naar Observations.npy
 	- resultsmanager pca analyses aanpassen
 	- opgeslagen pca.pt voor zowel pong als pysc2 gebruiken nog oude code voor state_dim
+	- benoemen in readme dat load_policy max_episode uitgaat van self.episode van policy die geladen wordt
 ### dim red:
 	doen zoals backup voor pca(zie main folder): 
 		dim red meegeven aan atari wrapper en in step gebruiken zodat ie slechts 1x per frame doet, ipv 4 frames (en dus telkens dezelfde frame 4x)
