@@ -3,13 +3,18 @@ from torch import nn
 from env_wrapper_abstract.env_wrapper import EnvWrapperAbstract
 import numpy as np
 from math import sqrt
+from collections import deque
 
 class EnvWrapper(EnvWrapperAbstract):
     def __init__(self, env, device):
         self.env = env
         self.device = device
-        self.ae_batch = np.empty((1000, 1, 42, 42),dtype=np.float32) #TODO
+        self.ae_batch_len = 1000 # Gather 1000 frames for ae training
+        self.ae_batch = np.empty((self.ae_batch_len, 1, 42, 42),dtype=np.float32)
         self.ae_index = 0
+
+        self.resetted = True    # Check whether we just resetted; needed for frame appending in state
+        self.state = deque([],maxlen=4)
         
         self.reward = 0
         self.episode = 0
@@ -35,13 +40,23 @@ class EnvWrapper(EnvWrapperAbstract):
     def get_state(self, state, reduce_dim, reduction_component, pca, ae, latent_space, train_online):                 
         if reduce_dim:
             if train_online:
-                self.add_obs_to_ae_batch(state[-1]) # add last frame to ae training batch
-                if self.ae_index-1 >= 1000: #TODO
+                self.add_obs_to_ae_batch(state[-1]) # add last 84 x 84 frame to ae training batch
+                if self.ae_index >= self.ae_batch_len: # Train AE on gathered frames
                     self.env.dim.train_on_trace(self.ae_batch)
-                    self.ae_batch = np.empty((1000, 1, 42, 42),dtype=np.float32)
+                    self.ae_batch = np.empty((self.ae_batch_len, 1, 42, 42),dtype=np.float32)
                     self.ae_index = 0
-            state = self.reduce_dim(state, reduction_component, pca, ae, latent_space)           
-        return state
+
+            frame = self.reduce_dim(state[-1], reduction_component, pca, ae, latent_space) # Reduce dim of last frame
+            if self.resetted:                   # Append reduced frame to state
+                for _ in range(4):
+                    self.state.append(frame)
+            else:
+                self.state.append(frame)
+                
+            self.resetted = False
+            return np.array(self.state) # Return 4 x 42 x 42 state
+
+        return state    # Return 4 x 84 x 84 state
 
     def step(self, action):
         self.total_steps += 1
@@ -52,6 +67,7 @@ class EnvWrapper(EnvWrapperAbstract):
 
     def reset(self):
         self.done = False
+        self.resetted = True
         self.step_num = 0
         self.reward = 0
         self.episode += 1
@@ -64,10 +80,13 @@ class EnvWrapper(EnvWrapperAbstract):
         return self.done
 
     def reduce_dim(self, state, reduction_component, pca, ae, latent_space):
-        state = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze(1) # Reshape to 4 X 1 X 84 X 84
-        state = reduction_component.state_dim_reduction(state)
-        if ae: return state.detach().cpu().numpy()
-        if pca: return torch.reshape(state, (4, int(sqrt(latent_space)), int(sqrt(latent_space)))).detach().cpu().numpy()
+        if ae:
+            state = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze(0).unsqueeze(0) # Reshape to 1 X 1 X 84 X 84
+            state = reduction_component.state_dim_reduction(state) 
+            return state.detach().cpu().numpy()
+        if pca: 
+            state = reduction_component.state_dim_reduction(state) 
+            return np.reshape(state, (1, int(sqrt(latent_space)), int(sqrt(latent_space))))
 
     def add_obs_to_ae_batch(self, state):
         if self.ae_index < self.ae_batch.shape[0]: 

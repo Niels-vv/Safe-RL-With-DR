@@ -53,7 +53,7 @@ def main(unused_argv):
     if FLAGS.store_obs:
         agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, train=False)
         load_policy(agent, results_path)
-        agent.epsilon._value = 0.2 # 0.2 randomness when choosing action to prevent similar episodes
+        agent.epsilon._value = 0.2 # 0.2 randomness when choosing action to prevent too similar episodes
         agent.epsilon.isTraining = True
         total_obs = 100000
         obs = np.empty((total_obs, input_shape[0], input_shape[1], input_shape[2]),dtype=np.float32)

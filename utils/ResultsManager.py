@@ -408,8 +408,8 @@ def show_pca_agent_results(results_path, yrange):
     AgentPerformance.show_agent_results(pca_results_file, pca_name, store_filename_pca, yrange)
 
 # Show results for deepmdp agent
-def show_deepmdp_results(results_path, yrange):
-    deepmdp_results_file = f'{results_path}/results_deepmdp'
+def show_deepmdp_agent_results(results_path, yrange):
+    deepmdp_results_file = f'{results_path}/Results_deepmdp'
     deepmdp_name = "DeepMDP agent"
     store_filename_deepmdp = "Deepmdp_agent_results.png"
     AgentPerformance.show_agent_results(deepmdp_results_file, deepmdp_name, store_filename_deepmdp, yrange)
@@ -521,6 +521,9 @@ if __name__ == "__main__":
     show_online_ae_results(results_path, yrange)
     print("PCA agent results")
     show_pca_agent_results(results_path, yrange)
+    if env_name == "pysc2":
+        print("DeepMDP agent results")
+        show_deepmdp_agent_results(results_path, yrange)
 
     print("PCA analyses")
     pca_analyses(obs,states,results_dir,pca_name)
