@@ -19,11 +19,20 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
+
 \newtheorem{definition}{Definition}
 \DeclareMathOperator*{\argmax}{arg\,max}
 
 \makeatletter %otherwise geometry resets everything
-\Gm@restore@org
+
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+            {-2.5ex\@plus -1ex \@minus -.25ex}%
+            {1.25ex \@plus .25ex}%
+            {\normalfont\normalsize\bfseries}}
+\makeatother
+\setcounter{secnumdepth}{4} % how many sectioning levels to assign numbers to
+\setcounter{tocdepth}{4}    % how many sectioning levels to show in ToC
+
 \makeatother
 
 \setlength{\itemsep}{0cm}
@@ -46,7 +55,7 @@
 \textsc{\Large Radboud University}\\[1cm]
 \hrule
 \vspace{0.4cm}
-\textbf{\huge Title Master Thesis}\\[0.4cm]
+\textbf{\huge State-space dimensionality reduction in model-free reinforcement learning}\\[0.4cm]
 \hrule
 \vspace{2cm}
 \begin{minipage}[t]{0.45\textwidth}

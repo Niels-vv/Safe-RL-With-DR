@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TexmakerSession quickmode="12">
-    <document line="13" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/MasterThesis.tex" bookmark3="0" hasfocus="false" bookmark1="0" master="true" bookmark2="0"/>
-    <document line="0" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/introduction.tex" bookmark3="0" hasfocus="false" bookmark1="0" master="false" bookmark2="0"/>
-    <document line="0" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/abstract.tex" bookmark3="0" hasfocus="false" bookmark1="0" master="false" bookmark2="0"/>
-    <document line="13" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/preliminaries.tex" bookmark3="0" hasfocus="false" bookmark1="0" master="false" bookmark2="0"/>
-    <document line="40" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/bibliography.bib" bookmark3="0" hasfocus="false" bookmark1="0" master="false" bookmark2="0"/>
-    <document line="164" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/research.tex" bookmark3="0" hasfocus="false" bookmark1="0" master="false" bookmark2="0"/>
-    <document line="3" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/appendix.tex" bookmark3="0" hasfocus="true" bookmark1="0" master="false" bookmark2="0"/>
+    <document bookmark3="0" master="false" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/conclusions.tex" bookmark1="0" bookmark2="0" hasfocus="false" line="0"/>
+    <document bookmark3="0" master="true" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/MasterThesis.tex" bookmark1="0" bookmark2="0" hasfocus="false" line="34"/>
+    <document bookmark3="0" master="false" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/preliminaries.tex" bookmark1="0" bookmark2="0" hasfocus="false" line="164"/>
+    <document bookmark3="0" master="false" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/introduction.tex" bookmark1="0" bookmark2="0" hasfocus="true" line="19"/>
+    <document bookmark3="0" master="false" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/abstract.tex" bookmark1="0" bookmark2="0" hasfocus="false" line="0"/>
+    <document bookmark3="0" master="false" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/bibliography.bib" bookmark1="0" bookmark2="0" hasfocus="false" line="352"/>
+    <document bookmark3="0" master="false" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/research.tex" bookmark1="0" bookmark2="0" hasfocus="false" line="347"/>
+    <document bookmark3="0" master="false" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/relatedwork.tex" bookmark1="0" bookmark2="0" hasfocus="false" line="3"/>
+    <document bookmark3="0" master="false" file="/home/constantius/Documents/Master Thesis/Safe-RL-With-DR/Thesis/appendix.tex" bookmark1="0" bookmark2="0" hasfocus="false" line="3"/>
 </TexmakerSession>

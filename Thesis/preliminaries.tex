@@ -215,15 +215,23 @@ A fundamental difference with using PCA, is the type of functions that can be ap
 To use an autoencoder for state-space dimensionality reduction, we again (like with PCA) use as input an observation the agent got from the environment. We can train the autoencoder using both the encoder and the decoder to calculate the loss. When used in RL, only the encoder is used. The encoder will project the observation input to the dimensionality of the latent space. 
 
 \subsection{DeepMDP}\label{pl-deepmdp}
- The agent's network therefore consists of an encoder part and a policy part. This means that when the agent receives an observation from the environment and passes it to its network, it first goes through the encoder whose output is passed to the policy part. In effect this means that the encoder and policy network are now trained on the same loss, using a single optimizer.
- 
-Over transition network:
-%in pysc2 research deel: The auxiliary objective to calculate the transition loss represents the cost of all possible transitions from a given latent representation. This means that its output has dimensions $(32 \times 32) \times 16 \times 16$. The tuple $(32, 32)$ represents the actions that can be taken in the current state, while the other two dimensions, $16 \times 16$ represent the next (predicted) latent observation. It has only one layer, a convolutional layer, with $32 \times 32$ output channels to represent the action dimensions.
+\cite{deepmdp} \cite{wgan}
+plaatje deepmdp agent 
+The last method for state-space dimensionality reduction, is a \emph{DeepMDP} \cite{deepmdp}. In contrast with the previous methods, the DeepMDP is a partial RL agent: training the dimensionality reduction goes hand in hand with training the RL agent.
 
-origineel: Additionally, the DeepMDP makes use of an auxiliary objective to calculate the loss: the transition loss. This transition loss represents the cost of all possible transitions from a given latent representation. This means that its output has dimensions $(32 \times 32) \times 16 \times 16$. The tuple $(32, 32)$ represents the actions that can be taken in the current state, while the other two dimensions, $16 \times 16$ represent the next (predicted) latent observation.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{DeepMDP}
+    \caption{An overview of how a DeepMDP agent works.}
+    \label{fig:deepmdp_agent}
+\end{figure}
 
-Niet in research deel: This transition loss represents the cost of all possible transitions from a given latent representation. This means that its output has dimensions $action space \times latent space$. The action space here represents the actions that can be taken in the current state, while latent space represents the next (predicted) latent observation.
+This is done through several steps that alter the way the loss for the policy network is calculated. Firstly, there is an encoder neural network that projects the original data to a lower dimensional space, similar to the encoder of the autoencoder. However, in contrast with the autoencoder, this encoder is trained together with the network representing the Q-function using the same optimizer (and thus the same loss). This can be seen in figure \ref{fig:deepmdp_agent}, specifically the \textit{policy network} part. Like a normal value-based RL agent, it trains its policy network using stored transition tuples. Differently from value-based strategies, its policy network now also contains an encoder. An observation first goes through the encoder, lowering the state-space dimensionality, before going into the network representing the Q-function (the \textit{MLP} in figure \ref{fig:deepmdp_agent}. The presence of the encoder will not only project the data to a lower dimensional space, but will also influence the loss calculation for the entire policy network, since the encoder is trained simultaneously with the network representing the Q-function. 
+
+The loss calculation is also altered in a second way, which in figure \ref{fig:deepmdp_agent} can be seen in the \textit{Update policy network} part. The DeepMDP makes use of an auxiliary objective to calculate the loss, using another neural network: the transition cost network. This network calculates the cost for predicted transitions. For a given latent state (given by the encoder), it calculates the cost for all possible transitions to a next latent state. This means that its output has dimensions $action space \times latent space$. The action space here represents the actions that can be taken in the current latent state, while the latent space represents the next (predicted) latent observation.
 
 Again this network is a part of the agent's network. Consequently, the agent's network consists of three parts: an encoder part, a policy part, and a transition loss part, all trained on the same loss using a single optimizer.
 
-Lastly, a gradient penalty is calculated on all three parts of the network separately. This represents a Lipschitz-constrained Wasserstein Generative Adversarial Network (lol wat). Its penalty is used in calculating the loss while training the network. 
+Lastly, a Lipschitz-constrained Wasserstein metric is used. The Wasserstein metric corresponds to the minimum cost of transforming one distribution into another; thus it calculates the cost of moving a particle in a point in one distribution to a point in the other \cite{deepmdp}. The Lipschitz constraint then sets a bound to the degree to which a (value) function can change its values. This is implemented through calculating a gradient penalty on all three parts of the network separately (i.e. the Q-function, the encoder and the transition cost network), as done in \cite{wgan}.
+
+Consequently, the loss calculation is a weighted sum of three parts: the loss calculation of the RL strategy, the transition cost given by the transition cost network, and the gradient penalties for the Q-function network, the encoder network, and the transition cost network.

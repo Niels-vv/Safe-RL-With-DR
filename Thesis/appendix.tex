@@ -82,13 +82,13 @@ When training the policy network, the optimization algorithm \emph{Adam} is used
 \item Number of stored batches before training: $313$.
 \end{itemize}
 
-Lastly, an $\epsilon$-greedy strategy is used for balancing exploration and exploitation. This means that a random number in $[0,1]$ is chosen; whenever this is equal to or lower than the current epsilon value, a random action is chosen, and a greedy action otherwise. Epsilon decays from $1.0$ to $0.02$ in $400.000$ steps spaced on a logarithmic scale. Each step taken by the agent corresponds to one epsilon decay step. One episode takes roughly between $800$ and $3000$ steps (depending on the length of the episode). The resulting decay of the epsilon value can be seen in figure \ref{fig:epsilon}.
+Lastly, an $\epsilon$-greedy strategy is used for balancing exploration and exploitation. This means that a random number in $[0,1]$ is chosen; whenever this is equal to or lower than the current epsilon value, a random action is chosen, and a greedy action otherwise. Epsilon decays from $1.0$ to $0.02$ in $400.000$ steps spaced on a logarithmic scale. Each step taken by the agent corresponds to one epsilon decay step. One episode takes roughly between $800$ and $3000$ steps (depending on the length of the episode). The resulting decay of the epsilon value can be seen in figure \ref{fig:epsilon-pong}.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.75\textwidth]{Pong/Epsilon_decay_pong}
     \caption{The decay of the epsilon value per episode in Pong.}
-    \label{fig:epsilon}
+    \label{fig:epsilon-pong}
 \end{figure}
 
 \subsection{PCA agent}
