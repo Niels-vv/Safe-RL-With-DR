@@ -191,7 +191,7 @@ class Agent():
             state = self.reset()
 
             # Get state from env; applies dimensionality reduction if pca or ae are used
-            state = self.env.get_state(state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space, self.train_ae_online)
+            state = self.env.get_state(state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space, train_online = False)
             
             # A step in an episode
             while True:
@@ -202,7 +202,7 @@ class Agent():
                 new_state, reward, done = self.env.step(action)
 
                 # Get new state observation; applies dimensionality reduction if pca or ae are used
-                new_state = self.env.get_state(new_state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space, self.train_ae_online)
+                new_state = self.env.get_state(new_state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space, train_online = False)
 
                 self.env.reward += reward
 

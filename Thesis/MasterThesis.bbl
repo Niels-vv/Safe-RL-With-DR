@@ -1,5 +1,11 @@
 \begin{thebibliography}{10}
 
+\bibitem{pca_2010}
+Sebastian Bitzer, Matthew Howard, and Sethu Vijayakumar.
+\newblock Using dimensionality reduction to exploit constraints in
+  reinforcement learning.
+\newblock pages 3219--3225, 08 2010.
+
 \bibitem{blizzard}
 Blizzard.
 \newblock Blizzard/s2client-proto: Starcraft {II} {Client} - protocol

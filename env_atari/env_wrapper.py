@@ -10,7 +10,7 @@ class EnvWrapper(EnvWrapperAbstract):
         self.env = env
         self.device = device
         self.ae_batch_len = 1000 # Gather 1000 frames for ae training
-        self.ae_batch = np.empty((self.ae_batch_len, 1, 42, 42),dtype=np.float32)
+        self.ae_batch = np.empty((self.ae_batch_len, 1, 84, 84),dtype=np.float32)
         self.ae_index = 0
 
         self.resetted = True    # Check whether we just resetted; needed for frame appending in state
@@ -42,8 +42,8 @@ class EnvWrapper(EnvWrapperAbstract):
             if train_online:
                 self.add_obs_to_ae_batch(state[-1]) # add last 84 x 84 frame to ae training batch
                 if self.ae_index >= self.ae_batch_len: # Train AE on gathered frames
-                    self.env.dim.train_on_trace(self.ae_batch)
-                    self.ae_batch = np.empty((self.ae_batch_len, 1, 42, 42),dtype=np.float32)
+                    reduction_component.train_on_trace(self.ae_batch)
+                    self.ae_batch = np.empty((self.ae_batch_len, 1, 84, 84),dtype=np.float32)
                     self.ae_index = 0
 
             frame = self.reduce_dim(state[-1], reduction_component, pca, ae, latent_space) # Reduce dim of last frame
