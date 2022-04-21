@@ -18,9 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import importlib
-import threading
-
+import torch
+import numpy as np
 from absl import app
 from absl import flags
 from future.builtins import range  # pylint: disable=redefined-builtin
@@ -31,24 +30,25 @@ from pysc2.env import sc2_env
 from pysc2.lib import point_flag
 from pysc2.lib import stopwatch
 
-from env_pysc2.ppo_variants.ppo_base import AgentLoop as PPOBaseAgent
-from env_pysc2.dqn_variants.dqn_base import AgentLoop as DQNBaseAgent
-from env_pysc2.deepmdp_agent import DQNAgentLoop as DeepMDPAgent
-from env_pysc2.vae_agent import get_agent as get_vae_agent
-from env_pysc2.pca_agent import get_agent as get_pca_agent
-from env_pysc2.scripted_beacon_agent import Agent as BeaconAgent
+from dqn.dqn import Agent as DQNAgent
+from autoencoder.ae_agent import AEAgent
+from principal_component_analysis.pca_agent import PCAAgent
+from utils.DataManager import DataManager
+from env_pysc2.models import policy_network, deep_mdp_encoder
+from env_pysc2.models import ae_encoder, ae_decoder
+from env_pysc2.ae import get_ae_config
+from env_pysc2.pca import get_pca_config
+from env_pysc2.env_wrapper import EnvWrapper
+from env_pysc2.Hyperparameters import config
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("strategy", "dqn", "Which RL strategy to use.")
 flags.DEFINE_string("variant", "base", "Whether to use VAE, PCA, or none.")
-flags.DEFINE_bool("shield", False, "Whether to use shielding.")
 flags.DEFINE_bool("store_obs", False, "Whether to store observations.")
 flags.DEFINE_bool("train", True, "Whether we are training or evaluating.")
-flags.DEFINE_bool("train_component", False, "Whether to train a sub component, like PCA or VAE, on stored observations.")
 flags.DEFINE_bool("load_policy", False, "Whether to load an existing policy network.")
 flags.DEFINE_bool("train_ae_online", False, "Whether to use train ae online.") # TODO do this differently
 flags.DEFINE_integer("max_episodes", 500, "Total episodes.")
-flags.DEFINE_integer("max_agent_steps", 1000, "Total agent steps.")
 
 flags.DEFINE_bool("render", True, "Whether to render with pygame.")
 point_flag.DEFINE_point("feature_screen_size", "32",
@@ -99,6 +99,8 @@ flags.mark_flag_as_required("map")
 
 agent_class_name = ""
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def run_thread(players, map_name, visualize):
   """Run one thread worth of the environment with agents."""
   global agent_class_name
@@ -119,71 +121,107 @@ def run_thread(players, map_name, visualize):
       disable_fog=FLAGS.disable_fog,
       visualize=visualize) as env:
     env = available_actions_printer.AvailableActionsPrinter(env)
-    agent = get_agent(env)
-    agent.run_agent()
+    run_agent(env)
     if FLAGS.save_replay:
       env.save_replay(agent_class_name)
 
 # TODO remove PPO
-def get_agent(env):
-  global agent_class_name
+def run_agent(env):
+    global agent_class_name
 
-  if FLAGS.variant.lower() in ["scripted"]:
-    FLAGS.save_replay = False
-    return BeaconAgent(env, FLAGS.max_episodes, FLAGS.store_obs)
-  elif FLAGS.variant.lower() in ["base"]:
-    if FLAGS.strategy.lower() in ["dqn"]:
-      agent_class_name = DQNBaseAgent.__name__
-      return DQNBaseAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.map, FLAGS.load_policy)
+    env = EnvWrapper(env, device)
+
+    results_path = f'env_pysc2/results/dqn/{FLAGS.map}'                                     # Path for final results, relative to Package root
+    intermediate_results_path = f'../drive/MyDrive/Thesis/Code/PySC2/{FLAGS.map}/Results'   # Path for intermediate results relative to package root. Using Google drive in case colab disconnects
+    observations_path = f'../drive/MyDrive/Thesis/Code/PySC2/{FLAGS.map}/Observations'
+
+    data_manager = DataManager(observation_sub_dir = observations_path, results_sub_dir=results_path, intermediate_results_sub_dir=intermediate_results_path)
+    if FLAGS.store_obs:
+        FLAGS.train = False
+    if FLAGS.train:
+        data_manager.create_results_files()
+    encoder = None          # DeepMDP encoder
+    conv_last = True        # Whether last layer in policy network is conv layer; needed for training the network
+
+    if FLAGS.store_obs:
+        # TODO scripted maken in env
+        mlp = policy_network(dim_red=False)    # DDQN policy network. Not used in scripted agent
+        agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp=False, train=False)
+        total_obs = 240000
+        obs = np.empty((total_obs, 32, 32),dtype=np.float32)
+        agent.store_observations(total_obs = total_obs, observations = obs, skip_frame = 1)
     else:
-      agent_class_name = PPOBaseAgent.__name__
-      return PPOBaseAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.map, FLAGS.load_policy)
-  elif FLAGS.variant.lower() in ["pca"]:
-    agent_class_name, agent = get_pca_agent(FLAGS.strategy.lower(), env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy)
-    return agent
-  elif FLAGS.variant.lower() in ["vae"]:
-    agent_class_name, agent = get_vae_agent(FLAGS.strategy.lower(), env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.train_component, FLAGS.map, FLAGS.load_policy, FLAGS.train_ae_online)
-    return agent
-  elif FLAGS.variant.lower() in ["deepmdp", "deep_mdp"]:
-    agent_class_name = DeepMDPAgent.__name__
-    return DeepMDPAgent(env, FLAGS.shield, FLAGS.max_agent_steps, FLAGS.max_episodes, FLAGS.train, FLAGS.map, FLAGS.load_policy)
-  else:
-    raise NotImplementedError
+        if FLAGS.variant.lower() in ["scripted"]:
+            #TODO
+            mlp = policy_network(dim_red=False)    # DDQN policy network. Not used in scripted agent
+            agent_class_name = BeaconAgent.__name__
+        if FLAGS.variant.lower() in ["base"]:
+            deep_mdp = False
+            mlp = policy_network(dim_red=False)    # DDQN policy network
+            agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train)
+        elif FLAGS.variant.lower() in ["pca"]:
+            deep_mdp = False
+            mlp = policy_network(dim_red=True)    # DDQN policy network
+            pca_path = f'env_pysc2/results_pca/{FLAGS.map}' 
+            pca_config = get_pca_config(pca_path)
+            agent = PCAAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train, pca_config)
+        elif FLAGS.variant.lower() in ["ae"]:
+            deep_mdp = False
+            mlp = policy_network(dim_red=True)    # DDQN policy network
+            ae_path = f'env_pysc2/results_ae/{FLAGS.map}' 
+            ae_config = get_ae_config(ae_path)
+            agent = AEAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train, FLAGS.train_ae_online, ae_encoder, ae_decoder, ae_config)
+        elif FLAGS.variant.lower() in ["deepmdp", "deep_mdp"]:
+            #TODO Reduce_dim moet op false staan voor env_wrapper
+            mlp = policy_network(dim_red=True)    # DDQN policy network
+            deep_mdp = True
+            agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train)
+        else:
+          raise NotImplementedError
+    
+    if not FLAGS.store_obs:
+        if FLAGS.load_policy:
+            load_policy(agent, results_path)
+        agent.run_agent()
 
-
+def load_policy(agent, results_path):
+    checkpoint = DataManager.get_network(results_path, "policy_network.pt", device)
+    agent.load_policy_checkpoint(checkpoint)
+    if agent.train:
+        agent.fill_buffer()
 
 def main(unused_argv):
-  """Run an agent."""
-  if FLAGS.trace:
-    stopwatch.sw.trace()
-  elif FLAGS.profile:
-    stopwatch.sw.enable()
+    """Run an agent."""
+    if FLAGS.trace:
+        stopwatch.sw.trace()
+    elif FLAGS.profile:
+        stopwatch.sw.enable()
 
-  map_inst = maps.get(FLAGS.map)
+    map_inst = maps.get(FLAGS.map)
 
-  players = []
-  agent_module, agent_name = FLAGS.agent.rsplit(".", 1)
-  players.append(sc2_env.Agent(sc2_env.Race[FLAGS.agent_race],
-                               FLAGS.agent_name or agent_name))
-  if map_inst.players >= 2:
-    if FLAGS.agent2 == "Bot":
-      players.append(sc2_env.Bot(sc2_env.Race[FLAGS.agent2_race],
-                                 sc2_env.Difficulty[FLAGS.difficulty],
-                                 sc2_env.BotBuild[FLAGS.bot_build]))
-    else:
-      agent_module, agent_name = FLAGS.agent2.rsplit(".", 1)
-      players.append(sc2_env.Agent(sc2_env.Race[FLAGS.agent2_race],
-                                   FLAGS.agent2_name or agent_name))
+    players = []
+    agent_module, agent_name = FLAGS.agent.rsplit(".", 1)
+    players.append(sc2_env.Agent(sc2_env.Race[FLAGS.agent_race],
+                                FLAGS.agent_name or agent_name))
+    if map_inst.players >= 2:
+        if FLAGS.agent2 == "Bot":
+            players.append(sc2_env.Bot(sc2_env.Race[FLAGS.agent2_race],
+                                    sc2_env.Difficulty[FLAGS.difficulty],
+                                    sc2_env.BotBuild[FLAGS.bot_build]))
+        else:
+            agent_module, agent_name = FLAGS.agent2.rsplit(".", 1)
+            players.append(sc2_env.Agent(sc2_env.Race[FLAGS.agent2_race],
+                                        FLAGS.agent2_name or agent_name))
 
-  run_thread(players, FLAGS.map, FLAGS.render)
+    run_thread(players, FLAGS.map, FLAGS.render)
 
-  if FLAGS.profile:
-    print(stopwatch.sw)
+    if FLAGS.profile:
+        print(stopwatch.sw)
 
 
 def entry_point():  # Needed so setup.py scripts work.
-  app.run(main)
+    app.run(main)
 
 
 if __name__ == "__main__":
-  app.run(main)
+    app.run(main)

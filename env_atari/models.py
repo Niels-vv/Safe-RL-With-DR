@@ -46,7 +46,7 @@ ae_decoder = nn.Sequential(
 
 # Encoder for mlp when using Deep_MDP
 deep_mdp_encoder = nn.Sequential(
-                    nn.Conv2d(1, c_hid_first, kernel_size=3, padding=1, stride=2), # 32x32 => 16x16
+                    nn.Conv2d(1, c_hid_first, kernel_size=3, padding=1, stride=2),  # 84 x84 -> 42 x 42
                     nn.GELU(),
                     nn.Conv2d(c_hid_first, 1, kernel_size=3, padding=1, stride=1),
                     nn.GELU()

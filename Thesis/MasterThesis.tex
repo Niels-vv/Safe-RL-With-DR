@@ -1,7 +1,6 @@
 \documentclass[11pt,a4paper]{report}
 
 \usepackage{url}
-\usepackage[utf8]{inputenc}
 \usepackage{graphicx}
 \usepackage[all]{xy}
 \usepackage{amsmath}
@@ -44,6 +43,8 @@
 \lstset{basicstyle = \footnotesize, breaklines = true}
 
 \graphicspath{{imgs/}}
+
+\sloppy
 
 \begin{document}
 \begin{titlepage}
@@ -88,9 +89,9 @@ Ing., C. Schmidl\\
 \tableofcontents
 
 \input{introduction}
+\input{relatedwork}
 \input{preliminaries}
 \input{research}
-\input{relatedwork}
 \input{conclusions}
 
 \bibliographystyle{plain}

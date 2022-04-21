@@ -1,6 +1,6 @@
 \chapter{Research}\label{research}
 %TODO Mention RQ, problem statement
-The aim of this paper is to examine the effect of reducing the dimensionality of the state-space in reinforcement learning (RL). In this section we will discuss the our research and its results. We will start by detailing our method in section \ref{research-method}; here we will explain the environments we used for our experiments, as well as the experiments that we ran. After this, we will show and discuss the results from these experiments in section \ref{research-results}. The discussion of the results will include an examination of how the different state-space reduction methods led to their results.
+The aim of this thesis is to examine the effect of reducing the dimensionality of the state-space in reinforcement learning (RL). In this section we will discuss our research and its results. We will start by detailing our method in section \ref{research-method}; here we will explain the environments we used for our experiments, as well as the experiments that we ran. After this, we will show and discuss the results from these experiments in section \ref{research-results}. The discussion of the results will include an examination of how the different state-space reduction methods led to their results.
 
 \section{Methodology}\label{research-method}
 In this section we will explain our method: how we researched the effect of state-space dimensionality reduction on an RL agent. First, in section \ref{research-exp}, we will explain the experiments in general: the different agent setups that we compared. Then, we will look at the environments in which we ran the experiments in sections \ref{research-env-pysc2} and \ref{research-env-pong}, including their specific agent architectures.
@@ -12,57 +12,57 @@ The first agent mentioned is the baseline agent, which does not use a dimensiona
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\textwidth]{rl_cycle_dim_red}
+    \includegraphics[width=0.2\textwidth]{rl_cycle_dim_red}
     \caption{Overview of the general architecture of an RL agent using a state-space dimensionality reduction method. In our experiments, the learning algorithm used is DDQN.}
     \label{fig:rl_cycle_dim}
 \end{figure}
 
-Furthermore, to allow for a fair comparison of their performance, all agents must share as many architectural design choices and hyperparameter settings as possible. This is done by extending the baseline agent in all other agents. \newline
+Furthermore, to allow for a fair comparison of their performance, all agents must share as many architectural design choices and hyperparameter settings as possible. This is done by extending the baseline agent in all other agents. \par
 
-\noindent \textbf{Baseline agent}\newline
+\noindent \textbf{Baseline agent}\par
 \noindent The baseline agent is a standard RL agent that does not use any dimensionality reduction. This is the agent that is extended by all other agents. It uses a DDQN strategy, as explained in section \ref{pl-dqn}. 
 
-An overview of the agent, i.e. a high-level view of DDQN, is given in figure \ref{fig:rl_cycle_base}. First, the agent receives an observation from the environment. This observation is passed to its neural network approximating the Q-function: its policy network. This returns a valuation for each action taken in this state. Then, the agent either chooses the action with the best valuation (i.e. acting greedily) or chooses a random action. Then, the chosen action is performed and we repeat this cycle until the end of the episode, whilst often training the policy network on stored transitions. \newline
+An overview of the agent, i.e. a high-level view of DDQN, is given in figure \ref{fig:rl_cycle_base}. First, the agent receives an observation from the environment. This observation is passed to its neural network approximating the Q-function: its policy network. This returns a valuation for each action taken in this state. Then, the agent either chooses the action with the best valuation (i.e. acting greedily) or chooses a random action. Then, the chosen action is performed and we repeat this cycle until the end of the episode, whilst often training the policy network on stored transitions. \par
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\textwidth]{rl_cycle_baseline_agent}
+    \includegraphics[width=0.2\textwidth]{rl_cycle_baseline_agent}
     \caption{Overview of the baseline agent, using DDQN.}
     \label{fig:rl_cycle_base}
 \end{figure}
 
-\noindent \textbf{PCA agent}\newline
+\noindent \textbf{PCA agent}\par
 \noindent The PCA agent uses PCA to reduce the dimensionality of the state observations. As mentioned, this is done by extending the baseline agent: after receiving an observation from the environment, the observation is processed by a PCA component lowering the observation dimensionality. This latent representation is then used by the agent as if it is the actual observations. This means that it is passed to the policy network to give an action valuation, as well as being stored in transitions used to train the network. This is shown in figure \ref{fig:rl_cycle_pca}.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\textwidth]{rl_cycle_pca_agent}
-    \caption{Overview of PCA agent.}
+    \includegraphics[width=0.2\textwidth]{rl_cycle_pca_agent}
+    \caption{Overview of the PCA agent.}
     \label{fig:rl_cycle_pca}
 \end{figure}
 
-The PCA component is trained separately before being used by the agent. This is done by training the PCA on previously stored observations. It is important that these observations give a good representation of the entire environment to get a well trained PCA component. \newline
+The PCA component is trained separately before being used by the agent. This is done by training the PCA on previously stored observations. It is important that these observations give a good representation of the entire environment to get a well trained PCA component. \par
 
-\noindent \textbf{Pre-trained autoencoder agent}\newline
+\noindent \textbf{Pre-trained autoencoder agent}\par
 \noindent This agent is very similar to the PCA agent, except instead of using a PCA component, we are using an autoencoder to reduce dimensionality. Its overview is given in figure \ref{fig:rl_cycle_ae}. Just like the PCA component, the autoencoder is pre-trained on stored observations. After this it is used by the agent to reduce the dimensionality of the observation. 
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\textwidth]{rl_cycle_autoencoder_agent}
+    \includegraphics[width=0.2\textwidth]{rl_cycle_autoencoder_agent}
     \caption{Overview of the pre-trained and online trained autoencoder agents.}
     \label{fig:rl_cycle_ae}
 \end{figure}
 
 The autoencoder is trained by passing batches of observations to the encoder, which performs the dimensionality reduction. Its output is then passed to the decoder which tries to reconstruct the original data. The loss is then calculated by how similar the decoder output is, compared to the original data. Specifically, the \emph{mean squared error} is used.
 
-When being used by an agent to reduce the dimensionality of an observation, only the encoder part of the autoencoder is used. When we speak of the output of the autoencoder in the context of being used by an agent, we mean the output of the encoder part. The autoencoder is not being trained further while in use by an agent. \newline
+When being used by an agent to reduce the dimensionality of an observation, only the encoder part of the autoencoder is used. When we speak of the output of the autoencoder in the context of being used by an agent, we mean the output of the encoder part. The autoencoder is not being trained further while in use by an agent. \par
 
-\noindent \textbf{\todo{I guess "online" is not strictly correct}Online trained autoencoder agent}\newline
+\noindent \textbf{Online trained autoencoder agent}\par
 \noindent  This agent is very similar to the pre-trained autoencoder agent, so we again refer to figure \ref{fig:rl_cycle_ae}. The only difference is the moment of training the autoencoder. In the pre-trained autoencoder agent, the autoencoder is trained before being used by an agent, using previously stored observations. In this online trained autoencoder agent, we are using an autoencoder that has not been pre-trained; it is being trained while being used by the agent. 
 
-In this case, the agent itself still only uses the encoder part of the autoencoder. However, we now also store batches of observations and pass these to the training method of the autoencoder. This training method is the same as before: passing the observations to the encoder, whose output is passed to the decoder, whose output is compared to the original observation to calculate the loss and train the network.\newline
+In this case, the agent itself still only uses the encoder part of the autoencoder. However, we now also store batches of observations and pass these to the training method of the autoencoder. This training method is the same as before: passing the observations to the encoder, whose output is passed to the decoder, whose output is compared to the original observation to calculate the loss and train the network.\par
 
-\noindent \textbf{DeepMDP agent}\newline
+\noindent \textbf{DeepMDP agent}\par
 \noindent This agents has only been used in the Starcraft II environment, due to time limitations. Just like the online trained autoencoder agent, the DeepMDP agent is completely trained while being used by the agent. It also uses an encoder, which has the same design as the encoders of the autoencoders. Differently from the autoencoder though, this encoder is actually part of the agent's network; whereas the autoencoder is a separate network, the DeepMDP simply extends the network of the agent, thus training the policy network and encoder simultaneously. This is further explained in section \ref{pl-deepmdp}.
 
 In figure \ref{fig:rl_cycle_deepmdp} it can be seen that the observation given by the environment goes directly into the policy network. However, in contrast with the baseline agent, the observation first goes through the encoder, before going into the network representing the Q-function.
@@ -83,7 +83,7 @@ In particular we are using a PySC2 minigame called \emph{MoveToBeacon}. This min
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.75\textwidth]{pysc2_SS}
+    \includegraphics[width=0.45\textwidth]{pysc2_SS}
     \caption{Screenshot of the minigame \emph{MoveToBeacon} in \emph{StarCraft II}.}
     \label{fig:pysc2_SS}
 \end{figure}
@@ -92,7 +92,7 @@ An \textbf{observation} received by the agent in this minigame is given by a $32
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.75\textwidth]{AE_State_original}
+    \includegraphics[width=0.35\textwidth]{AE_State_original}
     \caption{A state observation received by the RL agent, for the StarCraft II minigame MoveToBeacon. The yellow cells represent one beacon; the blue cell represents the army unit controlled by the player; all other cells are empty.}
     \label{fig:state_example}
 \end{figure}
@@ -103,44 +103,44 @@ Lastly, an \textbf{episode} takes $120$ seconds. The goal is to move the army un
 
 Within the $120$s time limit, the agent will be able to take 239 steps/actions. An agent following a random policy gets a score of about $0-3$ points per episode (again, one point for each time the army unit reaches the beacon), whereas a scripted agent scores about $25-30$ points per episode (meaning the agent on average needs $8$ or $9$ actions before reaching a beacon).
 
-\subsubsection{Agents setup}
+\subsubsection*{Agents setup}
 We will now explain the architectures of the agents used in the Starcraft II environment. We will only give a general overview, referring to appendix \ref{appendix} section \ref{appendix-agents} for details on the neural network architectures and hyperparameter settings. 
 
-Whereas the baseline agent uses the $32 \times 32$ observations given by the environment, all other agents reduce the dimensionality to $16 \times 16$. This means that the number of features in an observation are reduced from \todo{Again, is this correct?}$1024$ to $256$.
+Whereas the baseline agent uses the $32 \times 32$ observations given by the environment, all other agents reduce the dimensionality to $16 \times 16$. This means that the number of features in an observation are reduced from \todo{Again, is this the correct use of "features"?}$1024$ to $256$.
 
-Though the baseline agent's architecture is extended by all other agents (in order to keep the agents as similar as possible), one important change must be made. The policy networks of all agents are convolutional neural networks, and the output dimensions of a convolutional layer depends on the dimensions of its input. The baseline agent's policy network receives a $32 \times 32$ input, whereas the other agents receive a $16 \times 16$ input. In all cases, the output dimensions must be $32 \times 32$. This is because the network approximates the Q-function: a valuation of all actions for a given state. Since an action in our environment is defined by the coordinates the army unit must walk to, there are $32 \times 32$ possible actions. To deal with this difference in input dimensions, the first layer of the policy networks of the non-baseline agents are modified (using different stride and padding sizes) to increase the dimensionality to $32 \times 32$.\newline
+Though the baseline agent's architecture is extended by all other agents (in order to keep the agents as similar as possible), one important change must be made. The policy networks of all agents are convolutional neural networks, and the output dimensions of a convolutional layer depends on the dimensions of its input. The baseline agent's policy network receives a $32 \times 32$ input, whereas the other agents receive a $16 \times 16$ input. In all cases, the output dimensions must be $32 \times 32$. This is because the network approximates the Q-function: a valuation of all actions for a given state. Since an action in our environment is defined by the coordinates the army unit must walk to, there are $32 \times 32$ possible actions. To deal with this difference in input dimensions, the first layer of the policy networks of the non-baseline agents are modified (using different stride and padding sizes) to increase the dimensionality to $32 \times 32$.\par
 
-\noindent \textbf{Baseline agent}\newline
+\noindent \textbf{Baseline agent}\par
 \noindent The baseline agent is a standard RL agent that does not use any dimensionality reduction and is extended by the other agents.
 
-Its policy network consists of three convolutional layers: the first layer being a transposed convolutional layer \cite{transpose}, the other two being regular convolutional layers. The use of the transposed convolutional layer allows for the possibility of upsampling the dimensionality of the given input. This is needed in agents using dimensionality reduction, where the input for the network is $16 \times 16$, but the output needs to be $32 \times 32$ to cover the action space. However, for our baseline agent, the input dimensions, $32 \times 32$, must remain the same, which is achieved by setting the stride of the first layer to $1$. This way, both the dimensions of the input and the output of the network are $32 \times 32$ (where its input represents the current state observation and its output the action valuation).\newline
+Its policy network consists of three convolutional layers: the first layer being a transposed convolutional layer \cite{transpose}, the other two being regular convolutional layers. The use of the transposed convolutional layer allows for the possibility of upsampling the dimensionality of the given input. This is needed in agents using dimensionality reduction, where the input for the network is $16 \times 16$, but the output needs to be $32 \times 32$ to cover the action space. However, for our baseline agent, the input dimensions, $32 \times 32$, must remain the same, which is achieved by setting the stride of the first layer to $1$. This way, both the dimensions of the input and the output of the network are $32 \times 32$ (where its input represents the current state observation and its output the action valuation).\par
 
-\noindent \textbf{PCA agent}\newline
-\noindent The PCA agent uses PCA to reduce the dimensionality of the state observations from $32 \times 32$ to $16 \times 16$. To do this, the observation input must first be flattened, and its output must be reshaped to $16 \times 16$.
+\noindent \textbf{PCA agent}\par
+\noindent The PCA agent uses PCA to reduce the dimensionality of the state observations from $32 \times 32$ to $16 \times 16$. To do this, the observation input must first be flattened, and the output of the PCA must be reshaped to $16 \times 16$.
 
 The output of the policy network representing the Q-function must remain $32 \times 32$, since we have $32 \cdot 32$ possible actions: one action per coordinate. Therefore, the first layer in the policy network, the aforementioned transposed convolutional layer, has a stride of $2$ and an output padding of $1$. This changes the dimensions from $16 \times 16$ to $32 \times 32$. 
 
-The PCA component is trained on $240.000$ previously stored observations, which corresponds to observations from $1000$ episodes. These have been gathered using a scripted agent. The first $256$ principal components in our PCA (representing a $16 \times 16$ dimensional observation), contain roughly $96\%$ of the variance of the original data. We are using a scalar to standardize the observation data as explained in section \ref{pl-pca}. \newline
+The PCA component is trained on $240.000$ previously stored observations, which corresponds to observations from $1000$ episodes. These have been gathered using a scripted agent. The first $256$ principal components in our PCA (representing a $16 \times 16$ dimensional observation), contain roughly $96\%$ of the variance of the original data. We are using a scalar to standardize the observation data as explained in section \ref{pl-pca}. \par
 
-\noindent \textbf{Pre-trained autoencoder agent}\newline
+\noindent \textbf{Pre-trained autoencoder agent}\par
 \noindent Just like the PCA component, the autoencoder is pre-trained on the same $240.000$ observations. After this its encoder is used by the agent to reduce the dimensionality of the observation. 
 
-The encoder and decoder of the autoencoder are convolutional neural networks. The encoder uses two convolutional layers: the first has a stride of $2$, which reduces the dimension to $16 \times 16$. The decoder, which tries to reconstruct the original data, uses three convolutional layers. The first layer is a transposed convolutional layer with a stride of $2$, to bring the dimensions back to $32 \times 32$. The other two layers are regular convolutional layers. \newline
+The encoder and decoder of the autoencoder are convolutional neural networks. The encoder uses two convolutional layers: the first has a stride of $2$, which reduces the dimension to $16 \times 16$. The decoder, which tries to reconstruct the original data, uses three convolutional layers. The first layer is a transposed convolutional layer with a stride of $2$, to bring the dimensions back to $32 \times 32$. The other two layers are regular convolutional layers. \par
  
-\noindent \textbf{\todo{I guess "online" is not strictly correct}Online trained autoencoder agent}\newline
-\noindent  This agent has the exact same design as the pre-trained autoencoder agent. As mentioned, the only difference is the moment of training the autoencoder: instead of training on previously stored observations, we are now training the autoencoder simultaneously with the RL agent. \newline
+\noindent \textbf{Online trained autoencoder agent}\par
+\noindent  This agent has the exact same design as the pre-trained autoencoder agent. As mentioned, the only difference is the moment of training the autoencoder: instead of training on previously stored observations, we are now training the autoencoder simultaneously with the RL agent. \par
 
-\noindent \textbf{DeepMDP agent}\newline
+\noindent \textbf{DeepMDP agent}\par
 \noindent The encoder of the DeepMDP has the same design as the encoders of the autoencoders: one convolutional layer with stride $2$ to reduce dimensions and a second convolutional layer with stride $1$. 
 
-The auxiliary objective to calculate the transition loss represents the cost of all possible transitions from a given latent representation. This means that its output has dimensions $(32 \times 32) \times 16 \times 16$. The tuple $(32, 32)$ represents the actions that can be taken in the current state, while the other two dimensions, $16 \times 16$ represent the next (predicted) latent observation. It has only one layer, a convolutional layer, with $32 \times 32$ output channels to represent the action dimensions.
+The auxiliary objective to calculate the transition loss represents the cost of all possible transitions from a given latent representation. This means that its output has dimensions $(32 \cdot 32) \times 16 \times 16$. The tuple $(32, 32)$ represents the actions that can be taken in the current state, while the other two dimensions, $16 \times 16$ represent the next (predicted) latent observation. It has only one layer, a convolutional layer, with $32 \cdot 32$ output channels to represent the action dimensions.
 
 \subsection{Environment: OpenAI Pong}\label{research-env-pong}
 The second environment in which we ran our experiments is the Atari game Pong, using the OpenAI Gym environment \cite{pong}. In figure \ref{fig:pong-screen}, a screenshot of the game is given. In the game, two players try to score points by getting a ball behind the opponent. Both players control one paddle that can be moved vertically, to bounce to ball off of. The first player to score $21$ points wins.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\textwidth]{Pong/Frame}
+    \includegraphics[width=0.25\textwidth]{Pong/Frame}
     \caption{A screenshot from the OpenAI Gym Atari game Pong.}
     \label{fig:pong-screen}
 \end{figure}
@@ -149,40 +149,40 @@ The second environment in which we ran our experiments is the Atari game Pong, u
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\textwidth]{Pong/Observation}
+    \includegraphics[width=0.2\textwidth]{Pong/Observation}
     \caption{A single observation in OpenAI Gym's Pong: four consecutive stacked frames.}
     \label{fig:pong-obs}
 \end{figure}
 
-An $84 \times 84$ frame means there are $ 84 \cdot 84 = 7056$ features per frame (thus for a single observation consisting of four frames, this would total to $84 /cdot 84 /cdot 4 = 28224$ features). Both paddles can move up and down to $64$ spaces, giving $64 \cdot 64$ possible states when only looking at the paddle placement. Furthermore, the ball can be in any place in the $64 \times 84$ playing field. This gives a total state-space of $84 \times 84$, with a cardinality of $(64 \cdot 64) \cdot (64 \cdot 84) = 22020096$. 
+An $84 \times 84$ frame means there are $ 84 \cdot 84 = 7056$ features per frame (thus for a single observation consisting of four frames, this would total to $84 \cdot 84 \cdot 4 = 28224$ features). Both paddles can move up and down to $64$ spaces, giving $64 \cdot 64$ possible states when only looking at the paddle placement. Furthermore, the ball can be in any place in the $64 \times 84$ playing field. This gives a total state-space of $84 \times 84$, with a cardinality of $(64 \cdot 64) \cdot (64 \cdot 84) = 22020096$. 
 
 The agent, controlling one paddle, has six possible \emph{actions} it can take. Most important are the actions \textit{right} and \textit{left}, moving the paddle up and down respectively. Another relevant action is \textit{noop}, to not move the paddle. Other actions include an action to start the game (\textit{fire}) and actions used for other Atari games, but meaningless in Pong (\textit{rightfire} and \textit{leftfire}). 
 
-An \emph{episode} ends when one player reaches $21$ points. After each step, the agent either receives a reward of $1$ if it scored a point, $-1$ if the opponent scored a point, or $0$ otherwise. At the end of the episode, the final score of the agent is calculated as the difference its own and the opponents points (e.g. a final score of $2$ means it won the game $21 - 19$). Thus, a perfect score would be $21$. A random agent mostly scores between $-21$ and $-18$.
+An \emph{episode} ends when one player reaches $21$ points. After each step, the agent either receives a reward of $1$ if it scored a point, $-1$ if the opponent scored a point, or $0$ otherwise. At the end of the episode, the final score of the agent is calculated as the difference between its own and the opponent's points (e.g. a final score of $2$ means it won the game $21 - 19$). Thus, a perfect score would be $21$. A random agent mostly scores between $-21$ and $-18$.
 
-\subsubsection{Agents setup}
+\subsubsection*{Agents setup}
 The same agents are used for experiments in this environment as in the Starcraft II environment, excluding the DeepMDP agent due to time limitations. Again, we only give a general overview of the agents' architectures, referring to appendix\ref{appendix} section \ref{appendix-agents-pong} for more details.
 
-The baseline agent receives a $4 \times 84 \times 84$ state observation input: four consecutive $84 \times 84$ stacked frames. This totals to $28224$ features per observation. All state-space dimensionality reduction methods, project a single $84 \times 84$ frame down to $42 \times 42$, thus reducing the number of features down from $7056$ to $1764$. Thus, agents using a dimensionality reduction method, receive a $4 \times 42 \times 42$ state observation, totaling to $7056$ features per observation. \newline
+The baseline agent receives a $4 \times 84 \times 84$ state observation input: four consecutive $84 \times 84$ stacked frames. This totals to $28224$ features per observation. All state-space dimensionality reduction methods, project a single $84 \times 84$ frame down to $42 \times 42$, thus reducing the number of features down from $7056$ to $1764$. Thus, agents using a dimensionality reduction method, receive a $4 \times 42 \times 42$ state observation, totaling to $7056$ features per observation. \par
 
-\noindent \textbf{Baseline agent}\newline
+\noindent \textbf{Baseline agent}\par
 \noindent The baseline agent is a standard DDQN RL agent that does not use any dimensionality reduction and is extended by the other agents.
 
-Its policy network, representing the Q-function, consists of three convolutional layers and two linear layers. The first conv layer has a kernel size of $6$ and a stride of $3$, the second conv layer a kernel size of $4$ and stride of $2$, and the final conv layer a kernel size of $3$ and stride of $1$. These settings affect the output shape of each layer. For this, the $4$ colour channels are irrelevant. Looking at a single colour channel, its $84 \times 84$ input is first downsampled to $27 \times 27$, then to $12 \times 12$ and finally to $10 \times 10$. The final conv layer's output is flattened before going into the first linear layer. The final linear layer has an output of $6$, corresponding to the action-space.\newline
+Its policy network, representing the Q-function, consists of three convolutional layers and two linear layers. The first conv layer has a kernel size of $6$ and a stride of $3$, the second conv layer a kernel size of $4$ and stride of $2$, and the final conv layer a kernel size of $3$ and stride of $1$. These settings affect the output shape of each layer. For this, the $4$ colour channels are irrelevant. Looking at a single colour channel, its $84 \times 84$ input is first downsampled to $27 \times 27$, then to $12 \times 12$ and finally to $10 \times 10$. The final conv layer's output is flattened before going into the first linear layer. The final linear layer has an output of $6$, corresponding to the action-space.\par
 
-\noindent \textbf{PCA agent}\newline
+\noindent \textbf{PCA agent}\par
 \noindent The PCA agent uses PCA to reduce the dimensionality of a single frame from $84 \times 84$ to $42 \times 42$. To do this, the observation input must first be flattened, and its output must be reshaped to $42 \times 42$. The final observation shape is thus $4 \times 42 \times 42$.
 
 The policy network, representing the Q-function, is identical to the baseline agent. Now that we have a $42 \times 42$ input per colour channel, the convolutional layers in the policy network downsample the input first to $13 \times 13$, then to $5 \times 5$ and finally to $3 \times 3$.
 
-The PCA component is trained on $40.000$ previously stored frames, which corresponds to roughly $40$ episodes, but were taken randomly across $300$ episodes. These have been gathered using the baseline agent. The first $1764$ principal components in our PCA (representing a $42 \times 42$ dimensional observation), capture roughly $99\%$ of the variance of the original data. Since we are already using (gray)scaled data, we do not use a scalar for the PCA  as mentioned in \ref{pl-pca}. \newline
+The PCA component is trained on $40.000$ previously stored frames, which corresponds to roughly $40$ episodes, but were taken randomly across $300$ episodes. These have been gathered using the baseline agent. The first $1764$ principal components in our PCA (representing a $42 \times 42$ dimensional observation), capture roughly $99\%$ of the variance of the original data. Since we are already using (gray)scaled data, we do not use a scalar for the PCA  as mentioned in \ref{pl-pca}. \par
 
-\noindent \textbf{Pre-trained autoencoder agent}\newline
+\noindent \textbf{Pre-trained autoencoder agent}\par
 \noindent The autoencoder is pre-trained on $332.000$ observations, taken from $300$ episodes. After this its encoder is used by the agent to reduce the dimensionality of a single frame. This, like the PCA agent, results in a observation of $4 \times 42 \times 42$.
 
-The encoder and decoder of the autoencoder are convolutional neural networks. The encoder uses three convolutional layers: the first has a stride of $2$, which reduces the dimension to $42 \times 42$. The decoder, which tries to reconstruct the original data, uses two convolutional layers. The first layer is a transposed convolutional layer with a stride of $2$, to bring the dimensions back to $84 \times 84$. The second layer is a regular convolutional layer. \newline
+The encoder and decoder of the autoencoder are convolutional neural networks. The encoder uses three convolutional layers: the first has a stride of $2$, which reduces the dimensions to $42 \times 42$. The decoder, which tries to reconstruct the original data, uses two convolutional layers. The first layer is a transposed convolutional layer with a stride of $2$, to bring the dimensions back to $84 \times 84$. The second layer is a regular convolutional layer. \par
  
-\noindent \textbf{\todo{I guess "online" is not strictly correct}Online trained autoencoder agent}\newline
+\noindent \textbf{Online trained autoencoder agent}\par
 \noindent  This agent has the exact same design as the pre-trained autoencoder agent. As mentioned, the only difference is the moment of training the autoencoder: instead of training on previously stored observations, we are now training the autoencoder simultaneously with the RL agent.
 
 \subsection{Remarks on method}
@@ -192,43 +192,45 @@ A second method we did not use in our experiments is \emph{Max-pooling}. Max-poo
  
 
 \section{Results}\label{research-results}
-In this section we will show and discuss the results from the experiments mentioned in section \ref{research-exp}. We will start by showing the results from the Starcraft II environment in section \ref{research-results-pysc2}, before showing the results of the OpenAI Pong environment in section \ref{research-results-pong}. These sections will focus on the research sub-questions: what are the effects of using PCA, autoencoders and DeepMDPs for state-space dimensionality reduction on reinforcement learning agents? They will also include a discussion of the results and an examination of how the different state-space reduction methods led to their results. In section \ref{research-discussion} we will give a general discussion of all results to answer the main research question: what is the effect of state-space dimensionality reduction on reinforcement learning?
+In this section we will show and discuss the results from the experiments mentioned in section \ref{research-exp}. We will start by showing the results from the Starcraft II environment in section \ref{research-results-pysc2}, before showing the results of the OpenAI Pong environment in section \ref{research-results-pong}. These sections will focus on the research sub-questions: how do the training results of a double deep-Q-learning reinforcement learning agent change when using PCA, autoencoders and DeepMDPs for state-space dimensionality reduction in Starcraft II MoveToBeacon and OpenAI Atari Pong? They will also include a discussion of the results and an examination of how the different state-space reduction methods led to their results. In section \ref{research-discussion} we will give a general discussion of all results to answer the main research question: what is the effect of state-space dimensionality reduction on model-free value-based reinforcement learning in an environment using grid-based observations, by using PCA, autoencoders or DeepMDPs?
 
 \subsection{Research results: Starcraft II}\label{research-results-pysc2}
-The results from running the different agents in the Starcraft II minigame MoveToBeacon, can be seen in figure \ref{fig:results-agents}. For each agent, the score, i.e. reward, per episode is shown, as well as an average score per $30$ episodes. Again, a scripted agents scores around $25-30$ per episode, and an agent following a random policy around $0-3$.
+\subsubsection{Results overview}
+The results from running the different agents in the Starcraft II minigame MoveToBeacon, can be seen in figure \ref{fig:results-agents}. For each agent, the score, i.e. return, per episode is shown, as well as an average score per $30$ episodes. Again, a scripted agents scores around $25-30$ per episode, and an agent following a random policy around $0-3$.
 
 
 \begin{figure}[h!]
 	\centering
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{Base_agent_results}
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=\linewidth]{Base_agent_results}
 		\caption{Results for the baseline agent.}
 		\label{fig:results-base} 
-	\end{subfigure}
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{PCA_with_scalar_agent_results}
+	\end{subfigure}\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=\linewidth]{PCA_with_scalar_agent_results}
 		\caption{Results for the PCA agent.}
 		\label{fig:results-pca}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{Pretrained_autoencoder_agent_results}
+	
+	\medskip
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=\linewidth]{Pretrained_autoencoder_agent_results}
 		\caption{Results for the pre-trained autoencoder agent.}
 		\label{fig:results-ae}
-	\end{subfigure}
-	\caption{Results of the different RL agents in Starcraft II.}
-\end{figure}%	
-\begin{figure}[ht]\ContinuedFloat
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{Online_autoencoder_agent_results}
+	\end{subfigure} \hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=\linewidth]{Online_autoencoder_agent_results}
 		\caption{Results for the online trained autoencoder agent.}
 		\label{fig:results-online-ae}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{Deepmdp_agent_results}
+	
+	\medskip
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=\linewidth]{Deepmdp_agent_results}
 		\caption{Results for the DeepMDP agent.}
 		\label{fig:results-deepmdp}
 	\end{subfigure}
-	\caption{Results of the different RL agents in Starcraft II(cont.).}
+	\caption{Results of the different RL agents in Starcraft II.}
 	\label{fig:results-agents}
 \end{figure}
 
@@ -243,38 +245,37 @@ Compared to the pre-trained autoencoder agent, the agent using an untrained auto
 Lastly we have the DeepMDP agent. After $130$ episodes, this agent suddenly jumps up from a random policy to scoring around $15$. However, after several episodes it starts going back down, alternating between scoring at a random policy and scoring around $7$, until finally reaching a random policy again. Furthermore it takes a lot longer to train. For the other agents, each episode took only a few seconds, whereas each episode in the DeepMDP agent takes $2.5$ minutes.
 
 \subsubsection{Discussion}\label{research-discussion-pysc2}
-TODO
 \paragraph{PCA Agent: losing all spatial information}
-The first notable result is the PCA agent giving a policy that remains at a policy at the level of a random policy during its $800$ episode training, therewith performing way worse than the other agents. A possible explanation might be that the PCA reduction loses (too much) spatial information. \todo{Citing}Although PCA can be used for image compression, where spatial information is retained, it is a lot more lossy than for instance an autoencoder.
+The first notable result is the PCA agent giving a policy that remains at the level of a random policy during its $800$ episode training, therewith performing way worse than the other agents. A possible explanation might be that the PCA reduction loses (too much) spatial information. Although PCA can be used for image compression, where spatial information is retained, it is a lot more lossy than for instance an autoencoder.
 
-Figure \ref{fig:pca-state} shows an example of the PCA transformation on an observation. figure \ref{fig:pca-original} shows the original observation that the agent would get from the environment. Figure \ref{fig:pca-latent} shows the latent representation after using PCA for dimensionality reduction. as mentioned before, this uses $256$ principal components, capturing roughly $96\%$ of the original data. Here we can see that no spatial information is retained, making it impossible for the agent to train a meaningful policy on. 
+Figure \ref{fig:pca-state} shows an example of the PCA transformation on an observation. figure \ref{fig:pca-original} shows the original observation that the agent would get from the environment. Figure \ref{fig:pca-latent} shows the latent representation after using PCA for dimensionality reduction. As mentioned before, this uses $256$ principal components, capturing roughly $96\%$ of the original data. Here we can see that no spatial information is retained, making it impossible for the agent to train a meaningful policy on. 
 
-Furthermore, we also tested a different PCA setup where we used all $1024$ principal components. Here, we again fitted the PCA on the same observations but keeping all principal components, giving a new $32 \times 32$ observation (and therefore not doing any dimensionality reduction). Transformation of an observation gave similar results: spatial information was lost. The problem therefore lies in the fitting process. A possible explanation for the bad transformation performance, might be that a single observation is very sparse. Even though the PCA is fitted on $240.000$ observations, each single observation is very sparse and at the same time, there are a lot of different possible observations due to the large state-space (see section \ref{research-env}). This combination might lead to the PCA not being able to generalize well enough.
+Furthermore, we also tested a different PCA setup where we used all $1024$ principal components. Here, we again fitted the PCA on the same observations but keeping all principal components, giving a new $32 \times 32$ observation (and therefore not doing any dimensionality reduction). Transformation of an observation gave similar results: spatial information was lost. The problem therefore lies in the fitting process. A possible explanation for the bad transformation performance, might be that a single observation is very sparse. Even though the PCA is fitted on $240.000$ observations, each single observation is very sparse and at the same time, there are a lot of different possible observations due to the large state-space (see section \ref{research-env-pysc2}). This combination might lead to the PCA not being able to generalize well enough.
 
 \begin{figure}[h!]
 	\centering
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{AE_State_original}
+	\begin{subfigure}[b]{0.3\textwidth}
+		\includegraphics[width=\linewidth]{AE_State_original}
 		\caption{The original observation, i.e. the input for the PCA transformation.}
 		\label{fig:pca-original} 
-	\end{subfigure}
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{pca_with_scalar_latent_state}
+	\end{subfigure}\hfill
+	\begin{subfigure}[b]{0.3\textwidth}
+	\includegraphics[width=\linewidth]{pca_with_scalar_latent_state}
 		\caption{The latent representation given by the PCA transformation}
 		\label{fig:pca-latent}
 	\end{subfigure}
-	\caption{Latent representation a state observation using PCA.}
+	\caption{Latent representation of a state observation using PCA in Starcraft II.}
 	\label{fig:pca-state}
 \end{figure}
 
 \paragraph{Autoencoder agents analyses: outperforming baseline agent}
 Another interesting result is the performance of the pre-trained autoencoder agent. Not only does it match the baseline agent's performance, it even slightly surpasses it: it finds a slightly better policy (scoring around $21$ per episode on average, versus $19$), and more quickly converges to a consistent policy (after $400$ episodes versus $600$). Its better performance is despite the agent using imperfect information, while the baseline agent uses complete information.
 
-Its performance is highly dependent on the quality of the output of the autoencoder, which is known in the discussion of the experiments in the second environment, Pong \ref{research-discussion-pong}. To get an understanding of why this agent achieves such good results, we will now examine the autoencoder in detail. We first show the results of training the autoencoder itself. As mentioned, it is trained on $240.000$ observations, corresponding to $1000$ episodes. Whereas each agent's training (except for the DeepMDP) took roughly $90$ minutes, training the autoencoder itself on $1000$ episodes worth of observations only took about $2.5$ minutes. The loss history for the autoencoder can be seen in figure \ref{fig:ae-loss}. After roughly $6000 \cdot 25 = 150.000$ observation it converges to its final loss.
+Its performance is highly dependent on the quality of the output of the autoencoder, which is corroborated in the discussion of the experiments in the second environment, Pong \ref{research-discussion-pong}. To get an understanding of why this agent achieves such good results, we will now examine the autoencoder in detail. We first show the results of training the autoencoder itself. As mentioned, it is trained on $240.000$ observations, corresponding to $1000$ episodes. Whereas each agent's training (except for the DeepMDP) took roughly $90$ minutes, training the autoencoder itself on $1000$ episodes worth of observations only took about $2.5$ minutes. The loss history for the autoencoder can be seen in figure \ref{fig:ae-loss}. After roughly $6000 \cdot 25 = 150.000$ observation it converges to its final loss.
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[width=1\textwidth]{ae_loss}
+    \includegraphics[width=0.5\textwidth]{ae_loss}
     \caption{Losses per 25 observations for training the autoencoder on $240.000$ state observations.}
     \label{fig:ae-loss}
 \end{figure}
@@ -285,13 +286,13 @@ Such a projection onto a lower dimensional space, could create problems for the 
 
 \begin{figure}[h!]
 	\centering
-	\begin{subfigure}[b]{1\textwidth}
-		\includegraphics[width=1\linewidth]{AE_State_original}
+	\begin{subfigure}[b]{0.30\textwidth}
+		\includegraphics[width=\linewidth]{AE_State_original}
 		\caption{The original observation, i.e. the input for the autoencoder.}
 		\label{fig:ae-featuremap-original} 
-	\end{subfigure}
-	\begin{subfigure}[b]{1\textwidth}
-		\includegraphics[width=1\linewidth]{AE_Layer_2_Feature_Map}
+	\end{subfigure}\hfill
+	\begin{subfigure}[b]{0.30\textwidth}
+		\includegraphics[width=\linewidth]{AE_Layer_2_Feature_Map}
 		\caption{The latent representation of the autoencoder, i.e. the output of the encoder.}
 		\label{fig:ae-featuremap-layer2}
 	\end{subfigure}
@@ -299,47 +300,48 @@ Such a projection onto a lower dimensional space, could create problems for the 
 	\label{fig:ae-featuremap}
 \end{figure}
 
-To analyse the autoencoder further, a correlation matrix is given in figure \ref{fig:ae-corr}. Based on $60.000$ state observations, it shows the correlation between the features of the original state observations (i.e. the input for the autoencoder) and the reduced state observations (i.e. the output of the autoencoder). The process of creating this matrix is shown in figure \ref{fig:ae-corr-process}. The original data has dimensions of $32 \times 32$, whereas the reduced data has dimensions of $16 \times 16$, resulting in $1024$ and $246$ features respectively. The $256$ latent features are shown on the y-axis, and the $1024$ original features are shown on the x-axis in figure \ref{fig:ae-corr}. Dark/black and light/beige colouring mean a high correlation (negative and positive correlation respectively), whereas a red colouring means no correlation and the white space means there was to too little variance to calculate a correlation. The latter case simply follows from the beacon and army unit not visiting these parts of the map enough times during the used episode observations, which results in too little variance for a correlation to be calculated.
+To analyse the autoencoder further, a correlation matrix is given in figure \ref{fig:ae-corr}. Based on $60.000$ state observations, it shows the correlation between the features of the original state observations (i.e. the input for the autoencoder) and the reduced state observations (i.e. the output of the autoencoder). The process of creating this matrix is shown in figure \ref{fig:ae-corr-process}. The original data has dimensions of $32 \times 32$, whereas the reduced data has dimensions of $16 \times 16$, resulting in $1024$ and $246$ features respectively. The $256$ latent features are shown on the x-axis, and the $1024$ original features are shown on the y-axis in figure \ref{fig:ae-corr}. Dark/black and light/beige colouring mean a high correlation (negative and positive correlation respectively), whereas a red colouring means no correlation and the white space means there was to too little variance to calculate a correlation. The latter case simply follows from the beacon and army unit not visiting these parts of the map enough times during the used episode observations, which results in too little variance for a correlation to be calculated.
 
-What can be seen from this matrix, is that each cell in the reduced data grid, correlates to a block (a few adjacent rows and columns) of cells of the original data grid. This explanation can be abducted from each feature of the reduced data being highly correlated to a few features of the original data, then being uncorrelated for $32$ features, after which highly correlated features are found again. This jump of $32$ features corresponds to a jump of one row in the original data grid. Thus, a reduced feature correlates to a block of the original features.
-
-This is better visualised by taking the correlation matrix of a single latent feature. The process of this is also shown in figure \ref{fig:ae-corr-process}. We choose a latent feature and take the correlation results of that feature from the correlation matrix, simply by taking the corresponding row from the matrix. We now have the correlation data of a single latent feature with all original features. We then reshape this data to a $32 \times 32$ shape for visualisation. In figure \ref{fig:latent-feature-corr} we have done this for latent feature $68$. In subfigure \ref{fig:ae-latent-feature} we can see where latent feature $68$ lies in the $16 \times 16$ latent space: in the 4th column of the 4th row. In subfigure \ref{fig:ae-latent-feature-corr-matrix} the correlation matrix for this latent feature with all original features is shown.
-
-Here we can see clearly the high correlation of the latent feature with a hexagonal shape of original features. This relates to the hexagonal shape of the beacon, the most important part of the observation. Thus, the autoencoder is taking in the values of a roughly $14$ by $14$ octagonal shape of pixels to get the value for a latent feature, thereby compressing the image to a lower dimension.
-
-\begin{figure}[h!]
+\begin{figure}[h]
 	\centering
 	\includegraphics[width=0.4\paperwidth]{Corr_matrix_method}
 	\caption{Process of creating a correlation matrix for the latent features with the original features, and creating the correlation matrix of a single latent feature with the original features.}
 	\label{fig:ae-corr-process}
 \end{figure}
 
-\begin{figure}[h!]
+What can be seen from this matrix, is that each cell in the reduced data grid, correlates to a block (a few adjacent rows and columns) of cells of the original data grid. This explanation can be abducted from each feature of the reduced data being highly correlated to a few features of the original data, then being uncorrelated for $32$ features, after which highly correlated features are found again. This jump of $32$ features corresponds to a jump of one row in the original data grid. Thus, a reduced feature correlates to a block of the original features.
+
+This is better visualised by taking the correlation matrix of a single latent feature. The process of this is also shown in figure \ref{fig:ae-corr-process}. We choose a latent feature and take the correlation results of that feature from the correlation matrix, simply by taking the corresponding column from the matrix. We now have the correlation data of a single latent feature with all original features. We then reshape this data to a $32 \times 32$ shape for visualisation. In figure \ref{fig:latent-feature-corr} we have done this for latent feature $68$. In subfigure \ref{fig:ae-latent-feature} we can see where latent feature $68$ lies in the $16 \times 16$ latent space: in the 4th column of the 4th row. In subfigure \ref{fig:ae-latent-feature-corr-matrix} the correlation matrix for this latent feature with all original features is shown.
+
+Here we can see clearly the high correlation of the latent feature with a octagonal shape of original features. This relates to the octagonal shape of the beacon, the most important part of the observation. Thus, the autoencoder is taking in the values of a roughly $14$ by $14$ octagonal shape of pixels to get the value for a latent feature, thereby compressing the image to a lower dimension.
+
+This autoencoder agent not only outperforms the baseline agent, it also outperforms the online trained autoencoder agent. This latter agent converges to a slightly worse policy and takes more episodes to get there, while remaining not very consistent (sometimes scoring only about $13$ points in an episode). This can of course be explained by the fact that this agent not only trains a policy network, but also, separately, the autoencoder. This means that for many episodes, the policy network is trained on a rather imperfect representation; the pre-trained autoencoder needed roughly $150.000$ observations before getting close to its final loss. Still, it got to a policy similar to the baseline agent (even scoring slightly better on average) in a similar number of episodes; the main difference being that the baseline agent is much more consistent.
+
+Besides outperforming the online trained autoencoder agent, the pre-trained agent has another advantage. Since the autoencoder can be trained separately from the agent, we can reuse the autoencoder for different agents acting in the same environment but solving a different RL problem. This allows for the possibility of training an autoencoder once, after which different agents can be trained on less features, allowing for less computation cost to train each agent. This is also substantiated by the autoencoder taking little time train.
+
+
+\begin{figure}[h]
 	\centering
-	\includegraphics[width=1.0\paperwidth]{AE_corr_matrix_cropped}
-	\caption{Correlation matrix for the autoencoder used in the pre-trained autoencoder agent, based on $60.000$ state observations. The x-axis contains the features of the original observations, and the y-axis contains the features of the reduced state observations.}
+	\includegraphics[width=0.35\paperwidth]{AE_corr_matrix_cropped}
+	\caption{Correlation matrix for the autoencoder used in the pre-trained autoencoder agent, based on $60.000$ state observations. The x-axis contains the features of the reduced state observations, and the y-axis contains the features of the original observations.}
 	\label{fig:ae-corr}
 \end{figure}
 
-\begin{figure}[h!]
+\begin{figure}[h]
 	\centering
-	\begin{subfigure}[b]{1\textwidth}
-		\includegraphics[width=1\linewidth]{Grid_latent_feature_68}
-		\caption{The latent feature that was used.}
+	\begin{subfigure}[b]{0.2\textwidth}
+		\includegraphics[width=\linewidth]{Grid_latent_feature_68}
+		\caption{The latent feature that was used: at index $67$ of flattened grid data.}
 		\label{fig:ae-latent-feature} 
-	\end{subfigure}
-	\begin{subfigure}[b]{1\textwidth}
-		\includegraphics[width=1\linewidth]{corr_matrix_latent_feature_68}
-		\caption{The feauture map of the first convoluational layer, showing the output of its $32$ channels.}
+	\end{subfigure}\hfill
+	\begin{subfigure}[b]{0.75\textwidth}
+		\includegraphics[width=\linewidth]{corr_matrix_latent_feature_68}
+		\caption{Correlation matrix for latent feature $68$ with the original features.}
 		\label{fig:ae-latent-feature-corr-matrix}
 	\end{subfigure}
-	\caption{The correlation matrix for latent feature with the original features.}
+	\caption{The correlation matrix for latent feature $68$ with the original features.}
 	\label{fig:latent-feature-corr}
 \end{figure}
-
-This autoencoder agent not only outperforms the baseline agent, it also (less surprisingly) outperforms the online trained autoencoder agent. This latter agent converges to a slightly worse policy and takes more episodes to get there, while remaining not very consistent (sometimes scoring only about $13$ points in an episode). This can of course be explained by the fact that this agent not only trains a policy network, but also, separately, the autoencoder. This means that for many episodes, the policy network is trained on a rather imperfect representation; the pre-trained autoencoder needed roughly $150.000$ observations before getting close to its final loss. Still, it got to a policy similar to the baseline agent (even scoring slightly better on average) in a similar number of episodes; the main difference being that the baseline agent is much more consistent.
-
-Besides outperforming the online trained autoencoder agent, the pre-trained agent has another advantage. Since the autoencoder can be trained separately from the agent, we can reuse the autoencoder for different agents acting in the same environment but solving a different RL problem. This allows for the possibility of training an autoencoder once, after which different agents can be trained on less features, allowing for less computation cost to train each agent. This is also substantiated by the autoencoder taking little time train.
 
 \paragraph{DeepMDP agent: unable to balance multiple loss calculations}
 
@@ -349,67 +351,68 @@ The DeepMDP agent seems to have trouble with balancing the multiple losses being
 
 This trouble with balancing the loss is further demonstrated at $240$ episodes into training. At this moment, the DDQN loss, as well as the gradient penalties for the Q-function and encoder networks, are all decreasing in value. This results in higher average episode scores. However, after this they start increasing again, leading to a further drop in episode scores around $330$ episodes.
 
+\clearpage
 \subsection{Research results: OpenAI Pong}\label{research-results-pong}
-The results for the different RL agents in OpenAI Pong can be seen in figure \ref{fig:results-agents-pong}. Like with Starcraft II, each agent's score is shown per episode, as well as a $30$ episode average. A perfect agent would score $21$ points per episode, whereas a random agent will score mostly between $-21$ and $-18$.
+\subsubsection{Results overview}
+The results for the different RL agents in OpenAI Pong can be seen in figure \ref{fig:results-agents-pong}. As with Starcraft II, each agent's score is shown per episode, as well as a $30$ episode average. A perfect agent would score $21$ points per episode, whereas a random agent will score mostly between $-21$ and $-18$.
 
-\begin{figure}[h!]
+\begin{figure}[h]
 	\centering
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{Pong/Base_agent_results}
+	\begin{subfigure}[b]{0.49\textwidth}
+		\includegraphics[width=\linewidth]{Pong/Base_agent_results}
 		\caption{Results for the baseline agent.}
 		\label{fig:results-base-pong} 
 	\end{subfigure}
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{Pong/PCA_agent_results}
+	\begin{subfigure}[b]{0.49\textwidth}
+		\includegraphics[width=\linewidth]{Pong/PCA_agent_results}
 		\caption{Results for the PCA agent.}
 		\label{fig:results-pca-pong}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{Pong/Pretrained_autoencoder_agent_results}
+	
+	\medskip
+	\begin{subfigure}[b]{0.49\textwidth}
+		\includegraphics[width=\linewidth]{Pong/Pretrained_autoencoder_agent_results}
 		\caption{Results for the pre-trained autoencoder agent.}
 		\label{fig:results-ae-pong}
-	\end{subfigure}
-	\caption{Results of the different RL agents in Pong.}
-\end{figure}%	
-\begin{figure}[ht]\ContinuedFloat
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{Pong/Online_autoencoder_agent_results}
+	\end{subfigure}	
+	\begin{subfigure}[b]{0.49\textwidth}
+		\includegraphics[width=\linewidth]{Pong/Online_autoencoder_agent_results}
 		\caption{Results for the online trained autoencoder agent.}
 		\label{fig:results-online-ae-pong}
 	\end{subfigure}
-	\caption{Results of the different RL agents in Pong(cont.).}
+	\caption{Results of the different RL agents in Pong.}
 	\label{fig:results-agents-pong}
 \end{figure}
 
 The results for the baseline agent, in subfigure \ref{fig:results-base-pong}, show that it converges to a policy scoring between $12$ and $21$ per episode (meaning it wins the game having scored $21$ points, while its opponent scores $0$ to $9$ points), with an average score around $18$. It converges to this policy after roughly $220$ episode.
 
-The results for the PCA agent can be seen in figure \ref{fig:results-pca-pong}. This agent trains significantly worse than the baseline agent. Though it eventually does improve compared to a random policy, it takes a lot of episodes before it does improve and it remains incredibly inconsistent. %TODO episode en scores aangeven
+The results for the PCA agent can be seen in figure \ref{fig:results-pca-pong}. This agent trains significantly worse than the baseline agent. Though it eventually does improve compared to a random policy, it takes $300$ episodes before it starts improving and it remains incredibly inconsistent, converging to a policy scoring between $21$ and $-21$. %TODO episode en scores aangeven
 
 The pre-trained autoencoder agent performs a lot better than the PCA agent, yet slightly worse than the baseline agent. This can be seen in figure \ref{fig:results-ae-pong}. Though the pre-trained autoencoder agent converges slightly quicker than the baseline agent, taking roughly $180$ episodes instead of $200$, it converges to a worse policy. Most notably, it is a lot less consistent: its average score oscillates between $11$ and $16$, whereas the baseline agent's average is around $18$. This is mostly the result of consistently having occasional episodes scoring only slightly above $0$.
 
-The online trained autoencoder on the other hand, is never able to train and remains at the level of a random policy.
+The online trained autoencoder on the other hand is able to reach a score similar to the baseline agent. Though it takes more episodes to converge (taking rougly $280$ episodes instead of $220$), due to using an initially untrained autoencoder, 
 
+\clearpage
 \subsubsection{Discussion}\label{research-discussion-pong}
-TODO
 \paragraph{PCA agent: losing spatial information}
 We will again start by examining the PCA agent. Like in the Starcraft II environment, the PCA agent converges to a very sub-optimal policy. Though after $300$ episode better than a random policy, the PCA agent performs very inconsistently, having both episodes of scores of $21$ and of $-21$.
 
-Like with the Starcraft II environment, we are working with spatial information. This information is not retained, despite using $1764$ principal components to transform a single observation frame, capturing roughly $99\%$ of the variance of the original input. This is shown in figure \ref{fig:pca-state-pong}, which shows a single observation frame and its latent representation through PCA. We can see that again (like in Starcraft II) the spatial information is lost in the latent representation \todo{Citing, same as in pysc2}, making it difficult for the agent to train. A possible explanation for learning a better than random policy might be the absence of enough stochasticity in this environment, making it possible to train (at least to a certain level) merely by directly mapping a state to an action, instead of learning generalisations. However, the results clearly show that the agent is not able to train well using latent representations that lose spatial information.
+As with the Starcraft II environment, we are working with spatial information. This information is not retained, despite using $1764$ principal components to transform a single observation frame, capturing roughly $99\%$ of the variance of the original input. This is shown in figure \ref{fig:pca-state-pong}, which shows a single observation frame and its latent representation through PCA. We can see that again (like in Starcraft II) the spatial information is lost in the latent representation, making it difficult for the agent to train. A possible explanation for learning a better than random policy might be the absence of enough stochasticity in this environment, making it possible to train (at least to a certain level) merely by directly mapping a state to an action, instead of learning generalisations. However, the results clearly show that the agent is not able to train well using latent representations that lose spatial information.
 
 
-\begin{figure}[h!]
+\begin{figure}[h]
 	\centering
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{Pong/State_original}
+	\begin{subfigure}[b]{0.3\textwidth}
+		\includegraphics[width=\linewidth]{Pong/State_original}
 		\caption{The original observation, i.e. the input for the PCA transformation.}
 		\label{fig:pca-original-pong} 
-	\end{subfigure}
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=0.75\linewidth]{Pong/State_pca}
+	\end{subfigure}\hfill
+	\begin{subfigure}[b]{0.3\textwidth}
+		\includegraphics[width=\linewidth]{Pong/State_pca}
 		\caption{The latent representation given by the PCA transformation}
 		\label{fig:pca-latent-pong}
 	\end{subfigure}
-	\caption{Latent representation of a state observation using PCA.}
+	\caption{Latent representation of a state observation using PCA in Pong.}
 	\label{fig:pca-state-pong}
 \end{figure}
 
@@ -418,16 +421,61 @@ Unlike in the Starcraft II environment, the pre-trained autoencoder agent perfor
 
 To analyse and validate the results of the autoencoder, we first show the output of the encoder, i.e. the latent representation, in figure \ref{fig:ae1-state-pong}. What can be seen here is a compression of the data similar to the autoencoder in Starcraft II. Each pixel in the latent representation correlates to a block of pixels of the original data. Thus, a pixel's value in the latent representation will reflect the values of a block of pixels in the original image, and therewith compress the data to a lower dimensional space. 
 
-This can explain why the agent learns a sub-optimal policy: the lower dimensional space creates slight imprecisions with regards to the exact locations of the ball and the paddles. In the Starcraft II environment this did not create problems since the beacon spans a relatively large space. However, in Pong the ball is only four pixels large and its precise location relative to paddle is very important for deciding where to move to paddle to.
+This can explain why the agent learns a sub-optimal policy: the lower dimensional space creates slight imprecisions with regards to the exact locations of the ball and the paddles. In the Starcraft II environment this did not create problems since the beacon spans a relatively large space. However, in Pong the ball is only four pixels large and its precise location relative to paddle is very important for deciding where to move to paddle to. As we will see with the online trained autoencoder though, having a better trained autoencoder results in a precise enough latent representation for the agent to train an optimal policy.
+
+Like in the Starcraft II discussion, we now also give the correlation matrix, following the same process as before, visualised in figure \ref{fig:ae-corr-process}. We create a correlation matrix based on $40.000$ frames between the original $84 \times 84$ features and the $42 \times 42$ latent features given by the autoencoder's encoder. The resulting matrix is given in figure \ref{fig:ae-corr-pong}. Again, to visualise this better, we show the correlation matrix of a single latent feature with the original features. We do this by taking the values of a single column corresponding to a latent feature from the correlation matrix, and then reshape this to the $84 \times 84$ grid.
+
+We show this for two latent features. The first is a latent feature that is centered in the latent grid, shown in figure \ref{fig:ae-latent-feature-pong}. What can be seen in its correlation matrix in figure \ref{fig:ae-latent-feature-corr-matrix-pong} is that there is high correlation of the latent feature with a square of original features in the same relative space. This could represent the ball in Pong, as that is the only object moving through this part of the screen. When we relate this to the correlation results from Starcraft II, we can see a similar pattern: the latent features correlate with a figure surrounding the same relative space in the original features. In Starcraft II, this took the form of the beacon: an octagon. This time, it takes the form of the ball.
+
+Interesting results also come from a different latent feature shown in figure \ref{fig:ae-latent-feature-pong2}. This is placed in the relative space of the right paddle in the original observation. The correlation matrix shown in figure \ref{fig:ae-latent-feature-corr-matrix-pong2} shows a high correlation with the entire space where the paddle can go. Thus, to project the paddle down to the latent space, the entire area where it could be present is taken into account for each latent feature in the same relative space.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.25\paperwidth]{Pong/corr_matrix_reduced}
+	\caption{Correlation matrix for the autoencoder used in the pre-trained autoencoder agent in Pong, based on $40.000$ state observations. The x-axis contains the features of the reduced state observations, and the y-axis contains the features of the original observations.}
+	\label{fig:ae-corr-pong}
+\end{figure}
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}[b]{0.2\textwidth}
+		\includegraphics[width=\linewidth]{Pong/grid_latent_feature_904}
+		\caption{The latent feature that was used: at index $903$ of flattened grid data.}
+		\label{fig:ae-latent-feature-pong} 
+	\end{subfigure}\hfill
+	\begin{subfigure}[b]{0.75\textwidth}
+		\includegraphics[width=\linewidth]{Pong/corr_matrix_latent_feature_904}
+		\caption{The correlation matrix for latent feature $904$ with the original features.}
+		\label{fig:ae-latent-feature-corr-matrix-pong}
+	\end{subfigure}
+	\caption{The correlation matrix for latent feature $904$ with the original features.}
+	\label{fig:latent-feature-corr-pong}
+\end{figure}
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}[b]{0.2\textwidth}
+		\includegraphics[width=\linewidth]{Pong/grid_latent_feature_918}
+		\caption{The latent feature that was used: at index $917$ of flattened grid data.}
+		\label{fig:ae-latent-feature-pong2} 
+	\end{subfigure}\hfill
+	\begin{subfigure}[b]{0.75\textwidth}
+		\includegraphics[width=\linewidth]{Pong/corr_matrix_latent_feature_918}
+		\caption{The correlation matrix for latent feature $918$ with the original features.}
+		\label{fig:ae-latent-feature-corr-matrix-pong2}
+	\end{subfigure}
+	\caption{The correlation matrix for latent feature $918$ with the original features.}
+	\label{fig:latent-feature-corr-pong2}
+\end{figure}
 
 To further validate the autoencoder agent's results, we trained two other autoencoders on a lower number of frames; the autoencoder used so far will be named \emph{autoencoder 1} and the two remaining autoencoders will be named \emph{autoencoder 2} and \emph{autoencoder 3}, where autoencoder 3 is trained on the fewest number of frames. These two additional autoencoders are used in two ways. First, we take the trained autoencoder agent (i.e. trained on the original autoencoder: autoencoder 1) and replace autoencoder 1 with autoencoders 2 and 3. This way we can see how much the agent depends on the specific encoding of the autoencoder it was trained on. Secondly, we will train two additional autoencoder agents on the other two pre-trained autoencoders. This way we can compare the effect of using a less accurate autoencoder on the RL agent.
 
-The losses of the autoencoders (computed by the difference between the input image and the latent representation, as explained in section \ref{pl-ae}) during training can be seen in figure \ref{fig:ae-loss-pong}. An untrained autoencoder has a loss of roughly $1500$. Autoencoder 1 was trained on $340.000$ frames and ended in a loss of $0.9$. Autoencoder 2 was on $25.000$ frames and ended in a loss of $30.7$. Finally, autoencoder 3 was trained on $10.000$ frames and ended in a loss of $86,2$.
+The losses of the autoencoders (computed by the difference between the input image and the latent representation, as explained in section \ref{pl-ae}) during training can be seen in figure \ref{fig:ae-loss-pong}. An untrained autoencoder has a loss of roughly $1500$. Autoencoder 1 was trained on $340.000$ frames and ended in a loss of $0.9$. Autoencoder 2 was trained on $25.000$ frames and ended in a loss of $30.7$. Finally, autoencoder 3 was trained on $10.000$ frames and ended in a loss of $86.2$.
 
-\begin{figure}[h!]
+\begin{figure}[h]
     \centering
-   	\includegraphics[width=1\textwidth]{Pong/AE_losses_pong}
-    	\caption{Losses frame for training three autoencoders in Pong. Autoencoder 1 trained on $340.000$ frames to a loss of $0.9$, autoencoder 2 trained on $25.000$ frames to a loss of $30.7$ and autoencoder 3 trained on $10.000$ frames to a loss of $86.2$.}
+   	\includegraphics[width=0.6\textwidth]{Pong/AE_losses_pong}
+    	\caption{Losses per frame for training three autoencoders in Pong. Autoencoder 1 trained on $340.000$ frames to a loss of $0.9$, autoencoder 2 trained on $25.000$ frames to a loss of $30.7$ and autoencoder 3 trained on $10.000$ frames to a loss of $86.2$.}
     	\label{fig:ae-loss-pong}
 \end{figure}
 
@@ -435,23 +483,24 @@ The effect of this difference in loss and number of training frames, is shown in
 
 \begin{figure}[h]
 	\centering
-	\begin{subfigure}[b]{0.5\textwidth}
-		\includegraphics[width=1\linewidth]{Pong/State_original}
+	\begin{subfigure}[b]{0.40\textwidth}
+		\includegraphics[width=\linewidth]{Pong/State_original}
 		\caption{The original observation frame, i.e. the input for the autoencoder.}
 		\label{fig:ae-state-original-pong} 
-	\end{subfigure}
-	\begin{subfigure}[b]{0.75\textwidth}
-		\includegraphics[width=1\linewidth]{Pong/State_ae1_output}
+	\end{subfigure}\hfill
+	\begin{subfigure}[b]{0.40\textwidth}
+		\includegraphics[width=\linewidth]{Pong/State_ae1_output}
 		\caption{The output of the encoder of autoencoder 1.}
+		\medskip
 		\label{fig:ae1-state-pong}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.5\textwidth}
-		\includegraphics[width=1\linewidth]{Pong/State_ae2_output}
+	\begin{subfigure}[b]{0.4\textwidth}
+		\includegraphics[width=\linewidth]{Pong/State_ae2_output}
 		\caption{The output of the encoder of autoencoder 2.}
 		\label{fig:ae2-state-pong}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.5\textwidth}
-		\includegraphics[width=1\linewidth]{Pong/State_ae3_output}
+	\end{subfigure}\hfill
+	\begin{subfigure}[b]{0.4\textwidth}
+		\includegraphics[width=\linewidth]{Pong/State_ae3_output}
 		\caption{The output of the encoder of autoencoder 3.}
 		\label{fig:ae3-state-pong}
 	\end{subfigure}
@@ -459,32 +508,62 @@ The effect of this difference in loss and number of training frames, is shown in
 	\label{fig:ae-output-pong}
 \end{figure}
 
-This is indeed the case as can bee in figure \ref{fig:ae-results-pong}: the better the autoencoder being used by the RL agent, the better the agent trains. We have already looked at the results for autoencoder 1, in figure \ref{fig:ae1-results-pong}, and how it compared to the baseline agent. We can see in figure \ref{fig:ae2-results-pong} that using autoencoder 2, results in a worse RL agent. It takes more episodes to converge compared to the agent using autoencoder 1 ($180$ and $250$ episodes respectively) and converges to a less optimal policy. In particular, it is a lot less consistent, often scoring even below $0$ (thus losing the Pong game). The agent using autoencoder 3, shown in figure \ref{fig:ae3-results-pong} performs even worse than this. It takes about $300$ episodes before it starts getting to a policy that is better than a random agent, and after $400$ gets to a very inconsistent policy: it both has episodes of $21$ and of $-21$. It's results are very similar to that of the PCA agent, which lost all spatial information in its latent representation. Thus, it is clearly seen that the less accurate the autoencoder, the less the RL agent is able to train on its latent representation, thereby showing the importance of a well trained autoencoder when used for state-space dimensionality reduction.
+This is indeed the case as can bee in figure \ref{fig:ae-results-pong}: the better the autoencoder being used by the RL agent, the better the agent trains. We have already looked at the results for autoencoder 1, in figure \ref{fig:ae1-results-pong}, and how it compared to the baseline agent. We can see in figure \ref{fig:ae2-results-pong} that using autoencoder 2, results in a worse RL agent. It takes more episodes to converge compared to the agent using autoencoder 1 ($180$ and $250$ episodes respectively) and converges to a less optimal policy. In particular, it is a lot less consistent, often scoring even below $0$ (thus losing the Pong game). The agent using autoencoder 3, shown in figure \ref{fig:ae3-results-pong} performs even worse than this. It takes about $300$ episodes before it starts getting to a policy that is better than a random agent, and after $400$ gets to a very inconsistent policy: it both has episodes of $21$ and of $-21$. Its results are very similar to that of the PCA agent, which lost all spatial information in its latent representation. Thus, it is clearly seen that the less accurate the autoencoder, the less the RL agent is able to train on its latent representation, thereby showing the importance of a well trained autoencoder when used for state-space dimensionality reduction.
 
 
-\begin{figure}[h!]
+\begin{figure}[h]
 	\centering
-	\begin{subfigure}[b]{0.5\textwidth}
+	\begin{subfigure}[b]{0.49\textwidth}
 		\includegraphics[width=1\linewidth]{Pong/Pretrained_autoencoder_agent_results}
 		\caption{Training results for RL agent using pre-trained autoencoder 1 in Pong.}
 		\label{fig:ae1-results-pong}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.5\textwidth}
+	\begin{subfigure}[b]{0.49\textwidth}
 		\includegraphics[width=1\linewidth]{Pong/Pretrained_autoencoder_2_agent_results}
 		\caption{Training results for RL agent using pre-trained autoencoder 2 in Pong.}
 		\label{fig:ae2-results-pong}
+	\medskip
 	\end{subfigure}
-	\begin{subfigure}[b]{0.5\textwidth}
+	\begin{subfigure}[b]{0.49\textwidth}
 		\includegraphics[width=1\linewidth]{Pong/Pretrained_autoencoder_3_agent_results}
 		\caption{Training results for RL agent using pre-trained autoencoder 3 in Pong.}
 		\label{fig:ae3-results-pong}
 	\end{subfigure}
-	\caption{Latent representations of three different autoencoders for an observation frame in Pong.}
+	\caption{Training results for three different pre-trained autoencoder agents in Pong.}
 	\label{fig:ae-results-pong}
 \end{figure}
 
-\paragraph{Online trained autoencoder agent:}%TODO online trained autoencoder
+\clearpage
+\paragraph{Online trained autoencoder agent: equaling the baseline agent's policy}
+Lastly we have the online trained autoencoder agent. Interestingly, this agent converges to a policy similar to the baseline agent, and better than the pre-trained autoencoder agent. However, it does take more episodes than both these other agents to converge.
 
+These results can both be explained by the way the autoencoder is trained. Because the autoencoder is trained simultaneously with the RL agent, the RL agent initially trains on bad latent representations, given by a barely trained encoder. Thus, initially the RL agent is unable to train well. Furthermore, during the initial stages of training the autoencoder, its latent representations will change significantly, meaning the RL agent will receive very differing latent representations for the same (or similar) state observations. This results in the RL agent needing more episodes to converge.
+
+Its converging policy being better than the pre-trained agent, and similar to the baseline agent, can also be explained by the way the autoencoder is trained. Because we are training on $500$ episodes, the online trained autoencoder is trained on more frames than the pre-trained autoencoder. Consequently, the training loss of the autoencoder component is eventually lower than that of the pre-trained autoencoder. Thus, it is able to give a more precise latent representation, which as we just saw in the analysis of the pre-trained autoencoder agent, results in better RL training results.
+
+Interestingly, the output of these two autoencoders are only slightly, barely visibly different. The pre-trained autoencoder trained to a loss of $0.9$ for reconstructing the original observation from its latent representation. The online trained autoencoder reaches this same loss value around episode $170$. It finally ends at a loss of $0.25$. The output of the encoders of both autoencoders can be seen in figure \ref{fig:online-ae-output-pong}.
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=1\linewidth]{Pong/State_original}
+		\caption{The original observation frame, i.e. the input for the autoencoder.}
+	\end{subfigure}\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=1\linewidth]{Pong/State_ae1_output}
+		\caption{The output of the encoder of the pre-trained autoencoder.}
+	\end{subfigure}\medskip
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=1\linewidth]{Pong/State_onlineae_output}
+		\caption{The output of the encoder of the online trained autoencoder.}
+	\end{subfigure}
+	\caption{Latent representations of the pre-trained autoencoder and online trained autoencoder for an observation frame in Pong.}
+	\label{fig:online-ae-output-pong}
+\end{figure}
+
+Thus, the pre-trained autoencoder was slightly too inaccurate to give precise spatial information, leading to a slightly sub-optimal policy for its RL agent. The online trained autoencoder gives a better latent representation, resulting in a more optimal policy for its RL agent.
+
+\clearpage
 \subsection{Results discussion}\label{research-discussion}
 As we have seen in the results from our experiments in Starcraft II and OpenAI Pong, the effect of state-space dimensionality reduction on reinforcement learning depends on the technique and environment used. 
 
@@ -492,4 +571,6 @@ Both PCA and DeepMDP did not work well in both our environments and resulted in 
 
 Although the DeepMDP agent was able to get to a decent policy in our Starcraft II environment, it had difficulty with balancing the different loss calculations. This is also mentioned in the paper introducing the DeepMDP architecture \cite{deepmdp}. This balancing issue resulted in network updates that lowered one loss calculation, but raised another. Hence, the policy network was not able to train well. Furthermore, the DeepMDP took a lot more time to train per episode than all other agents, due to an additional network being used.
 
-The use of the autoencoder was the most promising method for state-space dimensionality reduction in reinforcement learning. In both the Starcraft II and the Pong environment, the autoencoder was able to project the data to a space that is 4 times lower than the original state-space. However, some spatial information does get lost in its compression. For Starcraft II this was not a problem due to the beacon being fairly large. Here, the pre-trained autoencoder agent was able to train quicker to a better policy than the baseline agent. This is a result of the policy network being trained on smaller input, having to consider fewer states. However, in Pong the location of the ball and the paddle need to be precise in order to get an optimal agent. The imprecise spatial-information therefore resulted in a pre-trained autoencoder agent that performed slightly worse than the baseline agent. This was more clearly seen in the online trained autoencoder where the RL agent was not able to learn at all.
+The use of the autoencoder was the most promising method for state-space dimensionality reduction in reinforcement learning. In both the Starcraft II and the Pong environment, the autoencoder was able to project the data to a space that is 4 times lower than the original state-space. However, some spatial information might get lost in its compression. For Starcraft II this was not a problem due to the beacon being fairly large. Here, the pre-trained autoencoder agent was able to train quicker to a better policy than the baseline agent. This is a result of the policy network being trained on smaller input, having to consider fewer states. However, in Pong the location of the ball and the paddle need to be precise in order to get an optimal agent. The imprecise spatial-information of the pre-trained autoencoder therefore resulted in an agent that performed slightly worse than the baseline agent. This was corroborated  by the online trained autoencoder agent where the autoencoder was trained on more frames, resulting in a better latent representation. This RL agent reached a policy similar to the baseline agent. However, due to having the train the autoencoder simultaneously with the RL agent, it did take more episodes to converge. 
+
+The effect of the accuracy of the latent representation on the RL agent, also shows the limits of using an autoencoder. When there is a lot of detailed spatial information, some of this might get lost in the latent representation of the autoencoder. Thus, using an autoencoder for state-space dimensionality reduction in such environments could lead to sub-optimal policies.

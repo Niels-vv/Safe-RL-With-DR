@@ -14,15 +14,15 @@ The environment is encoded in a set of variables, where all possible values of t
 
 To be able to make any informed decision, the agent will need some information with regards to the current state. The information about a state received by the agent, i.e. the variables making up the state-space, is called an \emph{observation}. This observation might be partial; the agent might not receive all information about a state. In our example, the agent might not have any information about an obstacle on the road that it hasn't sensed yet.
 
-Using this information, the agent makes a decision  about which action to take. The total set of possible actions for all states is the \emph{action-space}. A lot of different algorithms exist with regards to decision making and learning how to make better decision. In section \ref{pl-dqn} we will discuss the learning algorithm we will use, called \emph{double deep-Q-network}. Depending on the current state and the action taken by the agent, the environment might go to a new, different state. This change is encoded by a \emph{transition function}; given a state and action pair it returns the next state. 
+Using this information, the agent makes a decision  about which action to take. The total set of possible actions for all states is the \emph{action-space}. A lot of different algorithms exist with regards to decision making and learning how to make better decisions. In section \ref{pl-dqn} we will discuss the learning algorithm we will use, called \emph{double deep-Q-network}. Depending on the current state and the action taken by the agent, the environment might go to a new, different state. This change is encoded by a \emph{transition function}; given a state and action pair it returns the next state. 
 
-The current mapping in the agent between a given state and a distribution over possible actions is called its \emph{policy}. The better its policy, the better it is able to solve the problem. To be able to improve its policy, the agent needs information about how well it has been performing. This feedback is given in the form of \emph{rewards}: the environment sends positive or negative rewards to the agent, informing it about how well it has performed. In our package delivery example, the robot might get a $+1$ reward whenever it delivers a package.
+The current mapping in the agent between a given state and a distribution over possible actions is called its \emph{control policy}. The better its policy, the better it is able to solve the problem. To be able to improve its policy, the agent needs information about how well it has been performing. This feedback is given in the form of \emph{rewards}: the environment sends positive or negative rewards to the agent, informing it about how well it has performed. In our package delivery example, the robot might get a $+1$ reward whenever it delivers a package.
 
-This results in an interaction cycle between the agent and the environment, depicted in figure \ref{fig:rl_cycle}. It begins with the agent receiving an observation. Then, it chooses an action. This results in the environment transitioning into a new state (possibly the same state as before having taken the action). After this, the environment send a new observation along with a reward to the agent, and the the agent chooses a new action. This interaction stops once the problem has been solved, or when some other constraint has been violated (like a time limit, or the robot getting into an unwanted state like the robot crashing into an object). When the cycle stops, we have finished an \emph{episode}. After this, the environment can be reset to start a new episode. To get to a well performing policy, the agent often needs hundreds or thousands of episodes \cite[p. 6-10]{grokking}. 
+This results in an interaction cycle between the agent and the environment, depicted in figure \ref{fig:rl_cycle}. It begins with the agent receiving an observation. Then, it chooses an action. This results in the environment transitioning into a new state (possibly the same state as before having taken the action). After this, the environment sends a new observation along with a reward to the agent, and the agent chooses a new action. This interaction stops once the problem has been solved, or when some other constraint has been violated (like a time limit, or the robot getting into an unwanted state like the robot crashing into an object). When the cycle stops, we have finished an \emph{episode}. After this, the environment can be reset to start a new episode. To get to a well performing policy, the agent often needs hundreds or thousands of episodes \cite[p. 6-10]{grokking}. 
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\textwidth]{rl-cycle}
+    \includegraphics[width=0.45\textwidth]{rl-cycle}
     \caption{The cycle of interaction between the environment and an agent in reinforcement learning.}
     \label{fig:rl_cycle}
 \end{figure}
@@ -70,16 +70,18 @@ q_\pi (s,a) = \sum_{s', r} p(s', r|s,a)[r + \gamma v_\pi (s')], \forall s \in S,
 \end{equation}
 For all possible state-action pairs $(s,a)$, we calculate their value by looking at all their possible transitions, taking the corresponding reward, sum this by the state-value of the next state weighted by the discount factor $\gamma$, and weigh this sum with the probability of this transition happening \cite[p. 74]{grokking}.
 
-An agent is in search of an optimal policy: a policy that has an expected return greater or equal to all other possible policies. Such a policy has the optimal action-value function, known as the $q*$ function: this is the action-value function with the highest value over all possible policies. Therefore, if the agent is able to figure out the $q*$ function, it knows the optimal action for each state and thus the optimal policy. Approximating this $q*$ is the approach for most current state-of-the-art learning algorithms, including the one used in this research: double deep-Q-network (DDQN). 
+An agent is in search of an optimal policy: a policy that has an expected return greater or equal to all other possible policies. Such a policy has the optimal action-value function, known as the $q*$ function: this is the action-value function with the highest value over all possible policies. Therefore, if the agent is able to figure out the $q*$ function, it knows the optimal action for each state and thus the optimal policy. 
+
+Approximating this $q*$ is the approach for most current state-of-the-art learning algorithms, including the one used in this research: double deep-Q-network (DDQN). These types of agents are called \emph{value-based RL agents}. Furthermore, learning algorithms might be \emph{model-based} or \emph{model-free}. In model-based algorithms, the RL agent tries to construct and use an MDP model of the environment. In  model-free agents, the agent directly learns a control policy. The latter is used in our research, using DDQN.
 
 We will explain how DDQN is able to approximate the $q*$ function in section \ref{pl-dqn}. However, to understand DDQN, we will first need to introduce \emph{neural networks}. This is because in order to approximate the $q*$ function, an agent will need to keep track of the action-value for all state-action pairs. Storing these values in a table is not scalable: for problems with large (or continuous) state-spaces and large action-spaces, the table would be became way too large to be able to work with. Therefore, we need a way to approximate this table, which is what neural networks are used for. We will now first explore neural networks, before explaining DDQN.
 
 \subsection{Artificial neural networks}\label{pl-nn}
-The use of artificial neural networks (ANN) in reinforcement learning, is known as \emph{deep RL} \cite[p. 5]{grokking}. ANNs are a way of being able to use RL in problems with large state-space and large action-spaces. This is because ANNs are able to approximate both linear and non-linear functions in an efficient way\cite[p. 165-166]{nn}. Therefore, they can be used to approximate the $q*$, instead of using an action-value table to know the $q*$ function. We will now shortly examine ANNs, using \cite[p. 164-366]{nn}.
+The use of artificial neural networks (ANN) in reinforcement learning, is known as \emph{deep RL} \cite[p. 5]{grokking}. ANNs are a way of being able to use RL in problems with large state-spaces and large action-spaces. This is because ANNs are able to approximate both linear and non-linear functions in an efficient way\cite[p. 165-166]{nn}. Therefore, they can be used to approximate the $q*$, instead of using an action-value table to know the $q*$ function. We will now shortly examine ANNs, using \cite[p. 164-366]{nn}.
 
 ANNs consist of artificial neurons: a mathematical function that sums its input which is used to produce an output. These neurons are grouped into different layers, consisting of any number of neurons. Firstly, there is the input layer. In the case of RL, its input is most often the variables making up an observation. Secondly, there is the output layer, creating the output of the network. In between these two layers there usually are other layers. These are known as the hidden layers. 
 
-To produce an output, a neuron sums its input. Each input of a neuron has its own weight: a variable settings its importance. The network learns to produce better output by changing these weights. After summing the weighted inputs, the result is passed through an (often nonlinear) activation function. This produces the output of the neuron. 
+To produce an output, a neuron sums its input. Each input of a neuron has its own weight: a variable setting its importance. The network learns to produce better output by changing these weights. After summing the weighted inputs, the result is passed through an (often nonlinear) activation function. This produces the output of the neuron. 
 
 Different types of neural networks exist. One important difference here is the connections between neurons. The simplest form is a \emph{feedforward} neural network. Here, each neuron is only connected to neurons of the next layer, meaning there are no cycles. They are often fully connected: a neuron passes its output to each neuron of the next layer. An example of fully connected feedforward neural network can be seen in figure \ref{fig:nn}.
 
@@ -87,12 +89,12 @@ Another important type of neural network is a \emph{convolutional neural network
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\textwidth]{CNN}
+    \includegraphics[width=0.75\textwidth]{CNN}
     \caption{A convolutional layer with a single filter. The filter convolves across the input image to produce one feature map. Adding more filters would results in a stack of feature maps (one per filter).}
     \label{fig:cnn}
 \end{figure}
 
-To improve the given output, a network can update its weights. For this it needs a loss function that computes how incorrect given output was. To calculate how much each weight needs to be changed, backpropagation is used. This computes the gradient for each weight with respect to the loss function. This way, loss can be minimized out therefore the output optimized.
+To improve the given output, a network can update its weights. For this it needs a loss function that computes how incorrect given output was. To calculate how much each weight needs to be changed, backpropagation is used. This computes the gradient for each weight with respect to the loss function. This way, loss can be minimized and therefore the output optimized.
 
 \begin{figure}[h]
     \centering
@@ -101,7 +103,7 @@ To improve the given output, a network can update its weights. For this it needs
     \label{fig:nn}
 \end{figure}
 
-For more details on artificial neural networks, we refer to \cite{nn}. ANNs are a central part of the learning algorithm used in this paper: double deep-Q-network, which we will now examine.
+For more details on artificial neural networks, we refer to \cite{nn}. ANNs are a central part of the learning algorithm used in this thesis: double deep-Q-network, which we will now examine.
 
 \subsection{Double deep-q-network}\label{pl-dqn}
 Before going into the learning algorithm DDQN, it is useful to start by looking at other algorithms preceding DDQN. Firstly we will look at \emph{Q-learning} and \emph{deep-Q-learning} (DQN). 
@@ -110,7 +112,7 @@ The RL approach taken in Q-learning is arguably the most used approach in RL \ci
 
 This is done through a cycle of interactions of the agent with the environment. The agent starts by getting an observation and choosing an action. The environment moves to a new state and the agent receives a new observation and a reward for the current transition. Then the Q-table is updated and the cycle starts over until we reach the end of our episode. Depending on the problem, the agent will need hundreds or thousands of episodes to get the Q-table to approximate the $Q*$ function.
 
-When choosing an action, exploitation needs to be balanced with exploration. The agent needs to explore different actions in the same state to find out what happens and explore as many states as possible. Simultaneously, the agent will only start performing well once it starts exploiting the updated Q-table. To do this, an \emph{$\epsilon$-greedy strategy} is used. Each time an action must be taken, the agent gets a random number between $0$ and $1$. Whenever this is lower than or equal to the $\epsilon$ value, a random action is taken, otherwise it takes chooses an action greedily based on the Q-table. In this strategy, $\epsilon$ is usually decayed over time, to slowly put more emphasis on exploitation.
+When choosing an action, exploitation needs to be balanced with exploration. The agent needs to explore different actions in the same state to find out what happens and explore as many states as possible. Simultaneously, the agent will only start performing well once it starts exploiting the updated Q-table. To do this, an \emph{$\epsilon$-greedy strategy} is used. Each time an action must be taken, the agent gets a random number between $0$ and $1$. Whenever this is lower than or equal to the $\epsilon$ value, a random action is taken, otherwise it chooses an action greedily based on the Q-table. In this strategy, $\epsilon$ is usually decayed over time, to slowly put more emphasis on exploitation.
 
 To update the Q-table after a transition, the old Q-value is added to the new information gotten from this transition, known as the \emph{temporal difference}. The temporal difference is first weighted by a hyperparameter called the \emph{learning rate}. This temporal difference is the difference between the current estimate in the Q-table and the \emph{TD-target}, which is the Q-value we are now moving towards. Thus, it represents the error between the current Q-value and the new estimate and is therefore known as the \emph{TD-error}.
 
@@ -128,13 +130,13 @@ To get the Q-values for a state, we pass the state to its policy network. This i
 
 Additionally, we don't train the policy network with every step, but use a hyperparameter to set how often we train the network. Thus, we must store \emph{experiences}: tuples containing information about a transition, including the initial state, next state, reward and whether we ended in a terminal state. When training the network, we train it on batches of these experiences, known as \emph{replay memory}. 
 
-Thus, when training the policy network we pass batches of next states to the policy network to get their maximum Q-values. The corresponding rewards are added to calculate the TD-target. Then the initial states are passed to the policy network to get their Q-values. These values are then used to calculate the TD-error which used to calculate the loss using the loss-function. Then the policy network is updated by backpropagating the loss.
+Thus, when training the policy network, we pass batches of next states to the policy network to get their maximum Q-values. The corresponding rewards are added to calculate the TD-target. Then the initial states are passed to the policy network to get their Q-values. These values are then used to calculate the TD-error which is used to calculate the loss using the loss-function. Then the policy network is updated by backpropagating the loss.
 
-Now we can look at the algorithm used in this paper: double-DQN (DDQN). An overview of how a DDQN agent works is given in figure \ref{fig:ddqn}. DDQN is every similar to DQN. The difference is in how the policy network is trained \cite{ddqn}. In DQN we are taking the maximum of all Q-values. Since these values are estimates that differ from their true value, DQN tends to overestimate the highest Q-value. Doing this often will lead to divergence \cite[p. 293-297]{grokking}. Implicitly we are using the target network for two things: to get the action with the highest value, and what its value is. To solve the problem of overestimating Q-values, DDQN separates these two concerns: we use the policy network to get the action with the highest Q-value and then use the target network to get this action's Q-value. This way, the target network cross-validates the estimates of the policy network.
+Now we can look at the algorithm used in this thesis: double-DQN (DDQN). An overview of how a DDQN agent works is given in figure \ref{fig:ddqn}. DDQN is every similar to DQN. The difference is in how the policy network is trained \cite{ddqn}. In DQN we are taking the maximum of all Q-values. Since these values are estimates that differ from their true value, DQN tends to overestimate the highest Q-value. Doing this often will lead to divergence \cite[p. 293-297]{grokking}. Implicitly we are using the target network for two things: to get the action with the highest value, and what its value is. To solve the problem of overestimating Q-values, DDQN separates these two concerns: we use the policy network to get the action with the highest Q-value and then use the target network to get this action's Q-value. This way, the target network cross-validates the estimates of the policy network.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\textwidth]{DDQN}
+    \includegraphics[width=0.6\textwidth]{DDQN}
     \caption{An overview of how a DDQN RL agent works.}
     \label{fig:ddqn}
 \end{figure}
@@ -144,13 +146,13 @@ The pseudocode for DDQN is given in figure \ref{alg:ddqn}. This shows its traini
 \begin{algorithm}
 \caption{DDQN training step \cite[p.299]{grokking}.}
 \label{alg:ddqn}
-\begin{algorithmic}
+\begin{algorithmic}[1]
 \State Sample $experiences$ from replay buffer
 \State $states$, $actions$, $rewards$, $next\_states$, $terminals$ $\gets$ $experiences$
 \State $indices\_a\_q\_sp$ $\gets$ $\argmax_a policy\_ network(next\_states)$
 \State $q\_sp$ $\gets$ $target\_network(next\_states)$
 \State $max\_a\_q\_sp$ $\gets$ $q\_sp[indices\_a\_q\_sp]$
-\State $max\_a\_q\_sp$ $\gets$ $max\_a\_q\_sp$ $\cdot$ $(1-terminals)$ \Comment{where in $terminals$ True equals $1$, False equals $0$.}
+\State $max\_a\_q\_sp$ $\gets$ $max\_a\_q\_sp$ $\cdot$ $(1-terminals)$ \Comment{where in $terminals$ True equals $1$, \null $\qquad\qquad\qquad\quad\qquad\qquad\qquad\qquad\qquad\enskip\qquad\qquad\qquad\qquad\qquad\qquad$ False equals $0$.}
 \State $target\_q\_sa$ $\gets$ $rewards + \gamma \cdot max\_a\_q\_sp$
 \State $q\_sa \gets policy\_network(states, actions)$
 \State $td\_error \gets q\_sa - target\_q\_sa$
@@ -160,7 +162,7 @@ The pseudocode for DDQN is given in figure \ref{alg:ddqn}. This shows its traini
 \end{algorithm}
 
 \section{State-space dimensionality reduction}\label{pl-dimensionality}
-In RL, states and observations are determined by variables, as mentioned in section \ref{pl-rl}. A single state, and thus also a single observation, is simply a single instantiation of these variables. All possible values of these variables together form the total state-space. A larger state-space means more computing cost for the agent. This has several reasons. Firstly, the agent needs to explore more states to explore the entire state-space. This in turn means having to gather larger datasets containing observations, which can be impractical \cite{AE-2019}. Secondly, for an agent to be able to form a decent policy, the policy network (and target network in case of DDQN) needs to be of an appropriate size. When it is too small for a certain state-space, it will not be able to approximate the Q-function well enough. Therefore, in general, the larger the state-space, the larger the policy network has to be. Training and using a larger network takes more computing cost, since we are dealing with more trainable variables (i.e. the weights of a neural network) \cite{AE_2019}. This is especially true for CNNs, which are commonly used in RL when dealing image data \cite{CNN_computation}. Lastly, higher dimensional data may include more noise, which can prevent an agent from finding an optimal policy \cite{AE_2016}. Thus, having a smaller state-space results in a less computationally expensive agent; decisions can be made quicker (since a forward pass through the network will be slightly faster) and the agent is able to faster converge to a good policy. 
+In RL, states and observations are determined by variables, as mentioned in section \ref{pl-rl}. A single state, and thus also a single observation, is simply a single instantiation of these variables. All possible values of these variables together form the total state-space. A larger state-space means more computing cost for the agent. This has several reasons. Firstly, the agent needs to explore more states to explore the entire state-space. This in turn means having to gather larger datasets containing observations, which can be impractical \cite{AE_2019}. Secondly, for an agent to be able to form a decent policy, the policy network (and target network in case of DDQN) needs to be of an appropriate size. When it is too small for a certain state-space, it will not be able to approximate the Q-function well enough. Therefore, in general, the larger the state-space, the larger the policy network has to be. Training and using a larger network takes more computing cost, since we are dealing with more trainable variables (i.e. the weights of a neural network) \cite{AE_2019}. This is especially true for CNNs, which are commonly used in RL when dealing with image data \cite{CNN_computation}. Lastly, higher dimensional data may include more noise, which can prevent an agent from finding an optimal policy \cite{AE_2016}. Thus, having a smaller state-space results in a less computationally expensive agents; decisions can be made quicker (since a forward pass through the network will be slightly faster) and the agent is able to faster converge to a good policy. 
 
 The size of the state-space is problem and environment specific. Generally, more complex problems and environments come with larger state-spaces. A way for dealing with large state-spaces is needed for RL to be scalable. One such way is to make the state-space of a specific problem smaller, while retaining enough information for the agent to get to a good policy. This problem of reducing the dimensionality of the state-space while keeping the necessary information for an agent to train on, is known as \emph{state-space dimensionality reduction}.  %TODO citation voor tweede zin?
 
@@ -170,13 +172,13 @@ The first method for state-space dimensionality reduction we will discuss, is \e
 
 The general idea of using PCA to reduce dimensionality of the latent space, is to apply PCA on a state observation of the agent immediately after receiving it from the environment. Applying PCA will project the observation data to a lower dimensional space. This lower dimensional observation will then be the observation the agent will use. Thus, the dimension PCA projects to determines the new state-space dimensionality \cite{mario}.
 
-The first important mathematical concept behind PCA, is the \emph{covariance matrix}. This computes the covariance between each variable-pair, thereby computing their correlation. To compute the covariance matrix, we first subtract the mean of each column in the original data matrix from every value in that column. Then, depending whether variance between features corresponds to the importance of that feature, we may standardize the data by dividing each value with the standard deviation of its column. This results in matrix $X$. To compute its covariance matrix, we simply transpose $X$ and multiply it with $X$ giving matrix $X^TX$.
+The first important mathematical concept behind PCA, is the \emph{covariance matrix}. This computes the covariance between each variable-pair, thereby computing their correlation. To compute the covariance matrix, we first subtract the mean of each column in the original data matrix from every value in that column. Then, depending on whether variance between features corresponds to the importance of that feature, we may standardize the data by dividing each value with the standard deviation of its column. This results in matrix $X$. To compute its covariance matrix, we simply transpose $X$ and multiply it with $X$ giving matrix $X^TX$.
 
-The other two important mathematical concepts behind PCA are \emph{eigenvectors} and \emph{eigenvalues}. An eigenvector $v$ of a matrix $X$ is a vector such that multiplying it with $X$ results in a variable number of vector $v$:
+The other two important mathematical concepts behind PCA are \emph{eigenvectors} and \emph{eigenvalues}. An eigenvector $v$ of a matrix $X$ is a vector such that multiplying it with $X$ results in a variable number of vectors $v$:
 
 \begin{equation}
 \label{eigenvectors}
-A \cdot v = \lambda \cdot v
+X \cdot v = \lambda \cdot v
 \end{equation}
 
 The number of vectors $v$ that we end up with, i.e. $\lambda$ in equation \ref{eigenvectors}, denotes how much we are scaling the eigenvector and is called the \emph{eigenvalue} of that eigenvector. The number of eigenvectors that a matrix has, is at most $min(\#rows, \#columns)$. 
@@ -212,21 +214,19 @@ Equation~\eqref{enc} defines the encoder and equation~\eqref{dec} the decoder, b
 
 A fundamental difference with using PCA, is the type of functions that can be approximated for lowering the dimensionality. Since an autoencoder uses neural networks, they can approximate nonlinear functions, as mentioned in section \ref{pl-nn}. This is in contrast with PCA, which can only approximate linear functions. Because of this, an autoencoder can learn more powerful generalisations which leads to lower information loss\cite{AE_general}.
 
-To use an autoencoder for state-space dimensionality reduction, we again (like with PCA) use as input an observation the agent got from the environment. We can train the autoencoder using both the encoder and the decoder to calculate the loss. When used in RL, only the encoder is used. The encoder will project the observation input to the dimensionality of the latent space. 
+To use an autoencoder for state-space dimensionality reduction, we again (as with PCA) use as input an observation the agent got from the environment. We can train the autoencoder using both the encoder and the decoder to calculate the loss. When used in RL, only the encoder is used. The encoder will project the observation input to the dimensionality of the latent space. 
 
 \subsection{DeepMDP}\label{pl-deepmdp}
-\cite{deepmdp} \cite{wgan}
-plaatje deepmdp agent 
 The last method for state-space dimensionality reduction, is a \emph{DeepMDP} \cite{deepmdp}. In contrast with the previous methods, the DeepMDP is a partial RL agent: training the dimensionality reduction goes hand in hand with training the RL agent.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\textwidth]{DeepMDP}
+    \includegraphics[width=0.75\textwidth]{DeepMDP}
     \caption{An overview of how a DeepMDP agent works.}
     \label{fig:deepmdp_agent}
 \end{figure}
 
-This is done through several steps that alter the way the loss for the policy network is calculated. Firstly, there is an encoder neural network that projects the original data to a lower dimensional space, similar to the encoder of the autoencoder. However, in contrast with the autoencoder, this encoder is trained together with the network representing the Q-function using the same optimizer (and thus the same loss). This can be seen in figure \ref{fig:deepmdp_agent}, specifically the \textit{policy network} part. Like a normal value-based RL agent, it trains its policy network using stored transition tuples. Differently from value-based strategies, its policy network now also contains an encoder. An observation first goes through the encoder, lowering the state-space dimensionality, before going into the network representing the Q-function (the \textit{MLP} in figure \ref{fig:deepmdp_agent}. The presence of the encoder will not only project the data to a lower dimensional space, but will also influence the loss calculation for the entire policy network, since the encoder is trained simultaneously with the network representing the Q-function. 
+This is done through several steps that alter the way the loss for the policy network is calculated. Firstly, there is an encoder neural network that projects the original data to a lower dimensional space, similar to the encoder of the autoencoder. However, in contrast with the autoencoder, this encoder is trained together with the network representing the Q-function using the same optimizer (and thus the same loss). This can be seen in figure \ref{fig:deepmdp_agent}, specifically the \textit{policy network} part. Like a normal value-based RL agent, it trains its policy network using stored transition tuples. Differently from value-based strategies, its policy network now also contains an encoder. An observation first goes through the encoder, lowering the state-space dimensionality, before going into the network representing the Q-function (the \textit{MLP} in figure \ref{fig:deepmdp_agent}). The presence of the encoder will not only project the data to a lower dimensional space, but will also influence the loss calculation for the entire policy network, since the encoder is trained simultaneously with the network representing the Q-function. 
 
 The loss calculation is also altered in a second way, which in figure \ref{fig:deepmdp_agent} can be seen in the \textit{Update policy network} part. The DeepMDP makes use of an auxiliary objective to calculate the loss, using another neural network: the transition cost network. This network calculates the cost for predicted transitions. For a given latent state (given by the encoder), it calculates the cost for all possible transitions to a next latent state. This means that its output has dimensions $action space \times latent space$. The action space here represents the actions that can be taken in the current latent state, while the latent space represents the next (predicted) latent observation.
 

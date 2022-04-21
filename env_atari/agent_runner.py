@@ -48,7 +48,7 @@ def main(unused_argv):
     env = EnvWrapper(env, device)
     input_shape = (4,84,84) # Shape of mlp input image: CxHxW
     mlp = policy_network(input_shape, env.env.action_space.n)
-    encoder = deep_mdp_encoder if deep_mdp else None
+    encoder = None
 
     if FLAGS.store_obs:
         agent = DQNAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, train=False)
@@ -75,6 +75,8 @@ def main(unused_argv):
             agent = AEAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train, FLAGS.train_ae_online, ae_encoder, ae_decoder, ae_config)
         elif FLAGS.variant.lower() in ["deepmdp", "deep_mdp"]:
             pass
+        else:
+            raise NotImplementedError
     
     if not FLAGS.store_obs:
         if FLAGS.load_policy:

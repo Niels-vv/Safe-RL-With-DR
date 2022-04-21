@@ -3,44 +3,44 @@
 \contentsline {section}{\numberline {1.2}Research questions}{3}{section.1.2}%
 \contentsline {section}{\numberline {1.3}Method, results and possible benefits}{4}{section.1.3}%
 \contentsline {section}{\numberline {1.4}Paper structure}{5}{section.1.4}%
-\contentsline {chapter}{\numberline {2}Preliminaries}{7}{chapter.2}%
-\contentsline {section}{\numberline {2.1}Reinforcement learning}{7}{section.2.1}%
-\contentsline {subsection}{\numberline {2.1.1}General overview}{7}{subsection.2.1.1}%
-\contentsline {subsection}{\numberline {2.1.2}Artificial neural networks}{10}{subsection.2.1.2}%
-\contentsline {subsection}{\numberline {2.1.3}Double deep-q-network}{12}{subsection.2.1.3}%
-\contentsline {section}{\numberline {2.2}State-space dimensionality reduction}{14}{section.2.2}%
-\contentsline {subsection}{\numberline {2.2.1}Principal Component Analysis}{15}{subsection.2.2.1}%
-\contentsline {subsection}{\numberline {2.2.2}Autoencoder}{16}{subsection.2.2.2}%
-\contentsline {subsection}{\numberline {2.2.3}DeepMDP}{17}{subsection.2.2.3}%
-\contentsline {chapter}{\numberline {3}Research}{19}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Methodology}{19}{section.3.1}%
-\contentsline {subsection}{\numberline {3.1.1}Experiments}{19}{subsection.3.1.1}%
-\contentsline {subsection}{\numberline {3.1.2}Environment: Starcraft II}{24}{subsection.3.1.2}%
-\contentsline {subsubsection}{\numberline {3.1.2.1}Agents setup}{25}{subsubsection.3.1.2.1}%
-\contentsline {subsection}{\numberline {3.1.3}Environment: OpenAI Pong}{28}{subsection.3.1.3}%
-\contentsline {subsubsection}{\numberline {3.1.3.1}Agents setup}{29}{subsubsection.3.1.3.1}%
-\contentsline {subsection}{\numberline {3.1.4}Remarks on method}{30}{subsection.3.1.4}%
-\contentsline {section}{\numberline {3.2}Results}{31}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Research results: Starcraft II}{31}{subsection.3.2.1}%
-\contentsline {subsubsection}{\numberline {3.2.1.1}Discussion}{32}{subsubsection.3.2.1.1}%
-\contentsline {paragraph}{\numberline {3.2.1.1.1}PCA Agent: losing all spatial information}{32}{paragraph.3.2.1.1.1}%
-\contentsline {paragraph}{\numberline {3.2.1.1.2}Autoencoder agents analyses: outperforming baseline agent}{32}{paragraph.3.2.1.1.2}%
-\contentsline {paragraph}{\numberline {3.2.1.1.3}DeepMDP agent: unable to balance multiple loss calculations}{34}{paragraph.3.2.1.1.3}%
-\contentsline {subsection}{\numberline {3.2.2}Research results: OpenAI Pong}{35}{subsection.3.2.2}%
-\contentsline {subsubsection}{\numberline {3.2.2.1}Discussion}{35}{subsubsection.3.2.2.1}%
-\contentsline {paragraph}{\numberline {3.2.2.1.1}PCA agent: losing spatial information}{35}{paragraph.3.2.2.1.1}%
-\contentsline {paragraph}{\numberline {3.2.2.1.2}Pre-trained autoencoder agent: slightly worse than the baseline agent}{36}{paragraph.3.2.2.1.2}%
-\contentsline {paragraph}{\numberline {3.2.2.1.3}Online trained autoencoder agent:}{37}{paragraph.3.2.2.1.3}%
-\contentsline {subsection}{\numberline {3.2.3}Results discussion}{37}{subsection.3.2.3}%
-\contentsline {chapter}{\numberline {4}Related work}{52}{chapter.4}%
+\contentsline {chapter}{\numberline {2}Related work}{7}{chapter.2}%
+\contentsline {chapter}{\numberline {3}Preliminaries}{9}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Reinforcement learning}{9}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}General overview}{9}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Artificial neural networks}{13}{subsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.1.3}Double deep-q-network}{14}{subsection.3.1.3}%
+\contentsline {section}{\numberline {3.2}State-space dimensionality reduction}{17}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Principal Component Analysis}{18}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Autoencoder}{19}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}DeepMDP}{20}{subsection.3.2.3}%
+\contentsline {chapter}{\numberline {4}Research}{22}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Methodology}{22}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Experiments}{22}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Environment: Starcraft II}{26}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Environment: OpenAI Pong}{29}{subsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.1.4}Remarks on method}{31}{subsection.4.1.4}%
+\contentsline {section}{\numberline {4.2}Results}{32}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Research results: Starcraft II}{32}{subsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.1.1}Results overview}{32}{subsubsection.4.2.1.1}%
+\contentsline {subsubsection}{\numberline {4.2.1.2}Discussion}{34}{subsubsection.4.2.1.2}%
+\contentsline {paragraph}{\numberline {4.2.1.2.1}PCA Agent: losing all spatial information}{34}{paragraph.4.2.1.2.1}%
+\contentsline {paragraph}{\numberline {4.2.1.2.2}Autoencoder agents analyses: outperforming baseline agent}{34}{paragraph.4.2.1.2.2}%
+\contentsline {paragraph}{\numberline {4.2.1.2.3}DeepMDP agent: unable to balance multiple loss calculations}{38}{paragraph.4.2.1.2.3}%
+\contentsline {subsection}{\numberline {4.2.2}Research results: OpenAI Pong}{41}{subsection.4.2.2}%
+\contentsline {subsubsection}{\numberline {4.2.2.1}Results overview}{41}{subsubsection.4.2.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2.2}Discussion}{43}{subsubsection.4.2.2.2}%
+\contentsline {paragraph}{\numberline {4.2.2.2.1}PCA agent: losing spatial information}{43}{paragraph.4.2.2.2.1}%
+\contentsline {paragraph}{\numberline {4.2.2.2.2}Pre-trained autoencoder agent: slightly worse than the baseline agent}{43}{paragraph.4.2.2.2.2}%
+\contentsline {paragraph}{\numberline {4.2.2.2.3}Online trained autoencoder agent: equaling the baseline agent's policy}{51}{paragraph.4.2.2.2.3}%
+\contentsline {subsection}{\numberline {4.2.3}Results discussion}{53}{subsection.4.2.3}%
 \contentsline {chapter}{\numberline {5}Conclusions and future research}{54}{chapter.5}%
-\contentsline {chapter}{\numberline {A}Appendix}{58}{appendix.A}%
-\contentsline {section}{\numberline {A.1}Starcraft II: RL agent architectures}{58}{section.A.1}%
-\contentsline {subsection}{\numberline {A.1.1}Baseline agent}{58}{subsection.A.1.1}%
-\contentsline {subsection}{\numberline {A.1.2}PCA agent}{59}{subsection.A.1.2}%
-\contentsline {subsection}{\numberline {A.1.3}Pre-trained and online trained autoencoder agent}{59}{subsection.A.1.3}%
-\contentsline {subsection}{\numberline {A.1.4}DeepMDP agent}{61}{subsection.A.1.4}%
-\contentsline {section}{\numberline {A.2}OpenAI Pong: RL agent architectures}{61}{section.A.2}%
-\contentsline {subsection}{\numberline {A.2.1}Baseline agent}{61}{subsection.A.2.1}%
-\contentsline {subsection}{\numberline {A.2.2}PCA agent}{62}{subsection.A.2.2}%
-\contentsline {subsection}{\numberline {A.2.3}Pre-trained and online trained autoencoder agent}{63}{subsection.A.2.3}%
+\contentsline {chapter}{\numberline {A}Appendix}{60}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Starcraft II: RL agent architectures}{60}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Baseline agent}{60}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {A.1.2}PCA agent}{62}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Pre-trained and online trained autoencoder agent}{62}{subsection.A.1.3}%
+\contentsline {subsection}{\numberline {A.1.4}DeepMDP agent}{62}{subsection.A.1.4}%
+\contentsline {section}{\numberline {A.2}OpenAI Pong: RL agent architectures}{63}{section.A.2}%
+\contentsline {subsection}{\numberline {A.2.1}Baseline agent}{63}{subsection.A.2.1}%
+\contentsline {subsection}{\numberline {A.2.2}PCA agent}{64}{subsection.A.2.2}%
+\contentsline {subsection}{\numberline {A.2.3}Pre-trained and online trained autoencoder agent}{65}{subsection.A.2.3}%

@@ -91,7 +91,7 @@ class PCAAnalysis:
 
 # Class methods showing analyses of autoencoder, e.g. visualizing feature maps and showing correlation matrix
 class AEAnalysis:
-    def reduced_features_correlation_matrix(ae, obs, states, features, original_space, latent_space):
+    def reduced_features_correlation_matrix(ae, obs, features, original_space, latent_space):
         def create_plot(filename, data, fig_size):
             fig, ax = plt.subplots(figsize=fig_size)
             sns.heatmap(data, vmin=-1, vmax=1, annot=False, ax=ax)
@@ -100,7 +100,7 @@ class AEAnalysis:
 
         # Get correlation matrix of single latent feature
         def get_cor_of_latent_feature(corr_matrix, feature):
-            cor_latent_feature = corr_matrix.iloc[feature].to_numpy().reshape(original_space[0], original_space[1])
+            cor_latent_feature = corr_matrix[:, feature].reshape(original_space[0], original_space[1])
             cor_latent_feature = pd.DataFrame(cor_latent_feature,columns=list(range(cor_latent_feature[0].shape[0])))
             create_plot(f'corr_matrix_latent_feature_{feature+1}.png', cor_latent_feature, (10,5))
      
@@ -115,12 +115,9 @@ class AEAnalysis:
             plt.show()
 
         reduced_states = []
-        #states = []
 
         i = 0
         max_num_states = min(60000, len(obs))
-        time.sleep(30)
-        print(process.memory_info().rss,flush=True) 
         print("Retrieving states and reduced states...")
         
         for state in obs:
@@ -131,12 +128,7 @@ class AEAnalysis:
             if i >= max_num_states:
                 break
         print(f'Retrieved reduced')
-        time.sleep(25)
-        print(process.memory_info().rss) 
-        reduced_states = pd.DataFrame(reduced_states, columns=list(range(reduced_states[0].shape[0])))
-        print(f'Dataframe reduced')
-        time.sleep(30)
-        print(process.memory_info().rss) 
+        reduced_states = np.array(reduced_states)
         # i=0
         # for state in obs:
         #     states.append(state.flatten())
@@ -144,20 +136,13 @@ class AEAnalysis:
         #     if i >= max_num_states:
         #         break
         # del obs        
-        #obs = [ob.flatten() for ob in obs][:max_num_states]
-        obs = None
-        print("waiting for dataframing")
-        time.sleep(40)
-        print(process.memory_info().rss) 
-        print("dataframing")
-        time.sleep(10)
-        #states = pd.DataFrame(obs, columns=list(range(obs[0].shape[0])))
-        print(process.memory_info().rss) 
+        obs = np.array([ob.flatten() for ob in obs][:max_num_states])
+
         print(f'Calculating correlation matrix...')
-        time.sleep(15)
-        df_cor = pd.concat([states, reduced_states], axis=1, keys=['df1', 'df2']).corr().loc['df2', 'df1']
+        df_cor = np.concatenate((obs,reduced_states),axis=1) # Concat so we can run np.corrcoef on the (obs + reduced states) x (obs + reduced states) matrxix
+        df_cor = np.corrcoef(df_cor,rowvar=False)[:obs.shape[1], obs.shape[1]:] # Take the obs x reduced states matrix from the returned (obs + reduced states) x (obs + reduced states) coeff matrix
         print("creating plot")
-        create_plot(f'corr_matrix_reduced.png', df_cor,(30,8))
+        create_plot(f'corr_matrix_reduced.png', df_cor,(8,30))
 
         # Show correlation for single latent feature
         for feature in features:
@@ -501,10 +486,6 @@ if __name__ == "__main__":
         data_manager.obs_file = f'{data_manager.observations_path}/Observations_corr.npy'
         print("Retrieving observations...")
         obs = data_manager.get_observations()   
-        # obs = [ob.flatten() for ob in obs]   
-        # print(process.memory_info().rss,flush=True)
-        # states = pd.DataFrame(obs, columns=list(range(obs[0].shape[0])))
-        # print(process.memory_info().rss,flush=True) 
 
         original_shape = (84,84)
         latent_shape = (42,42)
@@ -529,7 +510,7 @@ if __name__ == "__main__":
     pca_analyses(obs,states,results_dir,pca_name)
 
     #print("Correlation matrix")
-    #show_reduced_features_correlation(ae, obs, states, features, original_shape, latent_shape)
+    #show_reduced_features_correlation(ae, obs, features, original_shape, latent_shape)
     #print("feature maps")
     #show_feature_map_ae(ae, obs, states)
     #print("Filters")
