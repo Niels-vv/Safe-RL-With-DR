@@ -5,8 +5,8 @@ from utils.DataManager import DataManager
 from autoencoder.ae import AE, AEManager
 
 class AEAgent(DQNAgent):
-    def __init__(self, env, dqn_config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp, train, train_ae_online, ae_encoder, ae_decoder, ae_config):
-        ae_component = get_component(ae_config, ae_encoder, ae_decoder, train_ae_online, device)
+    def __init__(self, env, dqn_config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp, train, train_ae_online, ae_encoder, ae_decoder, ae_config, load_ae):
+        ae_component = get_component(ae_config, ae_encoder, ae_decoder, load_ae, device)
         latent_space = ae_component.latent_space
         print(f'Latent space: {latent_space}')
         super(AEAgent, self).__init__(env, dqn_config, device, max_episodes, data_manager, mlp, conv_last, encoder, deepmdp, train)
@@ -19,8 +19,8 @@ class AEAgent(DQNAgent):
     def run_agent(self):
         super(AEAgent, self).run_agent()
 
-def get_component(ae_config, ae_encoder, ae_decoder, train_online, device):
-    if train_online: # Not using pre-trained AE: initialize AE
+def get_component(ae_config, ae_encoder, ae_decoder, load_ae, device):
+    if not load_ae: # Not using pre-trained AE: initialize AE
         # Hyperparameters AE
         latent_space = ae_config['latent_space']
         ae_lr = ae_config['lr']

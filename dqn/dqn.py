@@ -93,8 +93,12 @@ class Agent():
             print("Rewards history:")
             for r in self.reward_history:
                 print(r)
-            self.data_manager.write_results(self.episode_history, self.reward_history, self.epsilon_history, self.duration_history, self.config, variant, self.get_policy_checkpoint())
-            self.data_manager.write_intermediate_results(self.episode_history, self.reward_history, self.duration_history, self.epsilon_history, self.get_policy_checkpoint())
+            if self.ae and self.train_ae_online:
+                ae_checkpoint = self.dim_reduction_component.get_checkpoint()
+            else:
+                ae_checkpoint = None
+            self.data_manager.write_results(self.episode_history, self.reward_history, self.epsilon_history, self.duration_history, self.config, variant, self.get_policy_checkpoint(), ae_checkpoint)
+            self.data_manager.write_intermediate_results(self.episode_history, self.reward_history, self.duration_history, self.epsilon_history, self.get_policy_checkpoint(), ae_checkpoint)
 
     def reset(self):
         self.duration = 0
@@ -169,7 +173,11 @@ class Agent():
                 # Store intermediate results in Google Drive
                 if self.train and self.env.episode % self.config['intermediate_results_freq'] == 0:
                     print("Storing intermediate results")
-                    self.data_manager.write_intermediate_results(self.episode_history, self.reward_history, self.duration_history, self.epsilon_history, self.get_policy_checkpoint())
+                    if self.ae and self.train_ae_online:
+                        ae_checkpoint = self.dim_reduction_component.get_checkpoint()
+                    else:
+                        ae_checkpoint = None
+                    self.data_manager.write_intermediate_results(self.episode_history, self.reward_history, self.duration_history, self.epsilon_history, self.get_policy_checkpoint(), ae_checkpoint)
 
         except KeyboardInterrupt:
             pass

@@ -23,8 +23,10 @@ class DataManager:
         self.setup_file = None
         self.variant_file = None
         self.policy_network_file = None
+        self.ae_file = None
         self.intermediate_policy_network_file = None
         self.intermediate_results_file = None
+        self.intermediate_ae_file = None
 
 
     '''Setup directories and files for storing state observations'''
@@ -57,6 +59,7 @@ class DataManager:
         self.setup_file = f'{self.results_path}/setup_{i}.json'
         self.variant_file = f'{self.results_path}/variant_{i}.json'
         self.policy_network_file = f'{self.results_path}/policy_network_{i}.pt'
+        self.ae_file = f'{self.results_path}/ae_online_{i}.pt'
 
         if not os.path.isdir(self.intermediate_results_path): os.makedirs(self.intermediate_results_path)
         with open(f'{self.intermediate_results_path}/Results.csv', "w") as f:
@@ -64,6 +67,7 @@ class DataManager:
             writer.writerow(["Episode", "Reward", "Epsilon", "Duration"])
         self.intermediate_policy_network_file = f'{self.intermediate_results_path}/policy_network.pt'
         self.intermediate_results_file = f'{self.intermediate_results_path}/Results.csv'
+        self.intermediate_ae_file = f'{self.intermediate_results_path}/ae_online.pt'
 
     '''Write state observation to file, creating demo trajectories to use for training PCA and AE'''
     def store_observation(self, data):
@@ -99,7 +103,7 @@ class DataManager:
 
 
     '''Store results of DQN after training; storing setup info, training results and policy network'''
-    def write_results(self, eps, rewards, epsilons, durations, setup, variant, network_checkpoint):
+    def write_results(self, eps, rewards, epsilons, durations, setup, variant, network_checkpoint, ae_checkpoint=None):
         rows = zip(eps, rewards, epsilons, durations)
         try:
             with open(self.results_file, "a") as f:
@@ -115,12 +119,13 @@ class DataManager:
                 json.dump(variant, f)
             
             torch.save(network_checkpoint, self.policy_network_file)
+            if ae_checkpoint is not None: torch.save(ae_checkpoint, self.ae_file)
 
         except Exception as e:
             print("writing results failed")
             print(e)
 
-    def write_intermediate_results(self, eps, rewards, durations, epsilons, network):
+    def write_intermediate_results(self, eps, rewards, durations, epsilons, network, ae_checkpoint):
         rows = zip(eps, rewards, epsilons, durations)
         try:
             with open(self.intermediate_results_file, "a") as f:
@@ -129,6 +134,7 @@ class DataManager:
                     writer.writerow(row)
 
             torch.save(network, self.intermediate_policy_network_file)
+            if ae_checkpoint is not None: torch.save(ae_checkpoint, self.intermediate_ae_file)
         except Exception as e:
             print("writing results failed")
             print(e)

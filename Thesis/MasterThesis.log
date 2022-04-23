@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2021.12.20)  21 APR 2022 14:54
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2021.12.20)  22 APR 2022 15:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1164,13 +1164,13 @@ LaTeX Warning: Text page 33 contains only floats.
 ent_results.png> <./imgs/Deepmdp_agent_results.png>]
 File: imgs/AE_State_original.png Graphic file (type png)
 <use imgs/AE_State_original.png>
-Package pdftex.def Info: imgs/AE_State_original.png  used on input line 258.
+Package pdftex.def Info: imgs/AE_State_original.png  used on input line 260.
 (pdftex.def)             Requested size: 125.47737pt x 119.19057pt.
 <imgs/pca_with_scalar_latent_state.png, id=677, 293.4162pt x 288.3573pt>
 File: imgs/pca_with_scalar_latent_state.png Graphic file (type png)
 <use imgs/pca_with_scalar_latent_state.png>
 Package pdftex.def Info: imgs/pca_with_scalar_latent_state.png  used on input l
-ine 263.
+ine 265.
 (pdftex.def)             Requested size: 125.47737pt x 123.31361pt.
 
 
@@ -1180,23 +1180,23 @@ LaTeX Warning: `!h' float specifier changed to `!ht'.
 <imgs/ae_loss.png, id=685, 416.2752pt x 321.6015pt>
 File: imgs/ae_loss.png Graphic file (type png)
 <use imgs/ae_loss.png>
-Package pdftex.def Info: imgs/ae_loss.png  used on input line 278.
+Package pdftex.def Info: imgs/ae_loss.png  used on input line 280.
 (pdftex.def)             Requested size: 209.12683pt x 161.56587pt.
  [35 <./imgs/pca_with_scalar_latent_state.png> <./imgs/ae_loss.png>]
 File: imgs/AE_State_original.png Graphic file (type png)
 <use imgs/AE_State_original.png>
-Package pdftex.def Info: imgs/AE_State_original.png  used on input line 290.
+Package pdftex.def Info: imgs/AE_State_original.png  used on input line 292.
 (pdftex.def)             Requested size: 125.47737pt x 119.19057pt.
-<imgs/AE_Layer_2_Feature_Map.png, id=698, 293.4162pt x 290.5254pt>
+<imgs/AE_Layer_2_Feature_Map.png, id=697, 293.4162pt x 290.5254pt>
 File: imgs/AE_Layer_2_Feature_Map.png Graphic file (type png)
 <use imgs/AE_Layer_2_Feature_Map.png>
 Package pdftex.def Info: imgs/AE_Layer_2_Feature_Map.png  used on input line 29
-5.
+7.
 (pdftex.def)             Requested size: 125.47737pt x 124.24078pt.
-<imgs/Corr_matrix_method.png, id=702, 297.11pt x 295.1025pt>
+<imgs/Corr_matrix_method.png, id=701, 297.11pt x 295.1025pt>
 File: imgs/Corr_matrix_method.png Graphic file (type png)
 <use imgs/Corr_matrix_method.png>
-Package pdftex.def Info: imgs/Corr_matrix_method.png  used on input line 307.
+Package pdftex.def Info: imgs/Corr_matrix_method.png  used on input line 309.
 (pdftex.def)             Requested size: 238.9995pt x 237.39264pt.
 
 
@@ -1207,7 +1207,7 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 File: imgs/AE_corr_matrix_cropped.png Graphic file (type png)
 <use imgs/AE_corr_matrix_cropped.png>
 Package pdftex.def Info: imgs/AE_corr_matrix_cropped.png  used on input line 32
-5.
+7.
 (pdftex.def)             Requested size: 209.1314pt x 515.6021pt.
 
 
@@ -1217,13 +1217,13 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 File: imgs/Grid_latent_feature_68.png Graphic file (type png)
 <use imgs/Grid_latent_feature_68.png>
 Package pdftex.def Info: imgs/Grid_latent_feature_68.png  used on input line 33
-3.
+5.
 (pdftex.def)             Requested size: 83.64944pt x 81.31148pt.
 <imgs/corr_matrix_latent_feature_68.png, id=722, 551.4201pt x 305.7021pt>
 File: imgs/corr_matrix_latent_feature_68.png Graphic file (type png)
 <use imgs/corr_matrix_latent_feature_68.png>
 Package pdftex.def Info: imgs/corr_matrix_latent_feature_68.png  used on input 
-line 338.
+line 340.
 (pdftex.def)             Requested size: 313.69025pt x 173.90681pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
@@ -1234,13 +1234,13 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 File: imgs/Pong/Base_agent_results.png Graphic file (type png)
 <use imgs/Pong/Base_agent_results.png>
 Package pdftex.def Info: imgs/Pong/Base_agent_results.png  used on input line 3
-62.
+64.
 (pdftex.def)             Requested size: 204.9466pt x 160.28508pt.
 <imgs/Pong/PCA_agent_results.png, id=740, 413.3844pt x 320.8788pt>
 File: imgs/Pong/PCA_agent_results.png Graphic file (type png)
 <use imgs/Pong/PCA_agent_results.png>
 Package pdftex.def Info: imgs/Pong/PCA_agent_results.png  used on input line 36
-7.
+9.
 (pdftex.def)             Requested size: 204.9466pt x 159.08275pt.
 <imgs/Pong/Pretrained_autoencoder_agent_results.png, id=741, 407.6028pt x 321.6
 015pt>
@@ -1248,14 +1248,14 @@ File: imgs/Pong/Pretrained_autoencoder_agent_results.png Graphic file (type png
 )
 <use imgs/Pong/Pretrained_autoencoder_agent_results.png>
 Package pdftex.def Info: imgs/Pong/Pretrained_autoencoder_agent_results.png  us
-ed on input line 374.
+ed on input line 376.
 (pdftex.def)             Requested size: 204.9466pt x 161.70328pt.
 <imgs/Pong/Online_autoencoder_agent_results.png, id=742, 412.6617pt x 320.1561p
 t>
 File: imgs/Pong/Online_autoencoder_agent_results.png Graphic file (type png)
 <use imgs/Pong/Online_autoencoder_agent_results.png>
 Package pdftex.def Info: imgs/Pong/Online_autoencoder_agent_results.png  used o
-n input line 379.
+n input line 381.
 (pdftex.def)             Requested size: 204.9466pt x 159.0029pt.
  [41
 
@@ -1266,12 +1266,12 @@ er_agent_results.png>]
 <imgs/Pong/State_original.png, id=762, 408.52625pt x 405.515pt>
 File: imgs/Pong/State_original.png Graphic file (type png)
 <use imgs/Pong/State_original.png>
-Package pdftex.def Info: imgs/Pong/State_original.png  used on input line 406.
+Package pdftex.def Info: imgs/Pong/State_original.png  used on input line 410.
 (pdftex.def)             Requested size: 125.47737pt x 124.55125pt.
 <imgs/Pong/State_pca.png, id=763, 414.54875pt x 402.50375pt>
 File: imgs/Pong/State_pca.png Graphic file (type png)
 <use imgs/Pong/State_pca.png>
-Package pdftex.def Info: imgs/Pong/State_pca.png  used on input line 411.
+Package pdftex.def Info: imgs/Pong/State_pca.png  used on input line 415.
 (pdftex.def)             Requested size: 125.47737pt x 121.82684pt.
  [43
 
@@ -1280,7 +1280,7 @@ Package pdftex.def Info: imgs/Pong/State_pca.png  used on input line 411.
 File: imgs/Pong/corr_matrix_reduced.png Graphic file (type png)
 <use imgs/Pong/corr_matrix_reduced.png>
 Package pdftex.def Info: imgs/Pong/corr_matrix_reduced.png  used on input line 
-434.
+438.
 (pdftex.def)             Requested size: 149.37697pt x 480.01924pt.
 
 
@@ -1290,14 +1290,14 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 File: imgs/Pong/grid_latent_feature_904.png Graphic file (type png)
 <use imgs/Pong/grid_latent_feature_904.png>
 Package pdftex.def Info: imgs/Pong/grid_latent_feature_904.png  used on input l
-ine 442.
+ine 446.
 (pdftex.def)             Requested size: 83.64944pt x 81.49863pt.
 <imgs/Pong/corr_matrix_latent_feature_904.png, id=778, 380.1402pt x 295.5843pt>
 
 File: imgs/Pong/corr_matrix_latent_feature_904.png Graphic file (type png)
 <use imgs/Pong/corr_matrix_latent_feature_904.png>
 Package pdftex.def Info: imgs/Pong/corr_matrix_latent_feature_904.png  used on 
-input line 447.
+input line 451.
 (pdftex.def)             Requested size: 313.69025pt x 243.92319pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
@@ -1306,14 +1306,14 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 File: imgs/Pong/grid_latent_feature_918.png Graphic file (type png)
 <use imgs/Pong/grid_latent_feature_918.png>
 Package pdftex.def Info: imgs/Pong/grid_latent_feature_918.png  used on input l
-ine 458.
+ine 462.
 (pdftex.def)             Requested size: 83.64944pt x 80.74448pt.
 <imgs/Pong/corr_matrix_latent_feature_918.png, id=780, 384.4764pt x 291.2481pt>
 
 File: imgs/Pong/corr_matrix_latent_feature_918.png Graphic file (type png)
 <use imgs/Pong/corr_matrix_latent_feature_918.png>
 Package pdftex.def Info: imgs/Pong/corr_matrix_latent_feature_918.png  used on 
-input line 463.
+input line 467.
 (pdftex.def)             Requested size: 313.69025pt x 237.62952pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
@@ -1322,7 +1322,7 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 <imgs/Pong/AE_losses_pong.png, id=791, 575.14874pt x 467.7475pt>
 File: imgs/Pong/AE_losses_pong.png Graphic file (type png)
 <use imgs/Pong/AE_losses_pong.png>
-Package pdftex.def Info: imgs/Pong/AE_losses_pong.png  used on input line 477.
+Package pdftex.def Info: imgs/Pong/AE_losses_pong.png  used on input line 481.
 (pdftex.def)             Requested size: 250.95476pt x 204.08945pt.
 
 
@@ -1330,24 +1330,24 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 File: imgs/Pong/State_original.png Graphic file (type png)
 <use imgs/Pong/State_original.png>
-Package pdftex.def Info: imgs/Pong/State_original.png  used on input line 487.
+Package pdftex.def Info: imgs/Pong/State_original.png  used on input line 491.
 (pdftex.def)             Requested size: 167.2989pt x 166.06421pt.
 <imgs/Pong/State_ae1_output.png, id=793, 415.5525pt x 407.5225pt>
 File: imgs/Pong/State_ae1_output.png Graphic file (type png)
 <use imgs/Pong/State_ae1_output.png>
-Package pdftex.def Info: imgs/Pong/State_ae1_output.png  used on input line 492
+Package pdftex.def Info: imgs/Pong/State_ae1_output.png  used on input line 496
 .
 (pdftex.def)             Requested size: 167.2989pt x 164.06322pt.
 <imgs/Pong/State_ae2_output.png, id=794, 414.54875pt x 410.53375pt>
 File: imgs/Pong/State_ae2_output.png Graphic file (type png)
 <use imgs/Pong/State_ae2_output.png>
-Package pdftex.def Info: imgs/Pong/State_ae2_output.png  used on input line 498
+Package pdftex.def Info: imgs/Pong/State_ae2_output.png  used on input line 502
 .
 (pdftex.def)             Requested size: 167.2989pt x 165.67642pt.
 <imgs/Pong/State_ae3_output.png, id=795, 411.5375pt x 401.5pt>
 File: imgs/Pong/State_ae3_output.png Graphic file (type png)
 <use imgs/Pong/State_ae3_output.png>
-Package pdftex.def Info: imgs/Pong/State_ae3_output.png  used on input line 503
+Package pdftex.def Info: imgs/Pong/State_ae3_output.png  used on input line 507
 .
 (pdftex.def)             Requested size: 167.2989pt x 163.21924pt.
 
@@ -1357,7 +1357,7 @@ File: imgs/Pong/Pretrained_autoencoder_agent_results.png Graphic file (type png
 )
 <use imgs/Pong/Pretrained_autoencoder_agent_results.png>
 Package pdftex.def Info: imgs/Pong/Pretrained_autoencoder_agent_results.png  us
-ed on input line 517.
+ed on input line 521.
 (pdftex.def)             Requested size: 204.9466pt x 161.70328pt.
 <imgs/Pong/Pretrained_autoencoder_2_agent_results.png, id=800, 408.3255pt x 323
 .0469pt>
@@ -1365,7 +1365,7 @@ File: imgs/Pong/Pretrained_autoencoder_2_agent_results.png Graphic file (type p
 ng)
 <use imgs/Pong/Pretrained_autoencoder_2_agent_results.png>
 Package pdftex.def Info: imgs/Pong/Pretrained_autoencoder_2_agent_results.png  
-used on input line 522.
+used on input line 526.
 (pdftex.def)             Requested size: 204.9466pt x 162.14413pt.
 <imgs/Pong/Pretrained_autoencoder_3_agent_results.png, id=801, 409.7709pt x 322
 .3242pt>
@@ -1373,7 +1373,7 @@ File: imgs/Pong/Pretrained_autoencoder_3_agent_results.png Graphic file (type p
 ng)
 <use imgs/Pong/Pretrained_autoencoder_3_agent_results.png>
 Package pdftex.def Info: imgs/Pong/Pretrained_autoencoder_3_agent_results.png  
-used on input line 528.
+used on input line 532.
 (pdftex.def)             Requested size: 204.9466pt x 161.21088pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
@@ -1387,18 +1387,18 @@ Pong/Pretrained_autoencoder_2_agent_results.png> <./imgs/Pong/Pretrained_autoen
 coder_3_agent_results.png>]
 File: imgs/Pong/State_original.png Graphic file (type png)
 <use imgs/Pong/State_original.png>
-Package pdftex.def Info: imgs/Pong/State_original.png  used on input line 549.
+Package pdftex.def Info: imgs/Pong/State_original.png  used on input line 553.
 (pdftex.def)             Requested size: 188.21288pt x 186.82378pt.
 File: imgs/Pong/State_ae1_output.png Graphic file (type png)
 <use imgs/Pong/State_ae1_output.png>
-Package pdftex.def Info: imgs/Pong/State_ae1_output.png  used on input line 553
+Package pdftex.def Info: imgs/Pong/State_ae1_output.png  used on input line 557
 .
 (pdftex.def)             Requested size: 188.21288pt x 184.57733pt.
 <imgs/Pong/State_onlineae_output.png, id=836, 406.51875pt x 399.4925pt>
 File: imgs/Pong/State_onlineae_output.png Graphic file (type png)
 <use imgs/Pong/State_onlineae_output.png>
 Package pdftex.def Info: imgs/Pong/State_onlineae_output.png  used on input lin
-e 557.
+e 561.
 (pdftex.def)             Requested size: 188.21288pt x 184.95744pt.
 
 
@@ -1409,10 +1409,11 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 ] [52 <./imgs/Pong/State_onlineae_output.png>]) (./conclusions.tex [53
 
 ]
+[54]
 Chapter 5.
-[54
+[55
 
-]) (./MasterThesis.bbl [55] [56
+]) (./MasterThesis.bbl [56] [57
 
 ]
 Underfull \hbox (badness 1577) in paragraph at lines 145--149
@@ -1420,18 +1421,18 @@ Underfull \hbox (badness 1577) in paragraph at lines 145--149
 aves, Ioan-nis
  []
 
-[57] [58]) (./appendix.tex [59]
+[58] [59]) (./appendix.tex [60]
 Appendix A.
-[60
+[61
 
 ]
-<imgs/Epsilon_decay.png, id=901, 402.5439pt x 321.6015pt>
+<imgs/Epsilon_decay.png, id=905, 402.5439pt x 321.6015pt>
 File: imgs/Epsilon_decay.png Graphic file (type png)
 <use imgs/Epsilon_decay.png>
 Package pdftex.def Info: imgs/Epsilon_decay.png  used on input line 31.
 (pdftex.def)             Requested size: 209.12683pt x 167.0767pt.
- [61 <./imgs/Epsilon_decay.png>] [62] [63]
-<imgs/Pong/Epsilon_decay_pong.png, id=929, 403.9893pt x 320.1561pt>
+ [62 <./imgs/Epsilon_decay.png>] [63] [64]
+<imgs/Pong/Epsilon_decay_pong.png, id=933, 403.9893pt x 320.1561pt>
 File: imgs/Pong/Epsilon_decay_pong.png Graphic file (type png)
 <use imgs/Pong/Epsilon_decay_pong.png>
 Package pdftex.def Info: imgs/Pong/Epsilon_decay_pong.png  used on input line 8
@@ -1441,7 +1442,7 @@ Package pdftex.def Info: imgs/Pong/Epsilon_decay_pong.png  used on input line 8
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[64]) [65 <./imgs/Pong/Epsilon_decay_pong.png>]
+[65]) [66 <./imgs/Pong/Epsilon_decay_pong.png>]
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 103.
 Package atveryend Info: Empty hook `AfterLastShipout' on input line 103.
  (./MasterThesis.aux)
@@ -1452,8 +1453,8 @@ Package rerunfilecheck Info: File `MasterThesis.out' has not changed.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 103.
  ) 
 Here is how much of TeX's memory you used:
- 24039 strings out of 481239
- 430883 string characters out of 5920376
+ 24040 strings out of 481239
+ 430890 string characters out of 5920376
  732342 words of memory out of 5000000
  38573 multiletter control sequences out of 15000+600000
  546013 words of font info for 83 fonts, out of 8000000 for 9000
@@ -1479,10 +1480,10 @@ f-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/share/texlive/texmf-dist
 c/doublestroke/dsrom10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/am
 sfonts/symbols/msbm10.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm109
 5.pfb>
-Output written on MasterThesis.pdf (67 pages, 2922224 bytes).
+Output written on MasterThesis.pdf (68 pages, 2923880 bytes).
 PDF statistics:
- 1055 PDF objects out of 1200 (max. 8388607)
- 853 compressed objects within 9 object streams
- 201 named destinations out of 1000 (max. 500000)
+ 1059 PDF objects out of 1200 (max. 8388607)
+ 856 compressed objects within 9 object streams
+ 202 named destinations out of 1000 (max. 500000)
  722 words of extra memory for PDF output out of 10000 (max. 10000000)
 

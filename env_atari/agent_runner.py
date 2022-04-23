@@ -18,7 +18,8 @@ flags.DEFINE_string("strategy", "dqn", "Which RL strategy to use.")
 flags.DEFINE_string("variant", "base", "Whether to use baseline, AE, PCA, or DeepMDP.")
 flags.DEFINE_bool("train", True, "Whether we are training or evaluating.")
 flags.DEFINE_bool("load_policy", False, "Whether to load an existing policy network.")
-flags.DEFINE_bool("train_ae_online", False, "Whether to use train ae online.") # TODO do this differently
+flags.DEFINE_bool("train_ae_online", False, "Whether to use train ae online.")
+flags.DEFINE_bool("load_ae", True, "Whether to use load ae policy.")
 flags.DEFINE_integer("max_episodes", 400, "Total episodes.")
 #flags.DEFINE_integer("max_agent_steps", 1000, "Total agent steps.")
 flags.DEFINE_string("map", "PongNoFrameskip-v4", "OpenAI name of the game/env to use.")
@@ -72,7 +73,7 @@ def main(unused_argv):
             ae_config = get_ae_config(ae_path)
             input_shape = (4,42,42) # Shape of mlp input image: CxHxW
             mlp = policy_network(input_shape, env.env.action_space.n)
-            agent = AEAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train, FLAGS.train_ae_online, ae_encoder, ae_decoder, ae_config)
+            agent = AEAgent(env, config, device, FLAGS.max_episodes, data_manager, mlp, conv_last, encoder, deep_mdp, FLAGS.train, FLAGS.train_ae_online, ae_encoder, ae_decoder, ae_config, FLAGS.load_ae)
         elif FLAGS.variant.lower() in ["deepmdp", "deep_mdp"]:
             pass
         else:

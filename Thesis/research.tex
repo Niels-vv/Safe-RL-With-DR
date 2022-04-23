@@ -88,7 +88,7 @@ In particular we are using a PySC2 minigame called \emph{MoveToBeacon}. This min
     \label{fig:pysc2_SS}
 \end{figure}
 
-An \textbf{observation} received by the agent in this minigame is given by a $32 \times 32$ grid, representing the entire state of the game, \todo{Is this correct? Or are there actually perhaps only 3 features or something?} giving a total of \textbf{$1024$ features}. Each cell in the grid represents a tile in the game. It can have one of three values: a 0 denoting an empty tile, a 1 denoting the army unit controlled by the agent, or a 5 denoting the beacon. The beacon comprises more than one tile, namely a total of $21$ tiles; it comprises five adjecent rows, where the first comprises three adjecent columns, followed by three rows of five columns, followed by a row of three columns, creating a octagonal-like shape. Because of this, the beacon has $27 \cdot 27$ places where it could be, with the army unit having $1003$ tiles left to be. This gives \todo{Is this a correct usage of state-space?} a total state-space of $32 \times 32$ with a cardinality of $27 \cdot 27 \cdot 1003 = 731.187$. An example of such a state observation can be seen in figure \ref{fig:state_example}.
+An \textbf{observation} received by the agent in this minigame is given by a $32 \times 32$ grid, representing the entire state of the game, giving a total of \textbf{$1024$ features}. Each cell in the grid represents a tile in the game. It can have one of three values: a 0 denoting an empty tile, a 1 denoting the army unit controlled by the agent, or a 5 denoting the beacon. The beacon comprises more than one tile, namely a total of $21$ tiles; it comprises five adjecent rows, where the first comprises three adjecent columns, followed by three rows of five columns, followed by a row of three columns, creating a octagonal-like shape. Because of this, the beacon has $27 \cdot 27$ places where it could be, with the army unit having $1003$ tiles left to be. This gives a total state-space of $27 \cdot 27 \cdot 1003 = 731.187$. An example of such a state observation can be seen in figure \ref{fig:state_example}.
 
 \begin{figure}[h]
     \centering
@@ -106,7 +106,7 @@ Within the $120$s time limit, the agent will be able to take 239 steps/actions. 
 \subsubsection*{Agents setup}
 We will now explain the architectures of the agents used in the Starcraft II environment. We will only give a general overview, referring to appendix \ref{appendix} section \ref{appendix-agents} for details on the neural network architectures and hyperparameter settings. 
 
-Whereas the baseline agent uses the $32 \times 32$ observations given by the environment, all other agents reduce the dimensionality to $16 \times 16$. This means that the number of features in an observation are reduced from \todo{Again, is this the correct use of "features"?}$1024$ to $256$.
+Whereas the baseline agent uses the $32 \times 32$ observations given by the environment, all other agents reduce the dimensionality to $16 \times 16$. This means that the number of features in an observation are reduced from $1024$ to $256$.
 
 Though the baseline agent's architecture is extended by all other agents (in order to keep the agents as similar as possible), one important change must be made. The policy networks of all agents are convolutional neural networks, and the output dimensions of a convolutional layer depends on the dimensions of its input. The baseline agent's policy network receives a $32 \times 32$ input, whereas the other agents receive a $16 \times 16$ input. In all cases, the output dimensions must be $32 \times 32$. This is because the network approximates the Q-function: a valuation of all actions for a given state. Since an action in our environment is defined by the coordinates the army unit must walk to, there are $32 \times 32$ possible actions. To deal with this difference in input dimensions, the first layer of the policy networks of the non-baseline agents are modified (using different stride and padding sizes) to increase the dimensionality to $32 \times 32$.\par
 
@@ -154,7 +154,7 @@ The second environment in which we ran our experiments is the Atari game Pong, u
     \label{fig:pong-obs}
 \end{figure}
 
-An $84 \times 84$ frame means there are $ 84 \cdot 84 = 7056$ features per frame (thus for a single observation consisting of four frames, this would total to $84 \cdot 84 \cdot 4 = 28224$ features). Both paddles can move up and down to $64$ spaces, giving $64 \cdot 64$ possible states when only looking at the paddle placement. Furthermore, the ball can be in any place in the $64 \times 84$ playing field. This gives a total state-space of $84 \times 84$, with a cardinality of $(64 \cdot 64) \cdot (64 \cdot 84) = 22020096$. 
+An $84 \times 84$ frame means there are $ 84 \cdot 84 = 7056$ features per frame (thus for a single observation consisting of four frames, this would total to $84 \cdot 84 \cdot 4 = 28224$ features). Both paddles can move up and down to $64$ spaces, giving $64 \cdot 64$ possible states when only looking at the paddle placement. Furthermore, the ball can be in any place in the $64 \times 84$ playing field. This gives a total state-space of $(64 \cdot 64) \cdot (64 \cdot 84) = 22020096$. 
 
 The agent, controlling one paddle, has six possible \emph{actions} it can take. Most important are the actions \textit{right} and \textit{left}, moving the paddle up and down respectively. Another relevant action is \textit{noop}, to not move the paddle. Other actions include an action to start the game (\textit{fire}) and actions used for other Atari games, but meaningless in Pong (\textit{rightfire} and \textit{leftfire}). 
 
@@ -242,7 +242,9 @@ The results for the agent using a pre-trained autoencoder, in figure \ref{fig:re
 
 Compared to the pre-trained autoencoder agent, the agent using an untrained autoencoder that is being trained while the agent is trained, performs a little worse. It converges after roughly $500$ episodes to a policy around $19-21$. Not only does it take longer to converge and converges to a slightly worse policy, it is also less consistent. Even after $400$ it still has episodes scoring around $13$. This shows it is less consistent than its pre-trained counterpart.
 
-Lastly we have the DeepMDP agent. After $130$ episodes, this agent suddenly jumps up from a random policy to scoring around $15$. However, after several episodes it starts going back down, alternating between scoring at a random policy and scoring around $7$, until finally reaching a random policy again. Furthermore it takes a lot longer to train. For the other agents, each episode took only a few seconds, whereas each episode in the DeepMDP agent takes $2.5$ minutes.
+Lastly we have the DeepMDP agent. After $130$ episodes, this agent suddenly jumps up from a random policy to scoring around $15$. However, after several episodes it starts going back down, alternating between scoring at a random policy and scoring around $7$, until finally reaching a random policy again. 
+
+Furthermore the training times per episode for each agent were very similar, except for the DeepMDP agent. For all agents but the DeepMDP agent, each episode took only a few seconds with a total training time of roughly $1.5$ hours for $1000$ episodes, whereas each episode in the DeepMDP agent takes $2.5$ minutes. The time to pass an observation through a PCA component or an autoencoder is negligible; the total training times for PCA agent and pre-trained autoencoder agent were almost identical to the baseline agent. Pre-training the PCA or the autoencoder on $1000$ episodes worth of observations only took $3$ minutes ($0.003$ minutes per episode). For the online trained autoencoder agent this means an additional $3$ minutes of training time; approximately a $3.3\%$ increase.
 
 \subsubsection{Discussion}\label{research-discussion-pysc2}
 \paragraph{PCA Agent: losing all spatial information}
@@ -390,7 +392,9 @@ The results for the PCA agent can be seen in figure \ref{fig:results-pca-pong}. 
 
 The pre-trained autoencoder agent performs a lot better than the PCA agent, yet slightly worse than the baseline agent. This can be seen in figure \ref{fig:results-ae-pong}. Though the pre-trained autoencoder agent converges slightly quicker than the baseline agent, taking roughly $180$ episodes instead of $200$, it converges to a worse policy. Most notably, it is a lot less consistent: its average score oscillates between $11$ and $16$, whereas the baseline agent's average is around $18$. This is mostly the result of consistently having occasional episodes scoring only slightly above $0$.
 
-The online trained autoencoder on the other hand is able to reach a score similar to the baseline agent. Though it takes more episodes to converge (taking rougly $280$ episodes instead of $220$), due to using an initially untrained autoencoder, 
+The online trained autoencoder on the other hand is able to reach a score similar to the baseline agent, though it takes more episodes to converge (taking roughly $280$ episodes instead of $220$), due to using an initially untrained autoencoder.
+
+The total training time for each agent was roughly 6 hours for $500$ episodes. As in the Starcraft environment, using the PCA or autoencoder in an agent added a negligible amount of time, resulting in similar training times for the baseline agent, PCA agent and pre-trained autoencode agent. The time to pre-train the PCA component and autoencoder on roughly $300$ episodes worth of observations took around $10$ minutes ($0.033$ minutes per episode). For the online trained autoencoder agent, this means that it took roughly $17$ minutes longer to train on $500$ episodes than the baseline agent: a $4.7\%$ increase.
 
 \clearpage
 \subsubsection{Discussion}\label{research-discussion-pong}
@@ -529,7 +533,7 @@ This is indeed the case as can bee in figure \ref{fig:ae-results-pong}: the bett
 		\caption{Training results for RL agent using pre-trained autoencoder 3 in Pong.}
 		\label{fig:ae3-results-pong}
 	\end{subfigure}
-	\caption{Training results for three different pre-trained autoencoder agents in Pong.}
+	\caption{Training results for three different pre-trained autoencoder agents in Pong. Autoencoder 1 is trained to the lowest loss, followed by autoencoder 2, followed by autoencoder 3. Training to lower losses results in better latent representations.}
 	\label{fig:ae-results-pong}
 \end{figure}
 
@@ -541,7 +545,7 @@ These results can both be explained by the way the autoencoder is trained. Becau
 
 Its converging policy being better than the pre-trained agent, and similar to the baseline agent, can also be explained by the way the autoencoder is trained. Because we are training on $500$ episodes, the online trained autoencoder is trained on more frames than the pre-trained autoencoder. Consequently, the training loss of the autoencoder component is eventually lower than that of the pre-trained autoencoder. Thus, it is able to give a more precise latent representation, which as we just saw in the analysis of the pre-trained autoencoder agent, results in better RL training results.
 
-Interestingly, the output of these two autoencoders are only slightly, barely visibly different. The pre-trained autoencoder trained to a loss of $0.9$ for reconstructing the original observation from its latent representation. The online trained autoencoder reaches this same loss value around episode $170$. It finally ends at a loss of $0.25$. The output of the encoders of both autoencoders can be seen in figure \ref{fig:online-ae-output-pong}.
+Interestingly, the output of these two autoencoders are only slightly, barely visibly different. The pre-trained autoencoder trained to a loss of $0.9$ for reconstructing the original observation from its latent representation. The online trained autoencoder reaches this same loss value around episode $170$. It finally ends at a loss of $0.45$. The output of the encoders of both autoencoders can be seen in figure \ref{fig:online-ae-output-pong}.
 
 \begin{figure}[h]
 	\centering
@@ -574,3 +578,5 @@ Although the DeepMDP agent was able to get to a decent policy in our Starcraft I
 The use of the autoencoder was the most promising method for state-space dimensionality reduction in reinforcement learning. In both the Starcraft II and the Pong environment, the autoencoder was able to project the data to a space that is 4 times lower than the original state-space. However, some spatial information might get lost in its compression. For Starcraft II this was not a problem due to the beacon being fairly large. Here, the pre-trained autoencoder agent was able to train quicker to a better policy than the baseline agent. This is a result of the policy network being trained on smaller input, having to consider fewer states. However, in Pong the location of the ball and the paddle need to be precise in order to get an optimal agent. The imprecise spatial-information of the pre-trained autoencoder therefore resulted in an agent that performed slightly worse than the baseline agent. This was corroborated  by the online trained autoencoder agent where the autoencoder was trained on more frames, resulting in a better latent representation. This RL agent reached a policy similar to the baseline agent. However, due to having the train the autoencoder simultaneously with the RL agent, it did take more episodes to converge. 
 
 The effect of the accuracy of the latent representation on the RL agent, also shows the limits of using an autoencoder. When there is a lot of detailed spatial information, some of this might get lost in the latent representation of the autoencoder. Thus, using an autoencoder for state-space dimensionality reduction in such environments could lead to sub-optimal policies.
+
+As for training times, the use of a PCA component or autoencoder adds a very little, negligible amount of time to train the RL agent. Thus the baseline agent, PCA agent and pre-trained autoencoder agent all have similar training times. Pre-training the PCA component and autoencoder took relatively little time as well, resulting in an increase in training time for the online trained autoencoder agent of $3.3\%$ and $4.7\%$ for Starcraft II and Pong respectively. The DeepMDP agent however takes a lot longer to train; in Starcraft II, each episode took around $2.5$ minutes to train, in contrast with the $\sim3$ seconds per episode for the baseline agent.
