@@ -84,100 +84,9 @@ class Agent():
     def run_agent(self):
         print("Running dqn")
 
-        # Run agent
-        self.run_loop()
-
-        # Store final results
-        if self.train:
-            variant = {'pca' : self.pca, 'ae' : self.ae, 'latent_space' : self.latent_space}
-            print("Rewards history:")
-            for r in self.reward_history:
-                print(r)
-            if self.ae and self.train_ae_online:
-                ae_checkpoint = self.dim_reduction_component.get_checkpoint()
-            else:
-                ae_checkpoint = None
-            self.data_manager.write_results(self.episode_history, self.reward_history, self.epsilon_history, self.duration_history, self.config, variant, self.get_policy_checkpoint(), ae_checkpoint)
-            self.data_manager.write_intermediate_results(self.episode_history, self.reward_history, self.duration_history, self.epsilon_history, self.get_policy_checkpoint(), ae_checkpoint)
-
-    def reset(self):
-        self.duration = 0
-        return self.env.reset()
-
-    def run_loop(self):
         try:
-            # A new episode
-            while self.env.episode < self.max_episodes:
-                state = self.reset()
-
-                # Get state from env; applies dimensionality reduction if pca or ae are used
-                state = self.env.get_state(state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space, self.train_ae_online)
-                
-                # A step in an episode
-                while True:
-                    start_duration = time.time()
-
-                    # Choose action
-                    action = self.env.get_action(state, self.policy_network, self.epsilon, self.train)
-
-                    # Act
-                    new_state, reward, done = self.env.step(action)
-
-                    # Get new state observation; applies dimensionality reduction if pca or ae are used
-                    new_state = self.env.get_state(new_state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space, self.train_ae_online)
-
-                    self.env.reward += reward
-
-                    # Store transition to replay memory
-                    if self.train: 
-                        transition = Transition(state, action, new_state, reward, done)
-                        self.memory.push(transition)
-
-                    # Train Q network
-                    if self.epsilon.isTraining and self.env.total_steps % self.config['train_q_per_step'] == 0 and self.memory.ready_for_training():
-                        self.train_q()
-
-                    # Update Target network
-                    if self.epsilon.isTraining and self.env.total_steps % self.config['target_q_update_frequency'] == 0 and self.memory.ready_for_training():
-                        self.target_network.load_state_dict(self.policy_network.state_dict())
-                    
-                    state = new_state
-
-                    # Train ae (if non-pretrained ae is used)
-                    # if self.train_ae_online and len(self.env.ae_batch) >= self.dim_reduction_component.batch_size: 
-                    #     ae_batch = np.array(self.env.ae_batch)
-                    #     self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(self.device).float())
-                    #     self.env.ae_batch = []
-
-                    # Episode done
-                    if self.env.is_last_obs():
-                        # Train ae (if non-pretrained ae is used)
-                        # if self.train_ae_online and len(self.env.ae_batch) > 0: 
-                        #     ae_batch = np.array(self.env.ae_batch)
-                        #     self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(self.device).float())
-                        #     self.env.ae_batch = []
-
-                        # Store and show info
-                        end_duration = time.time()
-                        self.duration = end_duration - start_duration
-
-                        if self.env.episode % self.config['plot_every'] == 0:
-                            print(f'Episode {self.env.episode} done. Score: {self.env.reward}. Steps: {self.env.step_num}. Epsilon: {self.epsilon._value}. Fps: {self.env.step_num / self.duration}')
-                        self.reward_history.append(self.env.reward)
-                        self.duration_history.append(self.env.duration)
-                        self.epsilon_history.append(self.epsilon._value)
-                        self.episode_history.append(self.env.episode)
-
-                        break
-
-                # Store intermediate results in Google Drive
-                if self.train and self.env.episode % self.config['intermediate_results_freq'] == 0:
-                    print("Storing intermediate results")
-                    if self.ae and self.train_ae_online:
-                        ae_checkpoint = self.dim_reduction_component.get_checkpoint()
-                    else:
-                        ae_checkpoint = None
-                    self.data_manager.write_intermediate_results(self.episode_history, self.reward_history, self.duration_history, self.epsilon_history, self.get_policy_checkpoint(), ae_checkpoint)
+            # Run agent
+            self.run_loop()
 
         except KeyboardInterrupt:
             pass
@@ -186,6 +95,97 @@ class Agent():
             print(traceback.format_exc())
         finally:
             self.env.close()
+
+            # Store final results
+            if self.train:
+                variant = {'pca' : self.pca, 'ae' : self.ae, 'latent_space' : self.latent_space}
+                print("Rewards history:")
+                for r in self.reward_history:
+                    print(r)
+                if self.ae and self.train_ae_online:
+                    ae_checkpoint = self.dim_reduction_component.get_checkpoint()
+                else:
+                    ae_checkpoint = None
+                self.data_manager.write_results(self.episode_history, self.reward_history, self.epsilon_history, self.duration_history, self.config, variant, self.get_policy_checkpoint(), ae_checkpoint)
+                self.data_manager.write_intermediate_results(self.episode_history, self.reward_history, self.duration_history, self.epsilon_history, self.get_policy_checkpoint(), ae_checkpoint)
+
+    def reset(self):
+        self.duration = 0
+        return self.env.reset()
+
+    def run_loop(self):
+        # A new episode
+        while self.env.episode < self.max_episodes:
+            state = self.reset()
+
+            # Get state from env; applies dimensionality reduction if pca or ae are used
+            state = self.env.get_state(state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space, self.train_ae_online)
+            
+            # A step in an episode
+            while True:
+                start_duration = time.time()
+
+                # Choose action
+                action = self.env.get_action(state, self.policy_network, self.epsilon, self.train)
+
+                # Act
+                new_state, reward, done = self.env.step(action)
+
+                # Get new state observation; applies dimensionality reduction if pca or ae are used
+                new_state = self.env.get_state(new_state, self.reduce_dim, self.dim_reduction_component, self.pca, self.ae, self.latent_space, self.train_ae_online)
+
+                self.env.reward += reward
+
+                # Store transition to replay memory
+                if self.train: 
+                    transition = Transition(state, action, new_state, reward, done)
+                    self.memory.push(transition)
+
+                # Train Q network
+                if self.epsilon.isTraining and self.env.total_steps % self.config['train_q_per_step'] == 0 and self.memory.ready_for_training():
+                    self.train_q()
+
+                # Update Target network
+                if self.epsilon.isTraining and self.env.total_steps % self.config['target_q_update_frequency'] == 0 and self.memory.ready_for_training():
+                    self.target_network.load_state_dict(self.policy_network.state_dict())
+                
+                state = new_state
+
+                # Train ae (if non-pretrained ae is used)
+                # if self.train_ae_online and len(self.env.ae_batch) >= self.dim_reduction_component.batch_size: 
+                #     ae_batch = np.array(self.env.ae_batch)
+                #     self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(self.device).float())
+                #     self.env.ae_batch = []
+
+                # Episode done
+                if self.env.is_last_obs():
+                    # Train ae (if non-pretrained ae is used)
+                    # if self.train_ae_online and len(self.env.ae_batch) > 0: 
+                    #     ae_batch = np.array(self.env.ae_batch)
+                    #     self.dim_reduction_component.train_step(torch.from_numpy(ae_batch).to(self.device).float())
+                    #     self.env.ae_batch = []
+
+                    # Store and show info
+                    end_duration = time.time()
+                    self.duration = end_duration - start_duration
+
+                    if self.env.episode % self.config['plot_every'] == 0:
+                        print(f'Episode {self.env.episode} done. Score: {self.env.reward}. Steps: {self.env.step_num}. Epsilon: {self.epsilon._value}. Fps: {self.env.step_num / self.duration}')
+                    self.reward_history.append(self.env.reward)
+                    self.duration_history.append(self.env.duration)
+                    self.epsilon_history.append(self.epsilon._value)
+                    self.episode_history.append(self.env.episode)
+
+                    break
+
+            # Store intermediate results in Google Drive
+            if self.train and self.env.episode % self.config['intermediate_results_freq'] == 0:
+                print("Storing intermediate results")
+                if self.ae and self.train_ae_online:
+                    ae_checkpoint = self.dim_reduction_component.get_checkpoint()
+                else:
+                    ae_checkpoint = None
+                self.data_manager.write_intermediate_results(self.episode_history, self.reward_history, self.duration_history, self.epsilon_history, self.get_policy_checkpoint(), ae_checkpoint)
 
     def fill_buffer(self):
         print("Filling replay memory buffer...")
