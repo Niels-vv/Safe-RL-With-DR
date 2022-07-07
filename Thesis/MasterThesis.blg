@@ -8,50 +8,51 @@ Warning--empty booktitle in pca_curran
 Warning--empty journal in mario
 Warning--empty booktitle in ae_visual
 Warning--empty booktitle in vae
+Warning--empty booktitle in noproto
 Warning--empty journal in deeprl
 Warning--empty booktitle in relu
 Warning--empty journal in maxvsconv
 Warning--empty journal in ddqn
 Warning--empty journal in rlfitting
-You've used 37 entries,
+You've used 44 entries,
             2118 wiz_defined-function locations,
-            696 strings with 10802 characters,
-and the built_in function-call counts, 14243 in all, are:
-= -- 1297
-> -- 912
-< -- 13
-+ -- 361
-- -- 322
-* -- 995
-:= -- 2350
-add.period$ -- 110
-call.type$ -- 37
-change.case$ -- 269
+            736 strings with 12917 characters,
+and the built_in function-call counts, 17104 in all, are:
+= -- 1565
+> -- 1080
+< -- 16
++ -- 425
+- -- 379
+* -- 1200
+:= -- 2816
+add.period$ -- 133
+call.type$ -- 44
+change.case$ -- 316
 chr.to.int$ -- 0
-cite$ -- 47
-duplicate$ -- 522
-empty$ -- 974
-format.name$ -- 322
-if$ -- 2981
+cite$ -- 55
+duplicate$ -- 633
+empty$ -- 1180
+format.name$ -- 379
+if$ -- 3590
 int.to.chr$ -- 0
-int.to.str$ -- 37
-missing$ -- 33
-newline$ -- 183
-num.names$ -- 74
-pop$ -- 344
+int.to.str$ -- 44
+missing$ -- 40
+newline$ -- 219
+num.names$ -- 90
+pop$ -- 397
 preamble$ -- 1
-purify$ -- 235
+purify$ -- 275
 quote$ -- 0
-skip$ -- 443
+skip$ -- 530
 stack$ -- 0
-substring$ -- 538
-swap$ -- 155
-text.length$ -- 13
+substring$ -- 678
+swap$ -- 189
+text.length$ -- 16
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 142
-warning$ -- 10
-while$ -- 101
-width$ -- 39
-write$ -- 383
-(There were 10 warnings)
+type$ -- 170
+warning$ -- 11
+while$ -- 125
+width$ -- 46
+write$ -- 462
+(There were 11 warnings)

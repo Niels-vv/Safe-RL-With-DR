@@ -1,5 +1,12 @@
 \begin{thebibliography}{10}
 
+\bibitem{pca_ae}
+Jasem Almotiri, Khaled Elleithy, and Abdelrahman Elleithy.
+\newblock Comparison of autoencoder and principal component analysis followed
+  by neural network for e-learning using handwritten recognition.
+\newblock In {\em 2017 IEEE Long Island Systems, Applications and Technology
+  Conference (LISAT)}, pages 1--5, 2017.
+
 \bibitem{es}
 Hans-Georg Beyer and Hans-Paul Schwefel.
 \newblock Evolution strategies - a comprehensive introduction.
@@ -15,6 +22,20 @@ Sebastian Bitzer, Matthew Howard, and Sethu Vijayakumar.
 Blizzard.
 \newblock Blizzard/s2client-proto: Starcraft {II} {Client} - protocol
   definitions used to communicate with {StarCraft II}.
+
+\bibitem{priors}
+Nicol{\`o} Botteghi, Ruben Obbink, Daan Geijs, Mannes Poel, Beril Sirmacek,
+  Christoph Brune, Abeje Mersha, and Stefano Stramigioli.
+\newblock Low dimensional state representation learning with reward-shaped
+  priors.
+\newblock In {\em 2020 25th International Conference on Pattern Recognition
+  (ICPR)}, pages 3736--3743, May 2021.
+\newblock Funding Information: The authors thank Johan Engelen for the great
+  support in the initial phase of this work, Han Wopereis for the precious help
+  with ROS and Gazebo simulations and the reviewers for the comments that
+  greatly improved the manuscript. Publisher Copyright: {\textcopyright} 2021
+  IEEE; 25th International Conference on Pattern Recognition, ICPR 2020, ICPR ;
+  Conference date: 10-01-2021 Through 15-01-2021.
 
 \bibitem{pong}
 Greg Brockman, Vicki Cheung, Ludwig Pettersson, Jonas Schneider, John Schulman,
@@ -141,6 +162,27 @@ Alex~X. Lee, Anusha Nagabandi, Pieter Abbeel, and Sergey Levine.
 \newblock Stochastic latent actor-critic: Deep reinforcement learning with a
   latent variable model, 2020.
 
+\bibitem{representation_overview}
+Timothée Lesort, Natalia Diaz~Rodriguez, Jean-François Goudou, and David
+  Filliat.
+\newblock State representation learning for control: An overview.
+\newblock {\em Neural Networks}, 108, 02 2018.
+
+\bibitem{proto}
+Matthew Luciw and Juergen Schmidhuber.
+\newblock Low complexity proto-value function learning from sensory
+  observations with incremental slow feature analysis.
+\newblock In Alessandro E.~P. Villa, W{\l}odzis{\l}aw Duch, P{\'e}ter {\'E}rdi,
+  Francesco Masulli, and G{\"u}nther Palm, editors, {\em Artificial Neural
+  Networks and Machine Learning -- ICANN 2012}, pages 279--287, Berlin,
+  Heidelberg, 2012. Springer Berlin Heidelberg.
+
+\bibitem{noproto}
+Sephora Madjiheurem and L~Toni.
+\newblock Representation learning on graphs: A reinforcement learning
+  application.
+\newblock 04 2019.
+
 \bibitem{deeprl}
 Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Alex Graves, Ioannis
   Antonoglou, Daan Wierstra, and Martin Riedmiller.
@@ -182,6 +224,13 @@ Bharat Prakash, Mark Horton, Nicholas~R. Waytowich, William~David Hairston, Tim
   learning.
 \newblock {\em CoRR}, abs/1903.10404, 2019.
 
+\bibitem{project_matrix}
+Tomonori Sadamoto, Aranya Chakrabortty, and Jun-ichi Imura.
+\newblock Fast online reinforcement learning control using state-space
+  dimensionality reduction.
+\newblock {\em IEEE Transactions on Control of Network Systems}, 8(1):342--353,
+  2021.
+
 \bibitem{pca_neural}
 Nishal Shah and Frédéric Alexandre.
 \newblock Reinforcement learning and dimensionality reduction: A model in
@@ -212,11 +261,16 @@ Herke van Hoof, Nutan Chen, Maximilian Karl, Patrick van~der Smagt, and Jan
 Oriol Vinyals, Timo Ewalds, Sergey Bartunov, Petko Georgiev, Alexander~Sasha
   Vezhnevets, Michelle Yeo, Alireza Makhzani, Heinrich K{\"{u}}ttler, John~P.
   Agapiou, Julian Schrittwieser, John Quan, Stephen Gaffney, Stig Petersen,
-  Karen Simonyan, Tom Schaul, Hado van Hasselt, David Silver, Timothy~P.
+  Karen Simonyan, Tom Schaul, Hado~van Hasselt, David Silver, Timothy~P.
   Lillicrap, Kevin Calderone, Paul Keet, Anthony Brunasso, David Lawrence,
   Anders Ekermo, Jacob Repp, and Rodney Tsing.
 \newblock {StarCraft II:} {A} new challenge for reinforcement learning.
 \newblock {\em CoRR}, abs/1708.04782, 2017.
+
+\bibitem{prototypical}
+Denis Yarats, Rob Fergus, Alessandro Lazaric, and Lerrel Pinto.
+\newblock Reinforcement learning with prototypical representations.
+\newblock {\em CoRR}, abs/2102.11271, 2021.
 
 \bibitem{rlfitting}
 Chiyuan Zhang, Oriol Vinyals, Remi Munos, and Samy Bengio.
