@@ -72,6 +72,23 @@ class AgentPerformance:
         plt.savefig(filename)
         plt.show()
 
+    def show_average_plots(rewards, title, yrange, filename):
+        plt.figure(2)
+        plt.clf()        
+        plt.title(title)
+        plt.xlabel("episode")
+        plt.ylabel("reward average per 30 episodes")
+        plt.plot(rewards[0], '-b', label = "Baseline")
+        plt.plot(rewards[1], '-g', label = "PCA")
+        plt.plot(rewards[2], '-r', label = "Pre-trained AE")
+        plt.plot(rewards[3], '-c', label = "Online trained AE")
+        if len(rewards) == 5:
+            plt.plot(rewards[4], '-m', label = "DeepMDP")
+        plt.ylim([yrange[0],yrange[1]])
+        plt.legend(loc="upper left")
+        plt.savefig(filename)
+        plt.show()
+
 # Class methods showing analyses of PCA
 class PCAAnalysis:    
     @staticmethod
@@ -365,6 +382,24 @@ def get_rectangle(area):
 
 ### Results analysis methods
 
+# Show average results for all agents
+def show_average_results_all(results_path, yrange, env_name):
+    filename = f'Average_results_agents_{env_name}.png'
+    title = f'Training results for all agents in {env_name}'
+    result_names = ["Results", "Results_pca", "Results_ae", "Results_online_ae"]
+    if env_name == "pysc2": result_names.append("Results_deepmdp")
+    results = []
+    for res in result_names:
+        i = 1
+        rewards = []
+        while os.path.isfile(f'{results_path}/{res}_{i}.csv'):
+            r = pd.read_csv(f'{results_path}/{res}_{i}.csv')
+            rewards += r.loc[:, "Reward"].tolist()
+            i += 1
+        learning_period = 30
+        results.append(AgentPerformance.get_average(rewards, learning_period))
+    AgentPerformance.show_average_plots(results, title, yrange, filename)
+
 # Show results for baseline agent.
 def show_base_results(results_path, yrange):
     base_results_file = f'{results_path}/Results'
@@ -462,7 +497,7 @@ if __name__ == "__main__":
         data_manager = DataManager(observation_sub_dir = obs_dir)
         data_manager.obs_file = f'{data_manager.observations_path}/Observations.npy'
         print("Retrieving observations...")
-        obs = data_manager.get_observations()
+        #obs = data_manager.get_observations()
 
         original_shape = (32,32)
         latent_shape = (16,16)
@@ -485,7 +520,7 @@ if __name__ == "__main__":
         data_manager = DataManager(observation_sub_dir = obs_dir)
         data_manager.obs_file = f'{data_manager.observations_path}/Observations_corr.npy'
         print("Retrieving observations...")
-        obs = data_manager.get_observations()   
+        #obs = data_manager.get_observations()   
 
         original_shape = (84,84)
         latent_shape = (42,42)
@@ -494,20 +529,22 @@ if __name__ == "__main__":
     
     results_path = f'{PATH}/../{results_dir}'
 
+    print("Average results for all agents")
+    show_average_results_all(results_path, yrange, env_name)
     #print("Baseline results")
     #show_base_results(results_path, yrange)
     #print("AE results")
     #show_pretrained_ae_results(results_path, yrange)
-    print("AE results")
-    show_online_ae_results(results_path, yrange)
-    print("PCA agent results")
-    show_pca_agent_results(results_path, yrange)
-    if env_name == "pysc2":
-        print("DeepMDP agent results")
-        show_deepmdp_agent_results(results_path, yrange)
+    # print("AE results")
+    # show_online_ae_results(results_path, yrange)
+    # print("PCA agent results")
+    # show_pca_agent_results(results_path, yrange)
+    # if env_name == "pysc2":
+    #     print("DeepMDP agent results")
+    #     show_deepmdp_agent_results(results_path, yrange)
 
-    print("PCA analyses")
-    pca_analyses(obs,states,results_dir,pca_name)
+    # print("PCA analyses")
+    # pca_analyses(obs,states,results_dir,pca_name)
 
     #print("Correlation matrix")
     #show_reduced_features_correlation(ae, obs, features, original_shape, latent_shape)
