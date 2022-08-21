@@ -489,8 +489,8 @@ if __name__ == "__main__":
         results_dir = "env_pysc2/results/dqn/MoveToBeacon"
         yrange = (0,30)
 
-        ae_dir = "env_pysc2/results_vae/MoveToBeacon"
-        ae_name = "ae.pt"
+        ae_dir = "env_pysc2/results_ae/MoveToBeacon"
+        ae_name = "vae.pt"
         ae = AEAnalysis.get_component(ae_dir, ae_name)
 
         obs_dir = "drive/MyDrive/Thesis/Code/PySC2/Observations/MoveToBeacon"
